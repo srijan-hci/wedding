@@ -13,9 +13,16 @@ body {
   margin: 0;
 }
 
+/* Sized to the LARGE viewport (lvh), not the dynamic one (dvh).
+   Mobile Safari only collapses its toolbars once you scroll, and it can
+   only scroll if the page is taller than the visible area. 100dvh always
+   equals whatever is currently visible, so the page could never scroll
+   and the toolbars never collapsed. 100lvh is the height with the
+   toolbars already collapsed, which leaves just enough to scroll: one
+   flick collapses the chrome and the page then fits exactly. */
 body {
   min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 100lvh;
   overflow-x: hidden;
   overflow-y: auto;
   isolation: isolate;
@@ -38,7 +45,7 @@ body {
   z-index: 10;
   width: 100%;
   min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 100lvh;
 }
 
 .background-layer {
