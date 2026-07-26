@@ -13,3 +13,6 @@ Assets/shadow-matte*.mp4
 !Assets/shadow-wall-720.mp4
 !Assets/shadow-wall-poster.jpg
 Assets/shadow-wall-540.mp4
+
+# Design-hook tooling cache
+.impeccable/

@@ -10,6 +10,7 @@
     <title>Akriti &amp; Srijan</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="intro.css" />
   </head>
   <body>
     <picture class="background-layer" aria-hidden="true">
@@ -48,7 +49,29 @@
       />
     </picture>
 
-    <main class="content-layer"></main>
+    <main class="content-layer">
+      <!-- Intro animation. Remove this block, .hero-copy below, and the
+           intro.css / intro.js tags to take the whole sequence out. -->
+      <div class="intro" aria-hidden="true">
+        <div class="collage">
+          <!-- Order matters: later pieces stack on top. The hero is
+               last so it hides the whole stack at the centre. -->
+          <div class="layer"><div class="piece photo-tr"><div class="face"></div></div></div>
+          <div class="layer"><div class="piece map"><div class="face"></div></div></div>
+          <div class="layer"><div class="piece caption"><div class="face"></div></div></div>
+          <div class="layer"><div class="piece stamp"><div class="face"></div></div></div>
+          <div class="layer"><div class="piece postcard"><div class="face"></div></div></div>
+          <div class="layer"><div class="piece circle-a"><div class="face"></div></div></div>
+          <div class="layer"><div class="piece circle-b"><div class="face"></div></div></div>
+          <div class="layer"><div class="piece hero"><div class="face"></div></div></div>
+        </div>
+      </div>
+
+      <div class="hero-copy">
+        <h1>Akriti &amp; Srijan</h1>
+        <p>Placeholder date &middot; Placeholder city</p>
+      </div>
+    </main>
 
     <div class="shadow-layer" aria-hidden="true">
       <video
@@ -98,5 +121,6 @@
         window.addEventListener("load", syncPlayback, { once: true });
       }
     </script>
+    <script src="intro.js"></script>
   </body>
 </html>
