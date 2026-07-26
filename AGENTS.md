@@ -62,6 +62,41 @@ Do not leave stray servers running. One port, one URL, every time.
 The site uses `<video>` and responsive `<picture>` sources, so opening
 `index.html` via `file://` will not behave correctly. Always use the server.
 
+## Publishing
+
+Netlify deploys every push to `origin/main`, so pushing to main puts the
+change on `akriti-srijan.com` within about a minute. Never push to main
+without explicit approval ("publish", "push it", or similar).
+
+Two account traps on this machine:
+
+1. The personal GitHub account is `srijan-hci`. A LinkedIn account,
+   `srjhanwa_LinkedIn`, is also configured and has no access to this repo.
+   `GH_TOKEN` is injected for the LinkedIn account, so unset it and switch
+   accounts first:
+
+   ```
+   env -u GH_TOKEN gh auth switch --hostname github.com --user srijan-hci
+   ```
+
+2. The Copilot app injects a LinkedIn credential helper after normal git
+   config, so a plain `git push` still fails with a 403 even once
+   `srijan-hci` is active. Use this exact form:
+
+   ```
+   env -u GH_TOKEN git \
+     -c credential.helper= \
+     -c credential.https://github.com.helper= \
+     -c 'credential.https://github.com.helper=!/Users/srjhanwa/Library/Caches/copilot-desktop-gh-2.96.0/gh auth git-credential' \
+     push origin HEAD:main
+   ```
+
+Every commit should include:
+`Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>`
+
+After pushing, confirm the deploy by polling the live site for a file or
+marker that only exists in the new build.
+
 ## Audience
 
 The user is a product designer, not a developer. Explain changes in plain
