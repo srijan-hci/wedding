@@ -29,14 +29,21 @@ body {
   background: #a94332;
 }
 
+/* Deliberately taller than the viewport, and anchored to the top.
+   iOS 26 Safari's floating toolbar is an overlay: 100lvh stops where the
+   bar begins, so a layer sized exactly 100lvh gets cut off at its top
+   edge. Overflowing past the bottom pushes the image behind the bar so
+   the texture shows through the glass. `bottom: auto` releases the
+   `inset: 0` bottom constraint so the height is free to exceed it. */
 .background-layer,
 .shadow-layer {
   position: fixed;
   inset: 0;
+  bottom: auto;
   display: block;
   width: 100vw;
   height: 100vh;
-  height: 100lvh;
+  height: calc(100lvh + 15vh);
   pointer-events: none;
 }
 
