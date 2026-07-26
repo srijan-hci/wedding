@@ -1,0 +1,15 @@
+.DS_Store
+.claude/
+.playwright-mcp/
+
+# Keep large source artwork local. The optimized derivatives are published.
+Assets/Background.png
+Assets/Background2.jpg
+Assets/AdobeStock_940193429.mov
+Assets/shadow-*.mov
+Assets/shadow-*.png
+Assets/shadow-*.jpg
+Assets/shadow-matte*.mp4
+!Assets/shadow-wall-720.mp4
+!Assets/shadow-wall-poster.jpg
+Assets/shadow-wall-540.mp4

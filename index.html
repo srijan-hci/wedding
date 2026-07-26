@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Akriti and Srijan." />
+    <title>Akriti &amp; Srijan</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <picture class="background-layer" aria-hidden="true">
+      <source
+        media="(max-width: 600px)"
+        type="image/avif"
+        srcset="Assets/background-1200.avif"
+      />
+      <source
+        media="(max-width: 600px)"
+        type="image/jpeg"
+        srcset="Assets/background-1200.jpg"
+      />
+      <source
+        type="image/avif"
+        srcset="
+          Assets/background-1200.avif 1200w,
+          Assets/background-1600.avif 1600w,
+          Assets/background-3200.avif 3200w
+        "
+        sizes="100vw"
+      />
+      <img
+        src="Assets/background-1600.jpg"
+        srcset="
+          Assets/background-1200.jpg 1200w,
+          Assets/background-1600.jpg 1600w,
+          Assets/background-3200.jpg 3200w
+        "
+        sizes="100vw"
+        alt=""
+        width="3200"
+        height="1684"
+        decoding="async"
+        fetchpriority="high"
+      />
+    </picture>
+
+    <div class="shadow-layer" aria-hidden="true">
+      <video
+        class="shadow-video"
+        muted
+        loop
+        playsinline
+        poster="Assets/shadow-wall-poster.jpg"
+        preload="metadata"
+        disablepictureinpicture
+        disableremoteplayback
+      >
+        <source src="Assets/shadow-wall-720.mp4" type="video/mp4" />
+        <img src="Assets/shadow-wall-poster.jpg" alt="" />
+      </video>
+    </div>
+
+    <script>
+      const video = document.querySelector(".shadow-video");
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+      const connection = navigator.connection;
+
+      const syncPlayback = () => {
+        if (
+          reducedMotion.matches ||
+          document.hidden ||
+          (connection && connection.saveData)
+        ) {
+          video.pause();
+          return;
+        }
+
+        video.play().catch(() => {});
+      };
+
+      if (reducedMotion.addEventListener) {
+        reducedMotion.addEventListener("change", syncPlayback);
+      } else if (reducedMotion.addListener) {
+        reducedMotion.addListener(syncPlayback);
+      }
+
+      document.addEventListener("visibilitychange", syncPlayback);
+
+      if (document.readyState === "complete") {
+        syncPlayback();
+      } else {
+        window.addEventListener("load", syncPlayback, { once: true });
+      }
+    </script>
+  </body>
+</html>

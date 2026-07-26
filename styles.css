@@ -1,0 +1,62 @@
+:root {
+  background: #a94332;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  isolation: isolate;
+  background: #a94332;
+}
+
+.background-layer,
+.shadow-layer {
+  position: fixed;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.background-layer {
+  z-index: 0;
+}
+
+.background-layer img,
+.shadow-video,
+.shadow-video img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.background-layer img {
+  object-position: center;
+}
+
+.shadow-layer {
+  z-index: 20;
+  overflow: hidden;
+  mix-blend-mode: multiply;
+}
+
+.shadow-video {
+  object-position: 58% center;
+  transform: scaleX(-1);
+}
+
+@supports not (mix-blend-mode: multiply) {
+  .shadow-layer {
+    display: none;
+  }
+}
