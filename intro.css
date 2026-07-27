@@ -57,6 +57,16 @@
   pointer-events: none;
 }
 
+/* The collage pieces are laid out from a zero-size point and moved into
+   place with transforms, so their untransformed boxes stick out past the
+   bottom of the page and add ~220px of stray scroll. Clipping here stops
+   that. The clip box is the full viewport, so nothing visible is lost,
+   and it also hides the hero while it is still below the fold waiting to
+   rise. */
+.intro {
+  overflow: hidden;
+}
+
 /* A zero-size point that everything is measured from. Sitting a
    little below centre leaves clean space for the names above. */
 .collage {

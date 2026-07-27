@@ -21,13 +21,23 @@ body {
   background: #a94332;
 }
 
+/* Fixed full-bleed layers.
+
+   These are sized to the viewport PLUS --chrome-inset, a value measured
+   in intro.js. On phones the browser's toolbars overlay the page, so the
+   layout viewport is shorter than the physical screen: on an iPhone 14
+   Pro it is 660px against an 852px screen. Every viewport unit (vh, svh,
+   lvh, dvh) reports that same short 660px, so no unit can reach the
+   remaining 192px. Extending past the bottom is the only way to paint
+   the texture behind the toolbar. --chrome-inset is 0 on desktop. */
 .background-layer,
 .shadow-layer {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
   display: block;
   width: 100vw;
-  height: 100vh;
+  height: calc(100vh + var(--chrome-inset, 0px));
   pointer-events: none;
 }
 

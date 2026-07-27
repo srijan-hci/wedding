@@ -9,6 +9,28 @@
 
   if (!intro || !collage) return;
 
+  /* ---------- Browser chrome inset ----------
+     On phones the browser's toolbars overlay the page, so the layout
+     viewport is shorter than the physical screen. Every CSS viewport
+     unit reports that short height, so a full-bleed background sized
+     to 100vh stops at the toolbar's top edge instead of filling behind
+     it. Measuring the difference gives styles.css the missing height.
+
+     Only applied on touch devices. On a desktop, screen.height is the
+     whole monitor, which would wildly oversize the background. */
+
+  function setChromeInset() {
+    const coarse = window.matchMedia("(pointer: coarse)").matches;
+    const gap = window.screen.height - window.innerHeight;
+    // Ignore implausible values: a real toolbar is a fraction of the screen.
+    const inset = coarse && gap > 0 && gap < window.innerHeight ? gap : 0;
+    document.documentElement.style.setProperty("--chrome-inset", inset + "px");
+  }
+
+  setChromeInset();
+  window.addEventListener("resize", setChromeInset, { passive: true });
+  window.addEventListener("orientationchange", setChromeInset, { passive: true });
+
   /* ---------- The intro ---------- */
 
   function play() {
