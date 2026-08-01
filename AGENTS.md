@@ -29,7 +29,12 @@ still making the feature easy to back out.
 | File | Purpose |
 |---|---|
 | `index.html` | The whole page. Layers: background photo, content, shadow video overlay. |
-| `styles.css` | All base styling. |
+| `styles.css` | Base styling and the three-layer page shell. |
+| `intro.css` / `intro.js` | The opening collage animation. Self-contained. |
+| `sections.css` | Design tokens, navigation, and every section below the hero. |
+| `nav.js` | Nav state, active-link highlighting, click-to-load map, scroll reveals. |
+| `rsvp.js` | The RSVP form. Holds the Google Apps Script URL. |
+| `google-apps-script.js` | Not used by the page. The script to paste into Google Apps Script so RSVPs land in a Google Sheet, with setup instructions. |
 | `Assets/` | Background photo (avif/jpg at 1200/1600/3200) and the shadow-wall video. |
 
 The page is built from three stacked fixed layers:
@@ -37,19 +42,55 @@ The page is built from three stacked fixed layers:
 `mix-blend-mode: multiply`). Anything new needs a deliberate z-index
 relative to these.
 
+Two consequences of that stack worth knowing before editing:
+
+1. **The hero must stay bounded.** `.intro` and `.hero-copy` are positioned
+   with `inset: 0`, so they fill their nearest positioned ancestor. That
+   ancestor is `.hero-section`, which is fixed at `100vh`. Remove that height
+   and the collage is flung to the middle of the whole document.
+
+2. **Nothing inside `.content-layer` can paint above the shadow video.**
+   `.content-layer` creates a stacking context at z-index 10, and a child can
+   never escape above a sibling of its parent. That is why `.site-nav` is a
+   direct child of `<body>` at z-index 30 rather than living inside the
+   content.
+
 Brand colour is `#a94332`.
+
+## Contrast under the shadow video
+
+The shadow video multiplies over the entire page, and multiply only ever
+darkens. Measured against the actual video file, the middle of the frame sits
+at about 69% brightness and more than half the area is below 70%.
+
+That has two hard consequences:
+
+- **All body copy must be dark text on the light cream panels.** Light text on
+  the terracotta wall is reserved for large display type only (the hero and the
+  footer), never paragraphs.
+- **The ink colours in `sections.css` are deliberately darker than they look
+  like they need to be**, so body copy still clears roughly 5:1 in average
+  shadow. Do not lighten them back for aesthetic reasons without re-measuring.
+
+In the darkest ~1% of the frame, body copy still drops to about 3.6:1, which is
+under the WCAG AA threshold of 4.5:1. This is unavoidable while the shadow runs
+at full strength over the content: at that darkness even pure black text on the
+cream panel only reaches 4.5:1. Softening the shadow below the hero is the only
+real fix, and that is a deliberate design choice the owner has made against.
 
 ## Previewing: one server, always port 4173
 
 There is exactly ONE preview server, and it always runs on port 4173.
 
-Copilot sessions run in a git worktree, which is a *different folder* from
-the user's main checkout. A server started against the main checkout cannot
-see files added during a session. So at the start of a session, take over
-port 4173 and point it at the session folder:
+Copilot sessions sometimes run in a git worktree, which is a *different
+folder* from the user's main checkout, and sometimes run in place in the
+main checkout itself. A server started against the wrong folder cannot see
+files added during a session. So at the start of every session, take over
+port 4173 and point it at whichever folder the session is actually working
+in:
 
 ```
-kill $(lsof -ti :4173 -sTCP:LISTEN)          # free the port first
+lsof -ti :4173 -sTCP:LISTEN | while read p; do kill $p; done   # free the port
 cd <session folder>
 python3 -m http.server 4173 --bind 127.0.0.1
 ```

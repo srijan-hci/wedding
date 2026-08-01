@@ -48,6 +48,21 @@ body {
   min-height: 100vh;
 }
 
+/* The hero occupies exactly one screen and nothing more.
+
+   .intro and .hero-copy are absolutely positioned with `inset: 0`, so they
+   size themselves to their nearest positioned ancestor. This section is that
+   ancestor. Before it existed the job fell to .content-layer, which worked
+   only while the page was a single screen tall. With sections stacked below,
+   .content-layer runs to thousands of pixels, and the collage (placed at 56%
+   of its container) would drop to the middle of the whole document.
+
+   Plain `vh` on purpose, to match the fixed layers above. */
+.hero-section {
+  position: relative;
+  height: 100vh;
+}
+
 .background-layer {
   z-index: 0;
 }
