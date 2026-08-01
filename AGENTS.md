@@ -64,9 +64,18 @@ The site uses `<video>` and responsive `<picture>` sources, so opening
 
 ## Publishing
 
-Netlify deploys every push to `origin/main`, so pushing to main puts the
-change on `akriti-srijan.com` within about a minute. Never push to main
-without explicit approval ("publish", "push it", or similar).
+GitHub Pages deploys every push to `origin/main`, so pushing to main puts
+the change on `akriti-srijan.com` within a minute or two. Never push to
+main without explicit approval ("publish", "push it", or similar).
+
+The site is served from the `main` branch root. The `CNAME` file in the
+repo root holds the custom domain and must not be deleted or renamed:
+removing it unsets the domain in GitHub Pages and takes the site offline.
+(Despite the name, that file is not a DNS record.)
+
+DNS lives at Namecheap: the apex `akriti-srijan.com` uses four A records
+pointing at `185.199.108-111.153`, and `www` is a CNAME to
+`srijan-hci.github.io`.
 
 Two account traps on this machine:
 
