@@ -862,30 +862,42 @@
     /* The last frame drawn stays on screen, so stopping is invisible. */
   }
 
-  function onScreen() {
-    /* Below this the light is dialled right down anyway, so there is
-       nothing worth spending a phone battery on. */
-    return window.scrollY < window.innerHeight * 1.6;
-  }
+  /* ⚠️ There is deliberately no "is it on screen?" check here.
+
+     This used to stop rendering past 1.6 viewport heights, back when
+     main.js eased the light down to 35% below the hero: freezing
+     something already faded out was free. That fade is gone. The wall
+     and its shadow are now meant to read exactly the same the whole way
+     down the page, so the light layer is position: fixed at constant
+     opacity and is therefore *always* on screen.
+
+     The stale check outlived the fade and quietly froze the drift from
+     the venue section onward. stop() leaves the last frame painted, so
+     it did not look broken, just inexplicably still. Measured before the
+     fix: 105 draw calls per 1.5s above the threshold, 0 below it.
+
+     Do not reintroduce a scroll-based gate. Any saving it buys is
+     visible as the light seizing up mid-page. Hiding the tab is the one
+     honest reason to stop, and that is handled below. */
 
   document.addEventListener("visibilitychange", function () {
     if (document.hidden) stop();
-    else if (onScreen()) start();
+    else start();
   });
 
   window.addEventListener(
     "scroll",
     function () {
+      /* Time does not advance while a scroll is in flight, and tick()
+         rebases its clock so resuming never jumps. This is the only
+         scroll-linked pause, and it is deliberate: microsoft.ai does the
+         same. Rendering itself keeps going. */
       isScrolling = true;
       if (scrollIdle) clearTimeout(scrollIdle);
       scrollIdle = setTimeout(function () {
         isScrolling = false;
         scrollIdle = null;
       }, 150);
-
-      if (document.hidden) return;
-      if (onScreen()) start();
-      else stop();
     },
     { passive: true }
   );

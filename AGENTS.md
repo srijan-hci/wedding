@@ -440,9 +440,20 @@ Structural fingerprint matches theirs exactly: downsampling both canvases to
 128x80 and measuring directional gradient energy at 15 degree steps gives
 `streak along 135 degrees, across 60 degrees` for both. Zero axe violations at
 390, 820 and 1440 with all FAQs expanded. Zero console errors. The loop draws
-nothing at all when the tab is hidden or once you scroll 1.6 screens past the
-hero, and pauses while scrolling. No WebGL hides the layer and leaves a plain
-terracotta wall.
+nothing at all when the tab is hidden, and pauses the clock while scrolling. No
+WebGL hides the layer and leaves a plain terracotta wall.
+
+**⚠️ The light must animate the whole way down the page. Do not add a
+scroll-based gate.** There used to be one, `scrollY < innerHeight * 1.6`, from
+when main.js eased the light down to 35 percent below the hero: freezing
+something already faded out cost nothing. That fade was removed when the wall
+and shadow became continuous, but the gate stayed, and quietly froze the drift
+from the venue section onward. `stop()` leaves the last frame painted, so it
+never looked broken, just inexplicably still, which is why it survived so long.
+Measured: 105 draw calls per 1.5s above the threshold, **0** below it, resuming
+the moment you scrolled back up. The layer is `position: fixed` at constant
+opacity, so it is *always* on screen and there is no honest offscreen state.
+Hiding the tab is the one real reason to stop.
 
 🔴 **If you change the composite, re-measure contrast from scratch.** This blend
 *darkens*, where the first attempt brightened, so every reading moves the
