@@ -48,7 +48,7 @@ authoritative while still making the feature easy to back out.
 | `rsvp.js` | Form submission. Holds the Google Apps Script URL. Shared by the RSVP page. |
 | `google-apps-script.js` | Not used by the page. The script to paste into Google Apps Script so RSVPs land in a Google Sheet, with setup instructions. |
 | `Assets/` | The wall photograph, avif/jpg at 1200/1600/3200. |
-| `Assets/collage/` | The collage cut-outs, WebP with PNG fallback, plus `prepare.py` which made them. Originals in `Assets/collage/_source/`, gitignored. |
+| `Assets/collage/` | The collage cut-outs, WebP with PNG fallback except the three cards which are WebP only, plus `prepare.py` which made them. Originals in `Assets/collage/_source/`, gitignored. |
 | `Font/` | Recoleta. Only the three weights actually loaded are tracked. |
 | `tools/` | Measurement scripts. Nothing here ships. See `tools/README.md`. |
 
@@ -247,12 +247,19 @@ and it jumps.
 drop shadow already painted in, and `.card-shot img` adds its own
 `drop-shadow()`. `prepare.py` therefore crops them with `trim_solid()`, which
 keeps only the opaque rectangle, rather than `trim()`, which keeps anything not
-fully transparent. Using the wrong one gives every card two shadows *and* moves
-the label: `.card-label` is positioned `bottom: 4.5%` of the image box, so any
-shadow margin baked into that box lifts the label off the white caption band.
-All three are forced to one shared output size for the same reason: their solid
-rectangles differ by a pixel, which would otherwise make the three cards
-fractionally different heights in the grid.
+fully transparent. Using the wrong one gives every card two shadows. All three
+are forced to one shared output size because their solid rectangles differ by a
+pixel, which would otherwise make the three cards fractionally different heights
+in the grid.
+
+**⚠️ The captions are painted into the artwork, and the `alt` text is the only
+thing naming these buttons.** There used to be a `.card-label` span under each
+card holding "Travel / Stay" and so on. The designer moved that lettering into
+the Polaroid's white band, so the spans are gone and the CSS with them. That
+span was also the button's accessible name, so each `<img>` now carries a real
+alt instead. **Do not set `alt=""` on these three.** They look decorative, and
+the reflex is to blank them, but doing so makes a screen reader announce three
+consecutive buttons as nothing but "button".
 
 ### The RSVP page
 
@@ -336,8 +343,18 @@ after six seconds. **There is deliberately no timeout**: cutting the request off
 would report a failure for a reply that was actually delivered, and the guest
 would send it twice.
 
-`RSVP_ENDPOINT` in `rsvp.js` is empty until the script is deployed. While it is
-empty the form does not fail silently: it tells people to email instead.
+`RSVP_ENDPOINT` in `rsvp.js` holds the live `/exec` URL and is committed. It is
+not a secret: anyone can read it in the page source, and the script only ever
+appends a row. If it is ever emptied the form does not fail silently, it tells
+people to email instead.
+
+**⚠️ `mode: "no-cors"` means a success here is "delivered", not "confirmed".**
+The browser refuses to let us read the reply, so we cannot tell a written row
+from a script that threw. That is why the thank-you screen also gives an email
+address. It is also why **the sheet is the only ground truth when testing.**
+`curl` reports 405 on that endpoint even when the post works, because the real
+response is a 302 to `script.googleusercontent.com` and curl mishandles the
+redirect. Do not chase that 405.
 
 **If you change the Apps Script you must redeploy it**, via Deploy > Manage
 deployments > pencil > New version. A brand new deployment would hand you a
@@ -486,6 +503,78 @@ opposite way. All 40 text elements were re-measured in the two worst cases
 excluded.
 
 
+## Regenerating the collage assets
+
+`prepare.py` is the only thing that should ever write to `Assets/collage/`.
+Never hand-edit an exported file.
+
+**It must be run from the repo root, not from its own folder.** Its source
+paths are relative (`Assets/...`), so running it in place fails on the first
+missing file.
+
+```
+python3 Assets/collage/prepare.py
+```
+
+It writes everything to `/tmp/collage-out/` and prints a table of sizes. Copy
+across only the pieces that actually changed, then fix permissions (see the
+OneDrive note below):
+
+```
+cp /tmp/collage-out/card-travel.webp Assets/collage/card-travel.webp
+chmod 644 Assets/collage/card-travel.webp
+```
+
+The designer re-saves artwork **over the same filenames** (`Assets/Frame 6.png`
+and friends), so a re-export is usually just those two commands per piece with
+no code change at all. Check `git status`: if a source was not actually
+re-saved, its output is byte-identical and will not appear.
+
+It needs Pillow and numpy. `Assets/image 8.png`, `image 23.png` and
+`image 31.png` are a superseded first attempt at the cards, still on disk and
+gitignored. `Assets/collage/polaroid-blank.webp` is no longer referenced by
+anything but is deliberately still tracked, in case a fourth card is ever added.
+
+## Working on this machine
+
+Three environment traps, all of which cost real time to find:
+
+**⚠️ The repo lives inside OneDrive.** Writing many files in a tight loop
+throws `TimeoutError: [Errno 60]` partway through, so scripts should build
+their output in `/tmp` and copy it in afterwards. OneDrive also sets copied
+files to mode `700`, which is wrong for tracked files, so `chmod 644` after
+copying anything in.
+
+**Playwright needs an explicit browser path and WebGL flags.** The bundled
+launcher does not find Chromium here, and headless has no GPU, so the light
+renders nothing without SwiftShader:
+
+```python
+p.chromium.launch(headless=True,
+    executable_path="/Users/srjhanwa/Library/Caches/ms-playwright/"
+        "chromium_headless_shell-1208/chrome-headless-shell-mac-arm64/"
+        "chrome-headless-shell",
+    args=["--use-gl=angle", "--use-angle=swiftshader",
+          "--enable-unsafe-swiftshader"])
+```
+
+Route `**/*.{js,css,webp}` with `Cache-Control: no-cache` or Playwright will
+happily screenshot the previous version of a file you just changed. Also note
+`page.accessibility` does not exist in this build: inject axe and `evaluate`
+instead.
+
+**`pkill` and `killall` are refused; `kill` needs a numeric PID.** Finding the
+PID and killing it have to be two separate calls, because each shell command
+runs in a fresh process:
+
+```
+pgrep -f "http.server 4173" | head -1
+kill <pid>
+```
+
+A Python virtualenv with Pillow, numpy and Playwright is the easiest way to run
+any of this. Building it under `/tmp` works but does not survive a reboot.
+
 ## Previewing: one server, always port 4173
 
 There is exactly ONE preview server, and it always runs on port 4173.
@@ -552,10 +641,52 @@ Two account traps on this machine:
 Every commit should include:
 `Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>`
 
-After pushing, confirm the deploy by polling the live site for a file or
-marker that only exists in the new build.
+After pushing, poll the Pages build rather than guessing. It takes about
+45 seconds:
+
+```
+env -u GH_TOKEN gh api repos/srijan-hci/wedding/pages/builds/latest --jq '.status'
+```
+
+Wait for `built`, then load the live site with a cache-busting query string and
+confirm the change is really there. Do not treat a successful push as a
+successful deploy.
 
 ## Audience
 
 The user is a product designer, not a developer. Explain changes in plain
 language, work in small increments, and flag anything risky before doing it.
+
+Sentence case for headings. No em-dashes anywhere, in the site copy or in
+conversation: use a colon, a comma, or a shorter sentence.
+
+## Open, and not to be guessed at
+
+Everything below is either waiting on the owner or is copy nobody has approved.
+**Do not quietly resolve any of it.** Ask.
+
+**Waiting on the owner:**
+
+- **The Apps Script needs redeploying.** `google-apps-script.js` in this repo is
+  correct, but Google is still running an older copy that uses `appendRow()`.
+  A live test reply landed in row 14 with blank rows above it. Until it is
+  redeployed, replies are still recorded, just in the wrong place. Extensions >
+  Apps Script, paste the file, then Deploy > Manage deployments > pencil >
+  New version.
+
+**Unconfirmed copy currently on the live site:**
+
+- **The date.** The Figma says "February 21, 2027"; the site says
+  "20 & 21 February 2027". One of them is wrong.
+- **The venue spelling.** Figma "Tharvadu Mane", site "Tharavadu Mane".
+- **"Please RSVP by 28 August 2026"** was lifted from the Figma and never
+  confirmed.
+- **The venue street address in the Travel drawer is still a placeholder.**
+- **The closing paragraph** ("Come for the food, stay for the dancing...") was
+  written by an assistant, not by the couple.
+- **All three drawers** were condensed from an earlier version of the site and
+  have never been fact-checked. Treat every logistic in them as a draft.
+
+**Offered and not yet answered:** on the RSVP page the two long answers
+(dietary needs, note) now centre their text as it is typed, which reads oddly
+for a sentence. Left-aligning just those two is a small change if wanted.
