@@ -270,6 +270,28 @@ file knowing about the other: the flow simply becomes four steps instead of six.
 Submission is still the root `rsvp.js`. `steps.js` only decides which question
 you are looking at.
 
+**The page is centred**, set once as `text-align: center` on `.rsvp-page`.
+Everything either inherits that or is a flex row, and flex rows ignore
+`text-align`, which is why `.rsvp-choice` and `.rsvp-actions` centre themselves
+explicitly and `.rsvp-input--short` needs `margin-inline: auto`. Form controls
+do not inherit it either, hence `text-align: center` on `.rsvp-input`.
+
+**⚠️ The radio dots on the yes/no step are clipped, not removed.** Centring a
+dot and its label as a pair left the two dots 11px apart, because the labels are
+different lengths, and that reads as a mistake on a page where everything else
+lines up. The pill carries the state instead. It must stay a clip, never
+`display: none` or `visibility: hidden`: those drop the input out of the tab
+order and the accessibility tree, so it would stop being reachable by keyboard
+or announceable. Verified still a real radio group: arrow keys move between
+options, the wrapping label makes the whole pill clickable, and axe reports
+zero violations.
+
+Because the dot is gone, the checked pill changes *weight* as well as colour, via
+an `inset` box-shadow that doubles the border without moving anything. Colour
+alone would fail WCAG 1.4.1. There is also an `@supports not selector(:has(*))`
+block that puts the dot back, because without `:has()` nothing can show the
+checked state and the dot would be the only signal left.
+
 ### Where replies go
 
 GitHub Pages only serves files, so the form posts to a Google Apps Script that

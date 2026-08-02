@@ -1361,33 +1361,15 @@ body {
   filter: drop-shadow(0 12px 30px rgba(46, 12, 6, 0.34));
 }
 
-/* The label sits in the Polaroid's white margin, which is why it is
-   positioned rather than flowed: the blank frame has a fixed 536 x 660
-   geometry and the caption band is the bottom fifth of it. */
+/* The caption is hand-lettered into each Polaroid's white margin, so
+   there is no text element here to position. The alt text carries it
+   instead, which is also what names the button.
+
+   ⚠️ Do not set alt="" on these. The label span that used to name the
+   button is gone, so an empty alt would leave three buttons a screen
+   reader announces as just "button". */
 .card {
   position: relative;
-}
-
-.card-label {
-  position: absolute;
-  left: 11%;
-  right: 8%;
-  bottom: 4.5%;
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: clamp(13px, 1.35vw, 20px);
-  letter-spacing: 0.01em;
-  text-align: left;
-  color: #5b3826;
-  /* A hand-lettered tilt. The Figma writes these by hand; this is the
-     nearest honest approximation without shipping a script face for
-     three short labels. */
-  transform: rotate(-2.2deg);
-}
-
-.card-label i {
-  font-style: normal;
-  color: #a9714f;
 }
 
 .card:hover,
@@ -1795,6 +1777,12 @@ textarea:focus-visible {
   margin: 0 auto;
   padding: clamp(96px, 14vh, 180px) var(--space-5) clamp(80px, 12vh, 140px);
   min-height: 100svh;
+  /* One question at a time reads better centred: there is nothing else
+     on the page to align to, so a left edge just floats. This is the
+     only place alignment is set. Everything below either inherits it or
+     is a flex row, and flex rows ignore text-align, which is why the
+     three of them centre themselves explicitly. */
+  text-align: center;
 }
 
 .rsvp-title {
@@ -1923,10 +1911,17 @@ textarea:focus-visible {
   font-family: var(--font-body);
   font-size: 17px;
   line-height: 1.5;
+  /* Inherited alignment does not cross into a form control, so the
+     typed text has to be centred by hand or it sits left in an
+     otherwise centred page. */
+  text-align: center;
 }
 
+/* Narrower than its column, so it needs the auto margins to sit in the
+   middle. A block element with a max-width hugs the left otherwise. */
 .rsvp-input--short {
   max-width: 140px;
+  margin-inline: auto;
 }
 
 .rsvp-input:focus-visible {
@@ -1959,8 +1954,12 @@ textarea:focus-visible {
 .rsvp-choice {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  padding: 18px 20px;
+  /* A flex row does not inherit text-align. With the dot taken out of
+     flow the label is the only child left, so this centres it exactly,
+     and the two options line up with each other. */
+  justify-content: center;
+  position: relative;
+  padding: 20px;
   border: 1px solid rgba(255, 240, 224, 0.3);
   border-radius: var(--radius-lg);
   background: rgba(52, 18, 11, 0.4);
@@ -1977,21 +1976,55 @@ textarea:focus-visible {
   background: rgba(52, 18, 11, 0.58);
 }
 
+/* The dot is hidden, not removed. Centring a dot and a label as a pair
+   left the two dots 11px apart, because the labels are different
+   lengths, and a ragged pair reads as a mistake next to everything else
+   on this page lining up. The pill itself carries the state instead.
+
+   ⚠️ Clipped rather than display:none or visibility:hidden. Both of
+   those drop it out of the tab order and the accessibility tree, so it
+   would stop being reachable or announceable. This way it is still a
+   real radio: focusable, arrow-key navigable, and read out as checked.
+   The label wraps it, so clicking anywhere on the pill still selects. */
 .rsvp-choice input {
-  flex: none;
-  width: 22px;
-  height: 22px;
-  accent-color: #fdf1e2;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
 }
 
+/* With no dot, this is the only thing saying which one you picked, so it
+   changes weight as well as colour: the inset ring doubles the border
+   without moving anything. Colour alone would fail WCAG 1.4.1, and would
+   also just be hard to see. */
 .rsvp-choice:has(input:checked) {
   border-color: #ffe0bd;
   background: rgba(52, 18, 11, 0.72);
+  box-shadow: inset 0 0 0 1px #ffe0bd;
 }
 
 .rsvp-choice:has(input:focus-visible) {
   outline: 3px solid #ffe9c9;
   outline-offset: 3px;
+}
+
+/* Without :has() nothing above can show the checked state, and the dot
+   is the only signal left. Put it back rather than leave someone unable
+   to tell what they picked. */
+@supports not selector(:has(*)) {
+  .rsvp-choice input {
+    position: static;
+    width: 22px;
+    height: 22px;
+    clip-path: none;
+    accent-color: #fdf1e2;
+  }
+
+  .rsvp-choice {
+    gap: var(--space-4);
+  }
 }
 
 /* ---------- Review ---------- */
@@ -2021,10 +2054,14 @@ textarea:focus-visible {
   overflow-wrap: anywhere;
 }
 
-/* ---------- Actions ---------- */
+/* ---------- Actions ----------
+   Back keeps order: -1 so it stays to the left of Continue, and the
+   pair is centred together. Centring the buttons individually would
+   stack them; this keeps them on one line under the question. */
 .rsvp-actions {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-4);
   margin-top: clamp(36px, 6vh, 56px);
 }
@@ -2137,9 +2174,5 @@ textarea:focus-visible {
 
   .card {
     max-width: 260px;
-  }
-
-  .card-label {
-    font-size: 15px;
   }
 }

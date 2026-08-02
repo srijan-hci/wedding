@@ -50,16 +50,19 @@ VENUE = ("Venue image.png", "polaroid-venue", [1400, 900], 78, 90)
 # soft drop shadow already painted in, and `.card-shot img` adds its own
 # drop-shadow in CSS, so keeping the baked one would give every card two
 # shadows. Cropping to the solid rectangle also keeps the image box equal
-# to the Polaroid itself, which is what `.card-label`'s percentage offsets
-# assume: include the shadow margin and the label drifts up off the white
-# caption band.
+# to the Polaroid itself.
+#
+# The caption is hand-lettered into the Polaroid's white band, so there is
+# no text over the top of these in the markup. That also means the image
+# is not decorative: index.html gives each one a real alt, because it is
+# what names the button.
 #
 # WebP only, no PNG fallback. Nothing in the markup uses <picture> for
 # these, so a fallback would be several megabytes nothing ever requests.
 CARDS = [
-    ("image 8.png",  "card-travel",    920, 82, 90),
-    ("image 23.png", "card-events",    920, 82, 90),
-    ("image 31.png", "card-bangalore", 920, 82, 90),
+    ("Frame 6.png", "card-travel",    920, 82, 90),
+    ("Frame 7.png", "card-events",    920, 82, 90),
+    ("Frame 8.png", "card-bangalore", 920, 82, 90),
 ]
 
 
