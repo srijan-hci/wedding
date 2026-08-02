@@ -74,10 +74,10 @@
          can never paint above a sibling of its parent, and this needs to
          sit above the light layer. -->
     <nav class="site-nav" aria-label="Main">
-      <ul>
-        <li><a href="#venue">Venue</a></li>
-        <li><a href="#rsvp">RSVP</a></li>
-        <li><a href="#faqs">FAQs</a></li>
+      <ul class="glass">
+        <li><a href="#event">Event</a></li>
+        <li><a href="rsvp/">RSVP</a></li>
+        <li><a href="#details">Details</a></li>
       </ul>
     </nav>
 
@@ -250,292 +250,124 @@
         </div>
       </section>
 
-      <!-- ===== VENUE ===== -->
-      <section class="section" id="venue" aria-labelledby="venue-title">
-        <div class="panel">
-          <header class="section-head">
-            <h2 class="section-title" id="venue-title">Tharavadu Mane, Bangalore</h2>
-            <p class="section-lede">
-              A <em>tharavadu</em> is the ancestral home of a Kerala family:
-              four wings around an open courtyard, tiled roofs, carved wooden
-              pillars. <em>Mane</em> is Kannada for house. It is a semi-outdoor
-              heritage home rather than a banquet hall, which is exactly why we
-              chose it.
-            </p>
-          </header>
+      <!-- ===== THE INVITATION =====
+           Straight on the wall. No panel: the terracotta and the shadow
+           are meant to run unbroken from the collage to the footer. -->
+      <section class="invite" id="event" aria-labelledby="invite-date">
+        <p class="kicker">and we&rsquo;d love for you to be there on</p>
+        <h2 class="display" id="invite-date">20 &amp; 21 February 2027</h2>
+        <p class="kicker kicker-at">at</p>
 
-          <div class="venue-grid">
-            <div class="map-frame" id="venue-map">
-              <!-- Click to load. A Google Maps embed pulls in a lot of
-                   third-party script and delays the page, and sends every
-                   visitor's IP to Google before they have asked for a map.
+        <figure class="venue-shot">
+          <img
+            src="../Assets/collage/polaroid-venue-1400.webp"
+            srcset="
+              ../Assets/collage/polaroid-venue-900.webp   900w,
+              ../Assets/collage/polaroid-venue-1400.webp 1400w
+            "
+            sizes="(max-width: 760px) 92vw, min(72vw, 1100px)"
+            width="1400"
+            height="934"
+            loading="lazy"
+            decoding="async"
+            alt="The courtyard at Tharavadu Mane, strung with marigold and mango-leaf garlands, with a tiled roof and carved pillars around an open central pool."
+          />
+        </figure>
 
-                   WHEN THE ADDRESS IS CONFIRMED: update data-map-src with the
-                   venue's real embed URL. In Google Maps, find the venue, then
-                   Share > Embed a map, and copy the URL out of the iframe. -->
-              <button
-                class="map-placeholder"
-                type="button"
-                data-map-src="https://www.google.com/maps?q=Nagawara+Lake,+Bengaluru,+Karnataka&amp;output=embed"
-                data-map-title="Map of the area around the venue in Bangalore"
-              >
-                <b>Show the map</b>
-                <span>Loads Google Maps, centred on the neighbourhood</span>
-              </button>
-            </div>
+        <p class="venue-name">
+          The Tharavadu Mane<br />
+          <span>Bangalore, India</span>
+        </p>
 
-            <div>
-              <dl class="detail-list">
-                <div>
-                  <dt>Address</dt>
-                  <dd>
-                    <span class="placeholder"
-                      >To be confirmed. We are waiting on the full street
-                      address from the venue.</span
-                    >
-                  </dd>
-                </div>
-                <div>
-                  <dt>Area</dt>
-                  <dd>North Bangalore, near Nagawara Lake</dd>
-                </div>
-                <div>
-                  <dt>From the airport</dt>
-                  <dd>
-                    Around 30 to 35&nbsp;km from Kempegowda International
-                    (BLR), about an hour by car outside peak traffic.
-                  </dd>
-                </div>
-                <div>
-                  <dt>Getting there</dt>
-                  <dd>
-                    Uber and Ola cover the area well. We will arrange shuttles
-                    from the main guest hotels.
-                  </dd>
-                </div>
-              </dl>
-
-              <p class="note">
-                Please do not book a hotel based on distance yet. The map is
-                centred on the neighbourhood, not the building, and we are
-                still waiting on the exact address.
-              </p>
-            </div>
-          </div>
-
-          <div class="dates">
-            <div class="date-card">
-              <b>Saturday 20 February</b>
-              <span>Haldi, mehendi and sangeet</span>
-            </div>
-            <div class="date-card">
-              <b>Sunday 21 February</b>
-              <span>The ceremony and the reception</span>
-            </div>
-          </div>
-
-          <p class="note">
-            Timings and dress codes are still being worked out. We will put
-            them here as soon as they are settled, and everyone who has
-            replied will get an email.
-          </p>
-        </div>
+        <p class="cta-wrap">
+          <a class="btn-glass glass" href="rsvp/">RSVP here</a>
+        </p>
+        <p class="micro">Please RSVP by 28 August 2026</p>
       </section>
 
-      <!-- ===== RSVP ===== -->
-      <section class="section" id="rsvp" aria-labelledby="rsvp-title">
-        <div class="panel">
-          <header class="section-head">
-            <h2 class="section-title" id="rsvp-title">Will you be there?</h2>
-            <p class="section-lede">
-              Please let us know by
-              <strong><span class="placeholder">date to be confirmed</span></strong
-              >. If your plans change afterwards, just send the form again.
-            </p>
-          </header>
+      <hr class="rule" />
 
-          <form class="rsvp-form" id="rsvp-form" novalidate>
-            <!-- Honeypot. Real people never see this; bots fill in every
-                 field they find, so anything arriving with it set is
-                 discarded silently. -->
-            <div class="rsvp-hp" aria-hidden="true">
-              <label for="rsvp-website">Do not fill this in</label>
-              <input type="text" id="rsvp-website" name="website" tabindex="-1" autocomplete="off" />
-            </div>
+      <!-- ===== DETAILS =====
+           Three cards. Each opens a bottom drawer holding everything we
+           used to spread across separate pages of questions. -->
+      <section class="details" id="details" aria-labelledby="details-title">
+        <h2 class="details-title" id="details-title">
+          Here are some additional details you&rsquo;re likely looking for
+        </h2>
 
-            <div class="field-grid">
-              <p class="field">
-                <label for="rsvp-name">Your name</label>
-                <input type="text" id="rsvp-name" name="name" required autocomplete="name" />
-              </p>
-              <p class="field">
-                <label for="rsvp-email">Email</label>
-                <input type="email" id="rsvp-email" name="email" required autocomplete="email" />
-              </p>
-            </div>
-
-            <fieldset>
-              <legend>Can you come?</legend>
-              <div class="choice-row">
-                <label class="choice">
-                  <input type="radio" name="attending" value="Yes" required />
-                  <span>Yes, joyfully</span>
-                </label>
-                <label class="choice">
-                  <input type="radio" name="attending" value="No" />
-                  <span>Sadly not</span>
-                </label>
-              </div>
-            </fieldset>
-
-            <!-- Only relevant to people who are coming, so v2.js hides and
-                 disables all of it when "Sadly not" is chosen. -->
-            <div class="if-attending" id="rsvp-attending-details">
-              <div class="field-grid">
-                <p class="field">
-                  <label for="rsvp-guests">How many of you?</label>
-                  <input type="number" id="rsvp-guests" name="guests" min="1" max="12" value="1" />
-                </p>
-                <p class="field">
-                  <label for="rsvp-from">Travelling from</label>
-                  <select id="rsvp-from" name="travellingFrom">
-                    <option value="">Please choose</option>
-                    <option>Within India</option>
-                    <option>United States</option>
-                    <option>Elsewhere</option>
-                  </select>
-                </p>
-              </div>
-
-              <fieldset>
-                <legend>Which days can you make?</legend>
-                <div class="choice-row">
-                  <label class="choice">
-                    <input type="checkbox" name="days" value="Sat 20 Feb" />
-                    <span>Saturday 20 February</span>
-                  </label>
-                  <label class="choice">
-                    <input type="checkbox" name="days" value="Sun 21 Feb" />
-                    <span>Sunday 21 February</span>
-                  </label>
-                </div>
-              </fieldset>
-
-              <p class="field">
-                <label for="rsvp-diet">
-                  Anything we should know about food?
-                  <span class="optional">allergies, vegan, anything at all</span>
-                </label>
-                <input type="text" id="rsvp-diet" name="dietary" />
-              </p>
-            </div>
-
-            <p class="field">
-              <label for="rsvp-note">
-                Anything else?
-                <span class="optional">optional</span>
-              </label>
-              <textarea id="rsvp-note" name="note" rows="3"></textarea>
-            </p>
-
-            <div class="form-actions">
-              <button class="btn" type="submit" id="rsvp-submit">Send our RSVP</button>
-              <p class="form-status" id="rsvp-status" role="status" aria-live="polite"></p>
-            </div>
-          </form>
-        </div>
+        <ul class="card-row">
+          <li>
+            <button
+              class="card"
+              type="button"
+              data-drawer="drawer-travel"
+              aria-expanded="false"
+            >
+              <span class="card-shot">
+                <img
+                  src="../Assets/collage/polaroid-blank.webp"
+                  width="536"
+                  height="660"
+                  loading="lazy"
+                  decoding="async"
+                  alt=""
+                />
+              </span>
+              <span class="card-label">Travel <i>/</i> Stay</span>
+            </button>
+          </li>
+          <li>
+            <button
+              class="card"
+              type="button"
+              data-drawer="drawer-events"
+              aria-expanded="false"
+            >
+              <span class="card-shot">
+                <img
+                  src="../Assets/collage/polaroid-blank.webp"
+                  width="536"
+                  height="660"
+                  loading="lazy"
+                  decoding="async"
+                  alt=""
+                />
+              </span>
+              <span class="card-label">Events <i>/</i> Theme</span>
+            </button>
+          </li>
+          <li>
+            <button
+              class="card"
+              type="button"
+              data-drawer="drawer-bangalore"
+              aria-expanded="false"
+            >
+              <span class="card-shot">
+                <img
+                  src="../Assets/collage/polaroid-blank.webp"
+                  width="536"
+                  height="660"
+                  loading="lazy"
+                  decoding="async"
+                  alt=""
+                />
+              </span>
+              <span class="card-label">Bangalore <i>/</i> Around</span>
+            </button>
+          </li>
+        </ul>
       </section>
 
-      <!-- ===== FAQs ===== -->
-      <section class="section" id="faqs" aria-labelledby="faqs-title">
-        <div class="panel">
-          <header class="section-head">
-            <h2 class="section-title" id="faqs-title">Questions</h2>
-          </header>
+      <p class="closing">
+        Come for the food, stay for the dancing, and forgive us if we lose
+        track of you for an hour in the middle of it all. We would rather
+        have you there than have everything run to time.
+      </p>
 
-          <div class="faq-list">
-            <details class="faq-item">
-              <summary>What should I wear?</summary>
-              <div class="faq-answer">
-                <p>
-                  Anything bright and festive. Indian clothes are very welcome
-                  but never expected, and Western formal is perfectly
-                  appropriate at every event. Avoid pure white or all black for
-                  the ceremony, and leave head-to-toe red to the bride. Wear
-                  shoes you can slip off easily.
-                </p>
-              </div>
-            </details>
+      <hr class="rule" />
 
-            <details class="faq-item">
-              <summary>Do I need to come to both days?</summary>
-              <div class="faq-answer">
-                <p>
-                  No, come to whatever you can. If you can only make one, the
-                  ceremony and reception on Sunday 21 February are the heart of
-                  it.
-                </p>
-              </div>
-            </details>
-
-            <details class="faq-item">
-              <summary>I have never been to an Indian wedding. What happens?</summary>
-              <div class="faq-answer">
-                <p>
-                  Saturday is haldi, where turmeric is smeared on us by
-                  everyone we love, then mehendi, where henna is drawn on
-                  hands and feet, then sangeet, which is music and dancing and
-                  both families performing routines. Sunday is the ceremony
-                  around a sacred fire, which runs long and during which guests
-                  quite normally talk, move about and eat, followed by the
-                  reception.
-                </p>
-              </div>
-            </details>
-
-            <details class="faq-item">
-              <summary>I am flying from the USA. What do I need?</summary>
-              <div class="faq-answer">
-                <p>
-                  Fly into Bengaluru (BLR) and apply for an e-Tourist Visa at
-                  <a
-                    href="https://indianvisaonline.gov.in/evisa/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    >indianvisaonline.gov.in/evisa</a
-                  >. That is the only official site, so type it in by hand:
-                  there are convincing look-alikes that charge large fees. Apply
-                  from 120 days before you travel. February in Bangalore is
-                  lovely, around 27°C by day and 14°C at night, so pack light
-                  clothes and something warm for the evenings.
-                </p>
-              </div>
-            </details>
-
-            <details class="faq-item">
-              <summary>Can I bring my partner or my children?</summary>
-              <div class="faq-answer">
-                <p>
-                  Your invitation will say who it covers. Children are genuinely
-                  welcome at Indian weddings and there will be plenty of them.
-                  If you are unsure, just ask us on the form.
-                </p>
-              </div>
-            </details>
-
-            <details class="faq-item">
-              <summary>What about gifts?</summary>
-              <div class="faq-answer">
-                <p>
-                  Your being there, especially if you are flying a long way, is
-                  more than enough. We will add details here nearer the time for
-                  anyone who would like to.
-                </p>
-              </div>
-            </details>
-          </div>
-        </div>
-      </section>
+      <p class="signoff">See you there!</p>
     </main>
 
     <!-- ===== FOOTER ===== -->
@@ -545,6 +377,379 @@
       <p><a href="mailto:hello@akriti-srijan.com">hello@akriti-srijan.com</a></p>
     </footer>
 
+    <!-- ===== DETAIL DRAWERS =====
+         One bottom sheet per card. They live outside <main> so the scrim
+         can cover the whole page including the nav, and so nothing inside
+         inherits the page's stacking context.
+
+         Hidden with the `hidden` attribute rather than a class, so with
+         no JavaScript they simply never appear and the cards, which are
+         <button>s, do nothing. The same content is on the v1 pages. -->
+    <div class="drawer-root" hidden>
+      <div class="drawer-scrim" data-close></div>
+
+      <!-- ---------- Travel / Stay ---------- -->
+      <section
+        class="drawer"
+        id="drawer-travel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="drawer-travel-title"
+        hidden
+      >
+        <div class="drawer-grip" aria-hidden="true"></div>
+        <header class="drawer-head">
+          <h2 id="drawer-travel-title">Travel &amp; stay</h2>
+          <button class="drawer-close" type="button" data-close aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20">
+              <path d="M5 5l14 14M19 5L5 19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </header>
+
+        <div class="drawer-body">
+          <p class="drawer-lede">
+            Guests are coming from across the United States and from all over
+            India. If something you need is missing here, please just ask us.
+          </p>
+
+          <h3>Flights</h3>
+          <p>
+            Fly into <strong>Bengaluru (BLR)</strong>, Kempegowda
+            International. Air India runs a nonstop from San Francisco. From
+            everywhere else the usual one-stops are Emirates via Dubai, Qatar
+            via Doha, Etihad via Abu Dhabi, Lufthansa via Frankfurt, British
+            Airways via London, or Air India via Delhi.
+          </p>
+          <p>
+            Expect 20 to 26 hours door to door from the US East Coast and 18 to
+            24 from the West. India is 10.5 hours ahead of US Eastern and 13.5
+            ahead of Pacific, so give yourself a day to recover before things
+            start.
+          </p>
+          <p>
+            From within India, BLR is served by IndiGo, Air India, SpiceJet and
+            Akasa from every major city.
+          </p>
+
+          <h3>Visas</h3>
+          <p>
+            Most visitors need an e-Tourist Visa. Apply at
+            <a
+              href="https://indianvisaonline.gov.in/evisa/"
+              target="_blank"
+              rel="noopener noreferrer"
+              >indianvisaonline.gov.in/evisa</a
+            >. That is the only official site, so type it in by hand: there are
+            convincing look-alikes that charge large fees for nothing. You can
+            apply from 120 days before you travel, and it is worth doing early.
+          </p>
+
+          <h3>Getting to the venue</h3>
+          <p>
+            Tharavadu Mane is in north Bangalore, near Nagawara Lake, roughly
+            30 to 35&nbsp;km from the airport and about an hour by car outside
+            peak traffic. Uber and Ola cover the area well. We will arrange
+            shuttles from the main guest hotels.
+          </p>
+          <p class="drawer-note">
+            Please do not book a hotel on distance alone yet. We are still
+            waiting on the exact street address from the venue and will put it
+            here the moment we have it.
+          </p>
+
+          <h3>Where to stay</h3>
+          <p>
+            We will confirm a room block and rates here once they are arranged.
+            In the meantime, north Bangalore keeps you close to the venue and
+            the city centre is better if you want to explore between events.
+          </p>
+          <ul>
+            <li>
+              <b>Near the venue:</b> The Leela Bhartiya City on Thanisandra
+              Main Road, Radisson Blu on the Outer Ring Road, Novotel Bengaluru
+              ORR, plus plenty of good budget options in Hebbal, Nagawara and
+              HBR Layout.
+            </li>
+            <li>
+              <b>City centre:</b> The Oberoi and The Ritz-Carlton near MG Road,
+              ITC Gardenia, Taj West End, JW Marriott on Vittal Mallya Road,
+              and Lemon Tree or Ibis for something more modest.
+            </li>
+          </ul>
+          <p>
+            February is peak wedding season in India and hotels fill up, so
+            book early. Rates move a lot: compare Booking.com, MakeMyTrip and
+            the hotel's own site before committing.
+          </p>
+
+          <h3>Worth knowing</h3>
+          <ul>
+            <li>
+              <b>Weather.</b> February is Bangalore at its best: around 27&deg;C
+              (81&deg;F) by day and 14&deg;C (57&deg;F) at night. Pack light
+              clothes and something warm for the evenings.
+            </li>
+            <li>
+              <b>Money.</b> Cards are widely accepted, but carry some cash. UPI
+              runs the country and most foreign visitors cannot use it, so do
+              not rely on it.
+            </li>
+            <li>
+              <b>Water.</b> Drink bottled or filtered water. Street food is
+              part of the point of Bangalore, so eat it, just choose stalls
+              with a queue.
+            </li>
+            <li>
+              <b>Phones.</b> An Airtel or Jio tourist SIM at the airport is
+              cheap and makes cabs and maps far easier.
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ---------- Events / Theme ---------- -->
+      <section
+        class="drawer"
+        id="drawer-events"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="drawer-events-title"
+        hidden
+      >
+        <div class="drawer-grip" aria-hidden="true"></div>
+        <header class="drawer-head">
+          <h2 id="drawer-events-title">Events &amp; theme</h2>
+          <button class="drawer-close" type="button" data-close aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20">
+              <path d="M5 5l14 14M19 5L5 19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </header>
+
+        <div class="drawer-body">
+          <p class="drawer-lede">
+            Two days, and you are welcome at all of it. Timings are still being
+            settled and everyone who has replied will get an email once they
+            are.
+          </p>
+
+          <h3>Saturday 20 February</h3>
+          <ul>
+            <li>
+              <b>Haldi.</b> Turmeric paste is smeared on both of us by everyone
+              who loves us. It stains, so wear something you do not mind
+              ruining, ideally yellow.
+            </li>
+            <li>
+              <b>Mehendi.</b> Henna drawn on hands and feet, with music and a
+              great deal of sitting around while it dries. Artists will be
+              there for guests too.
+            </li>
+            <li>
+              <b>Sangeet.</b> Music, dancing, and both families performing
+              routines they have rehearsed far too little. This is the loud
+              one.
+            </li>
+          </ul>
+
+          <h3>Sunday 21 February</h3>
+          <ul>
+            <li>
+              <b>The ceremony.</b> Around a sacred fire, with a priest guiding
+              us through the rituals. It runs long, and guests quite normally
+              talk, move about and eat during it. That is not rudeness, it is
+              how it works.
+            </li>
+            <li>
+              <b>The reception.</b> Dinner, speeches, and dancing until someone
+              turns the lights on.
+            </li>
+          </ul>
+
+          <h3>What to wear</h3>
+          <p>
+            Anything bright and festive. Indian clothes are very welcome but
+            never expected, and Western formal is perfectly appropriate at
+            every event. A few things that help:
+          </p>
+          <ul>
+            <li>Avoid pure white and all black for the ceremony.</li>
+            <li>Leave head-to-toe red to the bride.</li>
+            <li>
+              Wear shoes you can slip off easily. You will take them off more
+              than once.
+            </li>
+            <li>
+              For the haldi, wear something you are happy to lose to turmeric.
+            </li>
+          </ul>
+
+          <h3>Do I need to come to both days?</h3>
+          <p>
+            No. Come to whatever you can. If you can only make one, the
+            ceremony and reception on Sunday 21 February are the heart of it.
+          </p>
+
+          <h3>Can I bring my partner or my children?</h3>
+          <p>
+            Your invitation will say who it covers. Children are genuinely
+            welcome at Indian weddings and there will be plenty of them. If you
+            are unsure, just ask us on the form.
+          </p>
+
+          <h3>Gifts</h3>
+          <p>
+            Your being there, especially if you are flying a long way, is more
+            than enough. We will add details here nearer the time for anyone
+            who would like to.
+          </p>
+        </div>
+      </section>
+
+      <!-- ---------- Bangalore / Around ---------- -->
+      <section
+        class="drawer"
+        id="drawer-bangalore"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="drawer-bangalore-title"
+        hidden
+      >
+        <div class="drawer-grip" aria-hidden="true"></div>
+        <header class="drawer-head">
+          <h2 id="drawer-bangalore-title">Bangalore &amp; around</h2>
+          <button class="drawer-close" type="button" data-close aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20">
+              <path d="M5 5l14 14M19 5L5 19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </header>
+
+        <div class="drawer-body">
+          <p class="drawer-lede">
+            You have come a long way. It would be a shame to see only the
+            inside of a wedding venue. February is the best month of the year
+            to be in this part of India, so stay a few extra days if you can.
+          </p>
+
+          <h3>In the city</h3>
+          <ul>
+            <li>
+              <b>Lalbagh Botanical Garden</b>, laid out in 1760, with a glass
+              house modelled on London's Crystal Palace.
+            </li>
+            <li>
+              <b>Cubbon Park</b>, 300 acres of trees in the middle of the city.
+              Best early in the morning.
+            </li>
+            <li>
+              <b>Bangalore Palace</b>, a Tudor-style royal residence from the
+              1880s, and <b>Vidhana Soudha</b>, the granite state legislature,
+              particularly good lit up at night.
+            </li>
+            <li>
+              <b>Museum of Art and Photography (MAP)</b>, five floors and a
+              very good collection, and
+              <b>Karnataka Chitrakala Parishath</b> for Indian painting and
+              sculpture.
+            </li>
+          </ul>
+
+          <h3>Eat</h3>
+          <ul>
+            <li>
+              <b>Vidyarthi Bhavan</b> in Basavanagudi, making the same crisp
+              masala dosa since 1943.
+            </li>
+            <li>
+              <b>Mavalli Tiffin Room (MTR)</b>, a Bangalore institution since
+              1924.
+            </li>
+            <li>
+              <b>VV Puram Food Street</b>, an entire lane of South Indian
+              street food. Best after dark.
+            </li>
+            <li>
+              Bangalore is India's craft beer capital. <b>Toit</b> in
+              Indiranagar and <b>Byg Brewski</b> in Hennur are the ones people
+              talk about.
+            </li>
+          </ul>
+
+          <h3>Browse</h3>
+          <ul>
+            <li>
+              <b>Commercial Street</b> for clothes, fabric and jewellery, and
+              the best place to have an outfit made.
+            </li>
+            <li>
+              <b>Indiranagar</b> and <b>Koramangala</b> for the densest
+              concentration of restaurants and bars.
+            </li>
+          </ul>
+
+          <h3>Worth leaving the city for</h3>
+          <dl class="trip-list">
+            <div>
+              <dt>Nandi Hills <span>1.5 hours</span></dt>
+              <dd>
+                A hilltop fort north of the city, and the classic Bangalore
+                sunrise. Leave very early and you will be above the clouds.
+              </dd>
+            </div>
+            <div>
+              <dt>Mysore <span>3 hours</span></dt>
+              <dd>
+                The city of palaces. Mysore Palace is illuminated on Sunday
+                evenings and is genuinely spectacular. Silk, sandalwood and
+                Chamundi Hills are all worth the trip. Easy as a long day or a
+                comfortable overnight.
+              </dd>
+            </div>
+            <div>
+              <dt>Coorg <span>5 hours</span></dt>
+              <dd>
+                Coffee and pepper plantations in the Western Ghats, misty and
+                cool. Best as a two or three night stay rather than a rush.
+              </dd>
+            </div>
+            <div>
+              <dt>Chikmagalur <span>5 hours</span></dt>
+              <dd>
+                India's coffee country, up at 1,100 metres, with good walking
+                in the Baba Budangiri range.
+              </dd>
+            </div>
+            <div>
+              <dt>Wayanad <span>5 hours</span></dt>
+              <dd>
+                Over the border into Kerala. Forested hills, tea and coffee
+                estates, elephants, and the prehistoric Edakkal Caves.
+              </dd>
+            </div>
+            <div>
+              <dt>Pondicherry <span>6 hours</span></dt>
+              <dd>
+                A former French colony on the east coast, with pastel streets,
+                the Sri Aurobindo Ashram and very good food. Worth a few
+                nights.
+              </dd>
+            </div>
+            <div>
+              <dt>Hampi <span>7 hours</span></dt>
+              <dd>
+                A UNESCO World Heritage site: the ruins of the Vijayanagara
+                empire scattered across a surreal landscape of giant boulders.
+                One of the most extraordinary places in India, and worth the
+                overnight journey.
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+    </div>
+
     <!-- ===== THE LIGHT ===== -->
     <div class="light-layer" aria-hidden="true">
       <canvas class="light-canvas"></canvas>
@@ -552,6 +757,5 @@
 
     <script src="v2.js"></script>
     <script src="light.js"></script>
-    <script src="../rsvp.js"></script>
   </body>
 </html>

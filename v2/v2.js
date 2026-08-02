@@ -1,11 +1,10 @@
 /* ============================================================
    v2 behaviour
 
-   Four small jobs:
+   Three small jobs:
      1. Play the intro once the images are actually ready.
      2. Drift the collage with the mouse afterwards.
-     3. Ease the light back as you scroll off the hero.
-     4. Nav state, section reveals, and the click-to-load map.
+     3. Nav state, section reveals, drawers, and the click-to-load map.
 
    All of it degrades safely. Everything this file hides is hidden by
    a `.js`-scoped CSS rule, so if this never runs, nothing disappears.
@@ -13,7 +12,6 @@
 (function () {
   var root = document.documentElement;
   var body = document.body;
-  var hero = document.querySelector(".hero");
   var collage = document.querySelector(".collage");
   var nav = document.querySelector(".site-nav");
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -85,8 +83,9 @@
     body.classList.add("intro-play");
 
     // The nav and the fan-out should not compete for attention, so the
-    // nav arrives as the last piece lands.
-    var navDelay = reduced ? 0 : 2400;
+    // nav arrives as the last piece lands. On a page with no collage,
+    // such as /rsvp, there is nothing to wait for, so it arrives at once.
+    var navDelay = reduced || !collage ? 0 : 1900;
     window.setTimeout(function () {
       if (nav) nav.classList.add("is-ready");
     }, navDelay);
@@ -94,8 +93,10 @@
 
   // Type replayIntro() in the browser console to watch it again.
   window.replayIntro = function () {
+    var stage = document.querySelector(".hero-stage");
+    if (!stage) return;
     body.classList.remove("intro-play");
-    void document.querySelector(".hero-stage").offsetWidth;
+    void stage.offsetWidth; // forces a reflow so the restart takes
     body.classList.add("intro-play");
   };
 
@@ -195,57 +196,24 @@
   window.setTimeout(startParallax, 3400);
 
   /* ============================================================
-     3. THE LIGHT, EASING BACK
+     3. THE LIGHT, CONSTANT
 
-     Full strength over the collage, gentler over the sections. This is
-     not only atmosphere: a screen blend can only lighten, so at full
-     strength the brightest part of the light washes out the cream
-     panels the body copy sits on. Easing it back is what keeps the
-     sections comfortably readable.
+     This used to ease the light back to 35% below the hero, because the
+     body copy sat on cream panels and a screen blend can only lighten,
+     so full strength washed them out.
 
-     Both ends of the range live in v2.css as --light-hero and
-     --light-sections, so the whole effect is two numbers.
+     The panels are gone. Text now sits straight on the wall, and the
+     shadow is meant to fall across the whole page exactly as it falls
+     across the collage. Anything that changed with scroll would read as
+     a bug, so the strength is simply left where the stylesheet sets it
+     and nothing here touches it.
      ============================================================ */
-  var lightFrom = parseFloat(
-    getComputedStyle(root).getPropertyValue("--light-hero")
-  );
-  var lightTo = parseFloat(
-    getComputedStyle(root).getPropertyValue("--light-sections")
-  );
-
-  if (isNaN(lightFrom)) lightFrom = 1;
-  if (isNaN(lightTo)) lightTo = 0.35;
-
-  var ticking = false;
-
-  function updateLight() {
-    var heroHeight = hero ? hero.getBoundingClientRect().height : window.innerHeight;
-    // Fully eased by the time the hero is one screen behind you.
-    var progress = Math.min(1, Math.max(0, window.scrollY / (heroHeight * 0.75)));
-    // Smoothstep, so it does not visibly start or stop.
-    var eased = progress * progress * (3 - 2 * progress);
-    var value = lightFrom + (lightTo - lightFrom) * eased;
-    root.style.setProperty("--light-strength", value.toFixed(3));
-  }
-
-  function onScroll() {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(function () {
-      updateLight();
-      ticking = false;
-    });
-  }
-
-  updateLight();
-  window.addEventListener("scroll", onScroll, { passive: true });
-  window.addEventListener("resize", onScroll, { passive: true });
 
   /* The light field itself lives in light.js, which handles its own
      pausing for hidden tabs and reduced motion. */
 
   /* ============================================================
-     4. NAV STATE, REVEALS AND THE MAP
+     3. NAV STATE, REVEALS AND THE MAP
      ============================================================ */
   var links = Array.prototype.slice.call(
     document.querySelectorAll(".site-nav a[href^='#']")
@@ -303,13 +271,16 @@
     });
   }
 
-  /* Section reveals. The class is added here rather than in the HTML so
-     that if scripting never runs, nothing is ever hidden. */
-  var panels = Array.prototype.slice.call(document.querySelectorAll(".panel"));
+  /* Section reveals. Everything below the collage now fades up as it
+     arrives, one block at a time. The class is added here rather than in
+     the HTML so that if scripting never runs, nothing is ever hidden. */
+  var reveals = Array.prototype.slice.call(
+    document.querySelectorAll(".invite, .details, .closing, .signoff")
+  );
 
-  if (!reduced && "IntersectionObserver" in window && panels.length) {
-    panels.forEach(function (panel) {
-      panel.classList.add("reveal");
+  if (!reduced && "IntersectionObserver" in window && reveals.length) {
+    reveals.forEach(function (el) {
+      el.classList.add("reveal");
     });
 
     var revealer = new IntersectionObserver(
@@ -323,8 +294,178 @@
       { rootMargin: "0px 0px -10% 0px", threshold: 0.05 }
     );
 
-    panels.forEach(function (panel) {
-      revealer.observe(panel);
+    reveals.forEach(function (el) {
+      revealer.observe(el);
+    });
+  }
+
+  /* ============================================================
+     4. THE DETAIL DRAWERS
+
+     Three bottom sheets, one per card.
+
+     The focus trap is the reason this is more than twenty lines. The
+     reference this was modelled on sets aria-modal="true" but leaves
+     focus loose, so a keyboard user tabs straight out of the sheet and
+     into the page behind it, which is still visible through the scrim
+     and still scrollable-looking but inert. That is worse than no dialog
+     at all, because there is no way to tell where you are. Here Tab and
+     Shift+Tab wrap inside the sheet, Escape closes it, and focus returns
+     to the exact card that opened it.
+     ============================================================ */
+  var drawerRoot = document.querySelector(".drawer-root");
+
+  if (drawerRoot) {
+    var openDrawer = null;
+    var lastFocused = null;
+    var scrollLocked = false;
+
+    var FOCUSABLE = [
+      "a[href]",
+      "button:not([disabled])",
+      "input:not([disabled])",
+      "select:not([disabled])",
+      "textarea:not([disabled])",
+      '[tabindex]:not([tabindex="-1"])',
+    ].join(",");
+
+    function focusablesIn(el) {
+      return Array.prototype.slice
+        .call(el.querySelectorAll(FOCUSABLE))
+        .filter(function (node) {
+          return node.offsetWidth > 0 || node.offsetHeight > 0;
+        });
+    }
+
+    /* Locking the page behind the sheet. Setting overflow on <html> and
+       <body> is what actually holds on iOS Safari, where either one on
+       its own is ignored. */
+    function lockScroll() {
+      if (scrollLocked) return;
+      root.style.overflow = "hidden";
+      body.style.overflow = "hidden";
+      scrollLocked = true;
+    }
+
+    function unlockScroll() {
+      if (!scrollLocked) return;
+      root.style.overflow = "";
+      body.style.overflow = "";
+      scrollLocked = false;
+    }
+
+    function open(id, trigger) {
+      var drawer = document.getElementById(id);
+      if (!drawer || openDrawer) return;
+
+      lastFocused = trigger || document.activeElement;
+      openDrawer = drawer;
+
+      drawerRoot.hidden = false;
+      drawer.hidden = false;
+      lockScroll();
+
+      /* Two frames, not one. The first paints the sheet at
+         translateY(100%); only after that has been committed does adding
+         the class produce a transition rather than an instant jump. */
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          drawerRoot.classList.add("is-open");
+          drawer.classList.add("is-open");
+        });
+      });
+
+      if (trigger) trigger.setAttribute("aria-expanded", "true");
+
+      var first = focusablesIn(drawer)[0];
+      if (first) first.focus();
+
+      document.addEventListener("keydown", onKeydown, true);
+    }
+
+    function close() {
+      if (!openDrawer) return;
+      var drawer = openDrawer;
+      openDrawer = null;
+
+      drawerRoot.classList.remove("is-open");
+      drawer.classList.remove("is-open");
+      document.removeEventListener("keydown", onKeydown, true);
+
+      var trigger = lastFocused;
+      if (trigger && trigger.hasAttribute("aria-expanded")) {
+        trigger.setAttribute("aria-expanded", "false");
+      }
+
+      /* Wait for the slide out before hiding, so it does not vanish
+         mid-animation. transitionend alone is not safe: if the sheet is
+         off screen the browser may never fire it, so a timer backs it
+         up and whichever lands first wins. */
+      var done = false;
+
+      function finish() {
+        if (done) return;
+        done = true;
+        drawer.hidden = true;
+        drawerRoot.hidden = true;
+        unlockScroll();
+        if (trigger && typeof trigger.focus === "function") trigger.focus();
+      }
+
+      drawer.addEventListener("transitionend", finish, { once: true });
+      window.setTimeout(finish, 560);
+    }
+
+    function onKeydown(event) {
+      if (!openDrawer) return;
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        close();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+
+      var items = focusablesIn(openDrawer);
+      if (!items.length) {
+        event.preventDefault();
+        return;
+      }
+
+      var first = items[0];
+      var last = items[items.length - 1];
+      var active = document.activeElement;
+
+      /* Focus can end up outside the sheet entirely, for instance after
+         clicking the scrim, so pull it back rather than assuming it is
+         on one of the two ends. */
+      if (!openDrawer.contains(active)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+        return;
+      }
+
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("click", function (event) {
+      var opener = event.target.closest("[data-drawer]");
+      if (opener) {
+        event.preventDefault();
+        open(opener.getAttribute("data-drawer"), opener);
+        return;
+      }
+      if (event.target.closest("[data-close]")) {
+        event.preventDefault();
+        close();
+      }
     });
   }
 })();

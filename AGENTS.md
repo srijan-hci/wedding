@@ -86,11 +86,41 @@ at full strength over the content: at that darkness even pure black text on the
 cream panel only reaches 4.5:1. Softening the shadow below the hero is the only
 real fix, and that is a deliberate design choice the owner has made against.
 
-**v2 solves this.** It runs the shadow at `--shadow-hero: 0.7` over the collage
-and eases it to `--shadow-sections: 0.22` over the content. Measured across 34
-text elements there, the worst case is 5.6:1 and the typical case 7 to 12:1.
-Those two variables in `v2/v2.css` are the single dial; re-measure if you change
-them.
+**v2 no longer solves this by easing the light.** It used to, running the
+shadow at `--light-hero: 1` over the collage and easing to
+`--light-sections: 0.35` over the content. That easing is **gone**: the owner
+asked for the wall and the shadow to stay constant the whole way down, and the
+cream panels went with it. Every word below the collage is now cream on
+terracotta at full light.
+
+That is a much tighter contrast budget, and it was re-measured from scratch
+rather than assumed. The method matters, because a `mix-blend-mode: multiply`
+layer makes computed CSS colours meaningless:
+
+1. Screenshot normally, then again with all text transparent, then again with
+   the light layer hidden.
+2. The difference between the first two is the exact glyph mask.
+3. Read the *rendered* foreground off the eroded glyph cores, so nothing is
+   assumed about how the light composites.
+4. Read the background from a 1 to 3px ring around the glyphs, not the whole
+   bounding box.
+5. Take the worst case only in the direction that actually costs contrast.
+
+Two traps, both of which produced alarming and completely false failures:
+
+- Sampling the whole bounding box, or taking the worst of both the darkest and
+  the lightest nearby pixel, compares cream text against the bright rim of the
+  glass pill it sits on and reports 1.2:1 for something plainly readable.
+- **The fixed nav overlays other elements' boxes.** Three "failures" under 2:1
+  were the nav's own cream-on-dark glyphs landing inside the box being
+  measured. Their real ratios were 11.7, 10.4 and 9.2. Hide `.site-nav` while
+  measuring and check it separately.
+
+Current state: 71 text runs across both pages at 390 and 1512, **zero below
+threshold**, and zero axe-core violations at 390, 820 and 1440 on the home
+page, the RSVP page and an open drawer. The colours are already near the top of
+their range, so if you add small text on the wall, measure it. Do not eyeball
+it.
 
 ## The v2 subpage
 
@@ -101,46 +131,162 @@ in the root loads it.
 
 | File | Purpose |
 |---|---|
-| `v2/index.html` | Pill nav, hero collage, and three short sections: Venue, RSVP, FAQs. |
-| `v2/v2.css` | Recoleta `@font-face`, tokens, collage placement, intro keyframes, sections. |
-| `v2/v2.js` | Intro timing, mouse parallax, scroll-linked light opacity, nav state, click-to-load map. |
+| `v2/index.html` | Pill nav, the hero collage, the invitation block, three detail cards, and the three drawers those cards open. |
+| `v2/v2.css` | Recoleta `@font-face`, tokens, the liquid glass, the collage stage, the stop-motion keyframes, the page below the collage, the drawers, and the RSVP page. |
+| `v2/v2.js` | Intro timing, mouse parallax, nav state, section reveals, and the drawers. |
 | `v2/light.js` | The WebGL light on the wall. Self-contained, shaders included. See the next section. |
+| `v2/rsvp/index.html` | The RSVP page. One plain form that becomes one question at a time. |
+| `v2/rsvp/steps.js` | The stepping only. Submission still belongs to the root `rsvp.js`. |
 
 It reuses the root `rsvp.js` rather than duplicating the form logic, and
-references assets as `../Assets/...` and `../Font/...`. If v2 is ever promoted
-to be the main site, that is: move three files up a level and strip the `../`.
+references assets as `../Assets/...` and `../Font/...` (`../../` from
+`v2/rsvp/`). If v2 is ever promoted to be the main site, that is: move the
+files up a level and strip the `../`.
 
 Things worth knowing before editing v2:
 
-1. **The same hero-bounding trap applies.** `.headline` and `.collage` use
-   `inset: 0`, so `.hero` is pinned at `100vh` and `.hero-inner` is
-   `position: absolute; inset: 0`. Remove either and the collage lands in the
-   middle of the document.
+1. **The collage is a fixed-ratio stage, not viewport units.** `.hero-stage`
+   has an `aspect-ratio` and `container-type: inline-size`; every piece is
+   placed with `--x` / `--y` / `--w` as a percentage of that box, and type uses
+   `cqw`. The whole composition therefore scales as one locked unit instead of
+   drifting apart as the window changes shape.
 
-2. **Collage placement is data, not layout.** Every piece is pinned to the
-   Polaroid's centre and pushed out by its own `--dx` / `--dy` in `vmin`, with
-   `--w`, `--rot` and parallax factors alongside. To move a sticker, change its
-   two numbers. Nothing reflows.
+   `cqw` rather than `vw` matters: the stage caps at `max-width: 1600px`, so
+   with `vw` the type would keep growing after the artwork had stopped.
 
-3. **DOM order is stacking order.** The Polaroid is last in `.collage` so it
-   covers the bunched-up stack during the intro.
+   There are **two** deliberate arrangements, wide and tall, neither random and
+   neither a scaled copy of the other. The user explicitly does not want the
+   same collage everywhere.
 
-4. **Intro delays ride on `--fan-delay`, deliberately.** The rule that starts
-   the fan is `.intro-play .piece:not(.p-polaroid)`, and `:not()` counts towards
-   specificity, so it scores (0,3,0). Per-piece rules like `.intro-play .p-stamp`
-   score only (0,2,0), which means the shorthand's implicit `animation-delay: 0`
-   used to beat them and every sticker fanned out at once, before the Polaroid
-   had risen. A custom property sidesteps specificity. Do not "simplify" it back.
+2. **The positions are measured, not eyeballed.** Every `--x` / `--y` / `--w`
+   in the wide arrangement was solved against `Assets/Testpage.png` by isolating
+   each piece (screenshot the page twice, once with the piece hidden, and use
+   the pixel difference as a mask) and template-matching it into the design.
+   All seventeen land within 10px. The headline is exact: its ink spans
+   x 153..1383 in both.
 
-5. **The collage images are pre-trimmed.** Each PNG was cropped to its alpha
+   If you change the headline wording, `font-size: 8.578cqw` has to be
+   re-solved. Measure the rendered INK, not the layout box: the box includes
+   side bearing the eye does not see, which is what made the first attempt 12%
+   too narrow.
+
+3. **DOM order is stacking order, and it drives the animation.** The Polaroid
+   sits in the middle of `.collage`. Everything before it is behind and steps
+   outward from underneath; everything after is in front and steps inward from
+   off screen.
+
+4. **⚠️ The `:not()` specificity trap, which has now bitten twice.**
+   `.intro-play .piece:not(.p-polaroid)` scores (0,3,0) because `:not()` counts.
+   A per-piece rule like `.p-stamp` scores (0,1,0) and loses.
+
+   * First time: the shorthand's implicit `animation-delay: 0` beat every
+     per-piece delay and all seventeen pieces animated at once. Fixed by moving
+     delays onto `--fan-delay`.
+   * Second time: a `.piece:not(.p-polaroid)` block holding "default" travel
+     values beat all seventeen `--from-x` / `--from-y` / `--from-scale` /
+     `--from-rot` rules, so no piece ever travelled and the assembly was
+     silently just a zoom. Fixed by deleting that block and putting the
+     defaults in `var()` fallbacks inside the keyframe.
+
+   **Do not reintroduce a defaults rule for anything a per-piece rule sets.**
+   Put the default in the `var()` fallback.
+
+5. **Media queries add no specificity, so source order decides.** The phone
+   travel vectors originally sat with the rest of the phone layout, above the
+   wide values, and were silently overwritten by them: pieces on a phone flew
+   towards where the Polaroid sits on a desktop. The phone overrides now sit
+   *after* the wide block, with a comment saying why.
+
+6. **The stop-motion is `steps()`, on two different counts.** `--frames: 14`
+   for position and `--frames-rot: 9` for rotation, deliberately not a factor of
+   14, so angle and position never land on the same beat. That mismatch is what
+   stops it reading as machinery. `assemble` owns `transform`, so the resting
+   tilt has to ride on the separate `rotate` property or the two overwrite each
+   other.
+
+   A third animation, `reveal`, flips opacity in one step at each piece's own
+   delay. Without it `animation-fill-mode: both` fills backwards and every piece
+   is painted at its start position from frame zero.
+
+   Travel distances are computed, not guessed: the exact vector back to the
+   Polaroid's centre for the pieces behind it, and a `cqw + vw` sum for the ones
+   in front so they clear the window at any width. Percentages do **not** work
+   inside `translate()`: they resolve against the element's own box, so the same
+   number means a different distance for every piece.
+
+7. **The collage images are pre-trimmed.** Each PNG was cropped to its alpha
    bounding box before resizing, so the image box equals the artwork and CSS
    sizing is predictable. The `width`/`height` attributes in the HTML match the
    trimmed files. If you re-export from Figma, re-trim, or the sizes will lie.
 
-6. **The shadow video is gone from v2.** It was 2.6 MB of the page's 3.5 MB.
-   `v2/light.js` replaces it with a generated light field. That has its own
-   section below.
+8. **The shadow video is gone from v2.** It was 2.6 MB of the page's 3.5 MB.
+   `v2/light.js` replaces it with a generated light field.
 
+### The liquid glass
+
+Used by the nav pill and the RSVP button. Frost, refraction, dispersion and
+rim, as four layers, because an element with its own `filter` becomes a
+backdrop root and would block its own `backdrop-filter`.
+
+**⚠️ Two approaches were built and rejected. Do not retry them without reading
+this.**
+
+* **SVG `feDisplacementMap` over a duplicated wall.** The usual web recipe for
+  geometric refraction. The duplicated wall layer is *opaque*, so it painted
+  over the collage and the Polaroid, and showed bare terracotta everywhere the
+  real backdrop was not bare terracotta, which is most of where a fixed nav
+  travels.
+* **`backdrop-filter: url(#filter)`.** Unimplemented in Chromium, unreliable
+  elsewhere. Genuinely bending a moving backdrop is not available
+  cross-browser at all.
+
+What ships instead reads as refraction without being it: a much heavier
+`backdrop-filter` masked away from the middle, so the centre stays sharp and
+the rim smears. It works over *any* backdrop, which is the point, because the
+nav crosses the wall, a photograph and cream card stock as you scroll.
+
+The dark tint is not decoration. Without it the cream label loses contrast the
+moment the nav passes over the venue photograph.
+
+Cost, measured with the pills over the animating light and interleaved against
+the same page with the glass switched off: +0.1ms median at 1x CPU, +4.7ms at
+6x throttling. Absolute frame times in headless Chrome are meaningless; only
+the delta within one session is.
+
+### The drawers
+
+Bottom sheets, one per detail card. The motion is measured off the reference
+the user chose rather than invented: `translateY(100%)` to 0 over 500ms on
+`cubic-bezier(0.32, 0.72, 0, 1)`, scrim black 40% with an 8px blur over the
+same 500ms, 32px rounded top on a phone and 48px on a desktop, and it stays a
+bottom sheet at every width.
+
+**One deliberate improvement on that reference:** it sets `aria-modal="true"`
+but does not trap focus, so a keyboard user tabs straight out into the inert
+page behind. Ours traps focus in both directions and hands it back to the exact
+card that opened it. Verified: 45 tabs each way, zero escapes.
+
+`hidden` on a drawer means "closed". Two frames are needed between painting the
+sheet at `translateY(100%)` and adding `.is-open`, or the transition is skipped
+and it jumps.
+
+### The RSVP page
+
+`v2/rsvp/` ships **one ordinary form** with every question visible and a
+working submit button. `steps.js` is pure enhancement: if it never loads, the
+form still works and only the pacing is lost. Verified with JavaScript off.
+
+**⚠️ Which step you are on is a class, `.is-current`. `hidden` means one thing
+only: this question does not apply to you.** They were the same attribute at
+first, and hiding the five steps you are not on made the step counter read
+"1 of 1" from the second question onward. Keeping them separate is also what
+lets `rsvp.js` hide the two attending-only questions for a "no" without either
+file knowing about the other: the flow simply becomes four steps instead of six.
+
+Submission is still the root `rsvp.js`. `steps.js` only decides which question
+you are looking at.
+
+## The light on the wall (`v2/light.js`)
 ## The light on the wall (`v2/light.js`)
 
 v1 darkens its wall with a 2.6 MB looping video of moving shadows. v2 does the

@@ -195,6 +195,172 @@ body {
 }
 
 /* ============================================================
+   LIQUID GLASS
+
+   Used by the nav pill and the RSVP button. Four qualities were asked
+   for, and each maps to a specific layer:
+
+     refraction   a heavier blur confined to the outer band, so the
+                  middle stays sharp and the rim smears. That contrast
+                  between a clear centre and a distorted edge is what the
+                  eye reads as thickness. It is not true refraction: see
+                  the note below.
+     dispersion   a warm-to-cool gradient in `screen`, masked to the same
+                  band, giving the faint colour fringe real glass throws.
+     depth        inset shadows: a bright lip where light enters, a
+                  dimmer bounce opposite, and a soft inner core shadow.
+     light angle  all of the above are oriented to one source, up and to
+                  the left, matching the direction the wall shadow falls.
+
+   ⚠️ WHAT THIS DELIBERATELY IS NOT.
+   The first attempt used an SVG feDisplacementMap over a duplicated copy
+   of the wall, which is the usual recipe for geometric refraction on the
+   web. It was built and rejected: the duplicated wall is opaque, so it
+   painted over the collage and the Polaroid, and showed bare terracotta
+   everywhere the real backdrop was not bare terracotta, which is most of
+   where the nav travels. Screenshots are unambiguous.
+
+   The alternative, `backdrop-filter: url(#filter)`, is unimplemented in
+   Chromium and unreliable elsewhere, so genuinely bending a moving
+   backdrop is not available cross-browser at all. What is here works
+   over any backdrop, which matters because the nav is fixed and passes
+   over the wall, a photograph and cream card stock as you scroll.
+
+   Cost was measured before any of this was built, with four pills over
+   the animating WebGL light: identical to baseline at 1x CPU, and at 6x
+   CPU throttling the median frame was unchanged with no frame over 20ms.
+   ============================================================ */
+.glass {
+  position: relative;
+  isolation: isolate;
+  border-radius: 999px;
+  /* The tint is not decoration. The nav is fixed, so it crosses the
+     venue photograph and the cream Polaroid cards as you scroll, and
+     without a dark base the cream label loses contrast over both. */
+  background: rgba(52, 18, 11, 0.52);
+  backdrop-filter: blur(5px) saturate(1.28);
+  -webkit-backdrop-filter: blur(5px) saturate(1.28);
+  box-shadow:
+    /* the lip, where the light enters */
+    inset 0 1px 0 rgba(255, 240, 224, 0.5),
+    inset 1px 0 0 rgba(255, 235, 214, 0.22),
+    /* the bounce on the far side */ inset 0 -1px 0 rgba(255, 224, 200, 0.14),
+    /* the body of the glass reading as thickness */
+      inset 0 -10px 22px -14px rgba(30, 8, 4, 0.5),
+    /* and what it casts on the wall */ 0 6px 22px rgba(46, 14, 7, 0.3);
+}
+
+/* Refraction: the same backdrop again, blurred much harder, but masked
+   away from the middle. `backdrop-filter` on a descendant of an element
+   that already has one filters the parent's result, so the rim ends up
+   carrying both blurs while the centre carries only the light one. */
+.glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  backdrop-filter: blur(17px) saturate(1.5) brightness(1.05);
+  -webkit-backdrop-filter: blur(17px) saturate(1.5) brightness(1.05);
+  -webkit-mask-image: radial-gradient(
+    115% 250% at 50% 50%,
+    transparent 42%,
+    #000 88%
+  );
+  mask-image: radial-gradient(115% 250% at 50% 50%, transparent 42%, #000 88%);
+  pointer-events: none;
+}
+
+/* Dispersion: warm on the side the light comes from, cool opposite,
+   confined to the same band so it reads as a fringe rather than a wash. */
+.glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(
+    150deg,
+    rgba(255, 196, 130, 0.55) 0%,
+    rgba(255, 255, 255, 0) 42%,
+    rgba(255, 255, 255, 0) 58%,
+    rgba(150, 200, 255, 0.42) 100%
+  );
+  mix-blend-mode: screen;
+  opacity: 0.5;
+  -webkit-mask-image: radial-gradient(
+    110% 230% at 50% 50%,
+    transparent 46%,
+    #000 92%
+  );
+  mask-image: radial-gradient(110% 230% at 50% 50%, transparent 46%, #000 92%);
+  pointer-events: none;
+}
+
+/* Anyone who cannot have it, or has asked not to, gets a solid pill.
+   The label colour does not change, so contrast is the same or better in
+   every one of these cases. */
+@supports not (backdrop-filter: blur(1px)) {
+  .glass {
+    background: rgba(52, 18, 11, 0.94);
+  }
+  .glass::before,
+  .glass::after {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: #3d1409;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .glass::before,
+  .glass::after {
+    display: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .glass {
+    background: #300f06;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: inset 0 0 0 1px #fff3e4;
+  }
+  .glass::before,
+  .glass::after {
+    display: none;
+  }
+}
+
+/* ---------- The RSVP button ---------- */
+.btn-glass {
+  display: inline-block;
+  padding: clamp(12px, 1.2vw, 18px) clamp(24px, 2.4vw, 36px);
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(15px, 1.32vw, 20px);
+  letter-spacing: 0.01em;
+  color: #fff4e6;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    transform 300ms var(--expo),
+    box-shadow 300ms var(--expo);
+}
+
+.btn-glass:hover {
+  transform: translateY(-2px);
+}
+
+.btn-glass:focus-visible {
+  outline: 3px solid #ffe9c9;
+  outline-offset: 4px;
+}
+
+/* ============================================================
    PILL NAV
    ============================================================ */
 .site-nav {
@@ -222,16 +388,6 @@ body {
   gap: var(--space-2);
   margin: 0;
   padding: 6px;
-  border-radius: 999px;
-  /* The pill floats over both the terracotta wall and the cream panels, so
-     it has to be opaque enough to read against a light background too. At
-     0.28 the cream label all but vanished over the Venue panel. 0.72 keeps
-     the glassy feel while holding 6.3:1 against the lightest thing it can
-     ever sit on. */
-  background: rgba(60, 20, 12, 0.72);
-  backdrop-filter: blur(10px) saturate(1.1);
-  -webkit-backdrop-filter: blur(10px) saturate(1.1);
-  box-shadow: 0 2px 18px rgba(50, 16, 8, 0.22);
   list-style: none;
 }
 
@@ -1051,491 +1207,234 @@ body {
   }
 }
 /* ============================================================
-   SECTIONS
-   Deliberately plain. Cream panels on the wall, one idea each.
+/* ============================================================
+   THE PAGE BELOW THE COLLAGE
+
+   The cream panels are gone. Every word from here down sits directly on
+   the wall, with the same shadow falling across it that falls across the
+   collage, exactly as the Figma has it.
+
+   That has one hard consequence worth stating: cream type on terracotta
+   is a far tighter contrast budget than dark type on cream. Nothing here
+   is small, nothing is dense, and every size below has been chosen so
+   the text survives the darkest part of the light passing over it.
+
+   Sizes come from the Figma, measured off the 1512-wide export rather
+   than eyeballed. They are expressed with clamp() against vw so they
+   scale down sensibly rather than snapping at a breakpoint.
    ============================================================ */
-.section {
+.invite,
+.details {
   position: relative;
-  padding: var(--space-6) var(--space-5) 0;
-  scroll-margin-top: 88px;
-}
-
-.section:last-of-type {
-  padding-bottom: var(--space-6);
-}
-
-.panel {
-  max-width: var(--content-max);
+  z-index: 4;
   margin: 0 auto;
-  padding: var(--space-9) clamp(var(--space-5), 5vw, var(--space-8));
-  border-radius: var(--radius-lg);
-  background: var(--cream);
-  box-shadow: 0 1px 2px rgba(51, 36, 26, 0.06),
-    0 16px 40px rgba(51, 36, 26, 0.14);
-}
-
-.section-head {
-  max-width: 60ch;
-  margin: 0 auto var(--space-7);
+  padding: 0 var(--space-5);
+  /* 1208px of cards plus the 24px gutters either side. The Figma puts the
+     three cards at x 152..1360, each 318 wide with 127 between them, and
+     this is the width that reproduces exactly that. */
+  max-width: 1256px;
   text-align: center;
 }
 
-.section-title {
+.invite {
+  padding-top: clamp(56px, 8.3vw, 126px);
+}
+
+/* The two small lines that frame the date: "and we'd love for you to be
+   there on" and "at". Figma has them at 29px on a 1512 frame. */
+.kicker {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 500;
-  font-size: clamp(30px, 4.4vw, 50px);
-  line-height: 1.1;
-  color: var(--ink);
+  font-weight: 400;
+  font-size: clamp(17px, 1.92vw, 29px);
+  line-height: 1.4;
+  color: #fdf6ed;
+  text-shadow: 0 2px 18px rgba(60, 16, 8, 0.45);
 }
 
-.section-lede {
-  margin: var(--space-4) 0 0;
-  font-size: 16.5px;
-  line-height: 1.65;
-  color: var(--ink-soft);
+.kicker-at {
+  margin-top: clamp(40px, 6.4vw, 97px);
 }
 
-.panel p {
-  font-size: 16px;
-  line-height: 1.7;
-  color: var(--ink-soft);
+/* The date, and "See you there!", are the two largest things on the
+   page. Figma puts both at 100px. */
+.display,
+.signoff {
+  margin: clamp(14px, 2.8vw, 42px) 0 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(40px, 6.6vw, 100px);
+  line-height: 1.02;
+  letter-spacing: -0.012em;
+  color: #fffaf2;
+  text-shadow: 0 3px 30px rgba(60, 16, 8, 0.42);
 }
 
-/* The light multiplies over the cream panels, so a link sitting under it
-   loses contrast. The brand red #a94332 measured 5.53:1 on an untouched
-   panel but only 3.66:1 once the light passed over, under the 4.5:1 AA
-   threshold. --wall-deep is the same red a shade darker, already in the
-   palette, and holds 4.78:1 in that worst case. Hover goes deeper still so
-   the state change stays visible. */
-.panel a {
-  color: var(--wall-deep);
-  text-underline-offset: 3px;
+/* ---------- The venue photograph ----------
+   Already a Polaroid: the frame is baked into the image, so there is no
+   border here to go out of step with it. */
+.venue-shot {
+  margin: clamp(30px, 5.1vw, 77px) auto 0;
+  width: min(72vw, 1100px);
 }
 
-.panel a:hover {
-  color: #75281a;
-}
-
-.panel strong {
-  color: var(--ink);
-}
-
-.placeholder {
-  color: var(--ink-faint);
-  font-style: italic;
-}
-
-/* ---------- Venue ---------- */
-.venue-grid {
-  display: grid;
-  gap: var(--space-7);
-  grid-template-columns: 1fr 1fr;
-  align-items: start;
-}
-
-@media (max-width: 780px) {
-  .venue-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.map-frame {
-  overflow: hidden;
-  aspect-ratio: 4 / 3;
-  border: 1px solid var(--cream-edge);
-  border-radius: var(--radius);
-  background: var(--cream-warm);
-}
-
-.map-frame iframe {
+.venue-shot img {
   display: block;
   width: 100%;
-  height: 100%;
-  border: 0;
+  height: auto;
+  filter: drop-shadow(0 18px 44px rgba(46, 12, 6, 0.4));
 }
 
-/* Click to load, so a heavy third-party map never delays the page and
-   nobody's IP goes to Google before they have asked for a map. */
-.map-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  height: 100%;
-  padding: var(--space-6);
-  border: 0;
-  background: repeating-linear-gradient(
-    45deg,
-    rgba(138, 95, 40, 0.06) 0 10px,
-    transparent 10px 20px
-  );
-  font-family: var(--font-body);
-  text-align: center;
-  cursor: pointer;
-}
-
-.map-placeholder:hover {
-  background-color: rgba(138, 95, 40, 0.08);
-}
-
-.map-placeholder b {
+.venue-name {
+  margin: clamp(28px, 5.1vw, 77px) 0 0;
   font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 19px;
-  color: var(--ink);
+  font-weight: 400;
+  font-size: clamp(26px, 3.5vw, 53px);
+  line-height: 1.24;
+  color: #f6efe6;
+  text-shadow: 0 2px 22px rgba(60, 16, 8, 0.45);
 }
 
-.map-placeholder span {
-  max-width: 24ch;
-  font-size: 13px;
-  color: var(--ink-faint);
+/* The city sits a shade warmer than the house, as in the Figma, but not
+   so far that it drops out of contrast. */
+.venue-name span {
+  color: #f9e3d4;
 }
 
-.detail-list {
+.cta-wrap {
+  margin: clamp(34px, 6.9vw, 105px) 0 0;
+}
+
+.micro {
+  margin: clamp(12px, 1.6vw, 24px) 0 0;
+  font-size: clamp(13px, 1vw, 15px);
+  letter-spacing: 0.02em;
+  color: #faf0e5;
+  text-shadow: 0 2px 14px rgba(60, 16, 8, 0.5);
+}
+
+/* ---------- Dividers ----------
+   A hairline, not a border. Kept narrow so it reads as a pause in the
+   page rather than a rule across it. */
+.rule {
+  position: relative;
+  z-index: 4;
+  width: min(260px, 40vw);
+  margin: clamp(48px, 7.3vw, 110px) auto;
+  border: 0;
+  border-top: 1px solid rgba(255, 244, 232, 0.4);
+}
+
+/* ---------- The three detail cards ---------- */
+.details-title {
   margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(20px, 2.25vw, 34px);
+  line-height: 1.35;
+  color: #fdf7ef;
+  text-shadow: 0 2px 20px rgba(60, 16, 8, 0.45);
 }
 
-.detail-list > div {
+.card-row {
   display: grid;
-  gap: 2px var(--space-5);
-  grid-template-columns: minmax(110px, 150px) 1fr;
-  padding: var(--space-4) 0;
-  border-bottom: 1px dashed rgba(138, 95, 40, 0.3);
-}
-
-.detail-list > div:last-child {
-  border-bottom: 0;
-}
-
-.detail-list dt {
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--brass);
-}
-
-.detail-list dd {
-  margin: 0;
-  font-size: 15.5px;
-  line-height: 1.6;
-  color: var(--ink-soft);
-}
-
-@media (max-width: 560px) {
-  .detail-list > div {
-    grid-template-columns: 1fr;
-  }
-}
-
-.note {
-  margin: var(--space-6) 0 0;
-  padding: var(--space-4) var(--space-5);
-  border: 1px solid rgba(169, 67, 50, 0.35);
-  border-radius: var(--radius);
-  background: rgba(169, 67, 50, 0.06);
-  font-size: 14.5px;
-}
-
-/* ---------- Dates ---------- */
-.dates {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--space-5);
-  margin-top: var(--space-7);
-}
-
-.date-card {
-  flex: 1 1 240px;
-  padding: var(--space-6);
-  border: 1px solid var(--cream-edge);
-  border-radius: var(--radius);
-  background: var(--cream-warm);
-  text-align: center;
-}
-
-.date-card b {
-  display: block;
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 24px;
-  color: var(--ink);
-}
-
-.date-card span {
-  display: block;
-  margin-top: 6px;
-  font-size: 14.5px;
-  line-height: 1.55;
-  color: var(--ink-soft);
-}
-
-/* ---------- FAQs ---------- */
-.faq-list {
-  max-width: 720px;
-  margin: 0 auto;
-}
-
-.faq-item {
-  border-bottom: 1px solid var(--cream-edge);
-}
-
-.faq-item summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-5) 0;
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 19px;
-  color: var(--ink);
-  cursor: pointer;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(20px, 8.4vw, 127px);
+  margin: clamp(40px, 6.7vw, 101px) 0 0;
+  padding: 0;
   list-style: none;
 }
 
-.faq-item summary::-webkit-details-marker {
-  display: none;
-}
-
-.faq-item summary::after {
-  content: "";
-  flex-shrink: 0;
-  width: 9px;
-  height: 9px;
-  border-right: 1.5px solid var(--brass);
-  border-bottom: 1.5px solid var(--brass);
-  transform: translateY(-2px) rotate(45deg);
-  transition: transform 220ms ease;
-}
-
-.faq-item[open] summary::after {
-  transform: translateY(2px) rotate(-135deg);
-}
-
-.faq-item summary:hover {
-  color: var(--wall);
-}
-
-.faq-answer {
-  padding: 0 0 var(--space-5);
-}
-
-.faq-answer p {
-  margin: 0;
-  max-width: 68ch;
-}
-
-/* ---------- Form ---------- */
-.rsvp-form {
-  max-width: 620px;
-  margin: 0 auto;
-}
-
-/* Moved off screen rather than display:none, because some bots skip
-   hidden fields. Kept out of the tab order and the accessibility tree
-   so no real person ever meets it. */
-.rsvp-hp {
-  position: absolute;
-  left: -9999px;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-}
-
-.field-grid {
-  display: grid;
-  gap: var(--space-5);
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-
-.field {
-  margin: 0 0 var(--space-5);
-}
-
-.field-grid .field {
-  margin-bottom: 0;
-}
-
-.field-grid + .field,
-.field-grid + fieldset,
-fieldset + .field,
-.if-attending {
-  margin-top: var(--space-5);
-}
-
-.field label,
-fieldset legend {
-  display: block;
-  margin-bottom: var(--space-2);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--ink);
-}
-
-.optional {
-  margin-left: 6px;
-  font-weight: 400;
-  font-style: italic;
-  color: var(--ink-faint);
-}
-
-.rsvp-form input[type="text"],
-.rsvp-form input[type="email"],
-.rsvp-form input[type="number"],
-.rsvp-form select,
-.rsvp-form textarea {
+/* The card is a button, not a link: it opens a drawer in place rather
+   than going anywhere, and a screen reader should be told which. */
+.card {
   display: block;
   width: 100%;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--cream-edge);
-  border-radius: var(--radius);
-  background: #fffdf9;
-  font-family: var(--font-body);
-  font-size: 16px;
-  color: var(--ink);
-}
-
-.rsvp-form textarea {
-  resize: vertical;
-  line-height: 1.6;
-}
-
-.rsvp-form input:focus,
-.rsvp-form select:focus,
-.rsvp-form textarea:focus {
-  border-color: var(--brass);
-  box-shadow: 0 0 0 3px rgba(138, 95, 40, 0.16);
-  outline: none;
-}
-
-/* Only flag an invalid field once the guest has actually tried to
-   submit, never while they are still typing. */
-.rsvp-form.was-validated input:invalid,
-.rsvp-form.was-validated select:invalid {
-  border-color: var(--wall);
-}
-
-fieldset {
-  margin: 0;
   padding: 0;
   border: 0;
-}
-
-.choice-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-}
-
-.choice {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  flex: 1 1 200px;
-  margin: 0;
-  padding: var(--space-4);
-  border: 1px solid var(--cream-edge);
-  border-radius: var(--radius);
-  background: #fffdf9;
-  font-size: 15.5px;
-  font-weight: 400;
-  letter-spacing: 0;
-  color: var(--ink-soft);
+  background: none;
+  color: inherit;
+  font: inherit;
   cursor: pointer;
+  transition:
+    transform 320ms var(--expo),
+    filter 320ms var(--expo);
 }
 
-.choice input {
-  flex-shrink: 0;
-  margin: 2px 0 0;
-  width: 17px;
-  height: 17px;
-  accent-color: var(--wall);
-}
-
-.choice:has(input:checked) {
-  border-color: var(--brass);
-  background: rgba(138, 95, 40, 0.1);
-  color: var(--ink);
-}
-
-.if-attending[hidden] {
-  display: none;
-}
-
-.form-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-5);
-  margin-top: var(--space-6);
-  padding-top: var(--space-6);
-  border-top: 1px solid var(--cream-edge);
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-4) var(--space-7);
-  border: 0;
-  border-radius: 999px;
-  background: var(--wall);
-  color: var(--cream);
-  font-family: var(--font-display);
-  font-size: 17px;
-  cursor: pointer;
-  transition: background-color 200ms ease;
-}
-
-.btn:hover,
-.btn:focus-visible {
-  background: var(--wall-deep);
-}
-
-.btn[disabled] {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.form-status {
-  margin: 0;
-  font-size: 14.5px;
-  line-height: 1.5;
-}
-
-.form-status:empty {
-  display: none;
-}
-
-.form-status.is-error {
-  color: var(--wall);
-}
-
-.rsvp-done {
-  max-width: 520px;
-  margin: 0 auto;
-  padding: var(--space-7) var(--space-6);
-  border: 1px solid rgba(138, 95, 40, 0.4);
-  border-radius: var(--radius);
-  background: rgba(138, 95, 40, 0.08);
-  text-align: center;
-}
-
-.rsvp-done b {
+.card-shot {
   display: block;
-  margin-bottom: var(--space-3);
+}
+
+.card-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 12px 30px rgba(46, 12, 6, 0.34));
+}
+
+/* The label sits in the Polaroid's white margin, which is why it is
+   positioned rather than flowed: the blank frame has a fixed 536 x 660
+   geometry and the caption band is the bottom fifth of it. */
+.card {
+  position: relative;
+}
+
+.card-label {
+  position: absolute;
+  left: 11%;
+  right: 8%;
+  bottom: 4.5%;
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: 22px;
-  color: var(--ink);
+  font-size: clamp(13px, 1.35vw, 20px);
+  letter-spacing: 0.01em;
+  text-align: left;
+  color: #5b3826;
+  /* A hand-lettered tilt. The Figma writes these by hand; this is the
+     nearest honest approximation without shipping a script face for
+     three short labels. */
+  transform: rotate(-2.2deg);
 }
 
+.card-label i {
+  font-style: normal;
+  color: #a9714f;
+}
+
+.card:hover,
+.card:focus-visible {
+  transform: translateY(-6px) rotate(-1deg);
+}
+
+.card:focus-visible {
+  outline: 3px solid #ffe9c9;
+  outline-offset: 8px;
+  border-radius: 4px;
+}
+
+/* ---------- Closing lines ---------- */
+.closing {
+  position: relative;
+  z-index: 4;
+  /* The Figma sets this paragraph 1086px wide on a 1512 frame. */
+  max-width: min(74vw, 1090px);
+  margin: clamp(44px, 7.2vw, 109px) auto 0;
+  padding: 0 var(--space-5);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(22px, 3.3vw, 50px);
+  line-height: 1.34;
+  text-align: center;
+  color: #f6efe6;
+  text-shadow: 0 2px 24px rgba(60, 16, 8, 0.45);
+}
+
+.signoff {
+  position: relative;
+  z-index: 4;
+  margin-top: clamp(60px, 12vw, 180px);
+  text-align: center;
+}
 /* ---------- Footer ----------
    Light type on the wall, so it must be large and generously spaced to
    survive the light blend. Nothing small or dense out here. */
@@ -1558,13 +1457,17 @@ fieldset {
 .site-footer p {
   margin: var(--space-3) 0 0;
   font-size: 14.5px;
-  color: rgba(255, 244, 232, 0.92);
+  color: #fff6ec;
   text-shadow: 0 1px 14px rgba(60, 16, 8, 0.55);
 }
 
 .site-footer a {
   color: inherit;
   text-underline-offset: 4px;
+  /* WCAG 2.2 asks for a 24x24 target. A bare inline link in 14.5px type
+     is 17px tall, so it gets padding to clear that. */
+  display: inline-block;
+  padding: 4px 2px;
 }
 
 /* ---------- Focus ---------- */
@@ -1637,4 +1540,601 @@ textarea:focus-visible {
   .panel {
     padding: var(--space-8) var(--space-5);
   }
+}
+
+/* ============================================================
+   DETAIL DRAWERS
+
+   Bottom sheets. The motion is measured off the reference the owner
+   picked rather than invented: translateY(100%) to 0 over 500ms on
+   cubic-bezier(0.32, 0.72, 0, 1), which is the standard iOS sheet curve,
+   with the scrim fading over the same 500ms. Rounded top 32px on a
+   phone, 48px on a desktop. It stays a bottom sheet at every width; it
+   does not become a centred modal on a large screen.
+
+   One deliberate improvement on the reference: that one sets
+   aria-modal="true" but does not actually trap focus, so tabbing walks
+   straight out into the page behind it. This one traps focus properly
+   and hands it back to the card that opened it. See v2.js.
+   ============================================================ */
+.drawer-root {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+
+.drawer-root[hidden] {
+  display: none;
+}
+
+.drawer-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  transition: opacity 500ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.drawer-root.is-open .drawer-scrim {
+  opacity: 1;
+}
+
+.drawer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 95vh;
+  border-radius: 48px 48px 0 0;
+  background: var(--cream);
+  box-shadow: 0 -18px 60px rgba(28, 8, 4, 0.42);
+  transform: translateY(100%);
+  transition: transform 500ms cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+}
+
+.drawer[hidden] {
+  display: none;
+}
+
+.drawer.is-open {
+  transform: translateY(0);
+}
+
+/* Purely a visual affordance for "this came up from the bottom". There
+   is no drag gesture yet, so it is hidden from assistive technology
+   rather than announced as something you can grab. */
+.drawer-grip {
+  flex: none;
+  width: 44px;
+  height: 4px;
+  margin: 14px auto 0;
+  border-radius: 999px;
+  background: rgba(51, 36, 26, 0.22);
+}
+
+.drawer-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding: var(--space-5) clamp(20px, 4vw, 56px) var(--space-4);
+  border-bottom: 1px solid var(--cream-edge);
+}
+
+.drawer-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(22px, 3vw, 34px);
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.drawer-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--cream-edge);
+  border-radius: 999px;
+  background: var(--cream-warm);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
+}
+
+.drawer-close:hover {
+  background: #efe0c8;
+  color: var(--ink);
+}
+
+.drawer-close:focus-visible {
+  outline: 3px solid var(--wall);
+  outline-offset: 2px;
+}
+
+/* The only scrolling region. The sheet itself must not scroll or the
+   header would leave with it.
+
+   The reading column is capped and centred rather than left-aligned:
+   on a wide screen the sheet is the full width of the window, and text
+   pinned to the left edge of a 1500px sheet reads as broken rather than
+   as a deliberate measure. */
+.drawer-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--space-6) clamp(20px, 4vw, 56px) clamp(40px, 6vw, 72px);
+  color: var(--ink-soft);
+  font-size: 16.5px;
+  line-height: 1.62;
+}
+
+.drawer-body > * {
+  max-width: 68ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.drawer-lede {
+  margin: 0 auto var(--space-6);
+  font-family: var(--font-display);
+  font-size: clamp(17px, 1.5vw, 20px);
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.drawer-body h3 {
+  margin: var(--space-7) auto var(--space-3);
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(18px, 1.8vw, 23px);
+  color: var(--ink);
+}
+
+.drawer-body h3:first-of-type {
+  margin-top: var(--space-5);
+}
+
+.drawer-body p {
+  margin: 0 auto var(--space-4);
+}
+
+.drawer-body ul {
+  margin: 0 auto var(--space-4);
+  padding-left: 1.15em;
+}
+
+.drawer-body li {
+  margin-bottom: var(--space-3);
+}
+
+.drawer-body b,
+.drawer-body strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.drawer-body a {
+  color: var(--wall-deep);
+  text-underline-offset: 3px;
+}
+
+.drawer-body a:hover {
+  color: #75281a;
+}
+
+.drawer-note {
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid rgba(169, 67, 50, 0.35);
+  border-radius: var(--radius);
+  background: rgba(169, 67, 50, 0.06);
+  font-size: 15px;
+}
+
+/* Day trips: the drive time sits with the place name rather than in its
+   own column, so it stays attached when the row wraps on a phone. */
+.trip-list {
+  margin: 0;
+}
+
+.trip-list > div {
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--cream-edge);
+}
+
+.trip-list dt {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 18px;
+  color: var(--ink);
+}
+
+.trip-list dt span {
+  margin-left: var(--space-3);
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--brass);
+}
+
+.trip-list dd {
+  margin: var(--space-2) 0 0;
+}
+
+@media (max-width: 760px) {
+  .drawer {
+    max-height: calc(100dvh - 1.5rem);
+    border-radius: 32px 32px 0 0;
+  }
+}
+
+/* The sheet arrives instantly for anyone who has asked for less motion.
+   It still arrives: this is a disclosure, not decoration, so removing it
+   would remove the content. */
+@media (prefers-reduced-motion: reduce) {
+  .drawer,
+  .drawer-scrim {
+    transition-duration: 1ms;
+  }
+}
+
+/* ============================================================
+   THE RSVP PAGE
+
+   One question at a time, on the same wall, under the same shadow.
+   Deliberately quiet: no panel, no card, nothing to look at but the
+   question you are being asked.
+
+   Every size here is larger than it would be on cream. Cream type on
+   terracotta under a multiply blend has a much tighter contrast budget
+   than dark type on a light panel, and small text is the first thing to
+   fail it.
+   ============================================================ */
+.rsvp-page {
+  position: relative;
+  z-index: 4;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: clamp(96px, 14vh, 180px) var(--space-5) clamp(80px, 12vh, 140px);
+  min-height: 100svh;
+}
+
+.rsvp-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(34px, 5.2vw, 62px);
+  line-height: 1.06;
+  color: #fffaf2;
+  text-shadow: 0 3px 30px rgba(60, 16, 8, 0.42);
+}
+
+.rsvp-sub {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(15px, 1.5vw, 19px);
+  color: #fcf3ea;
+  text-shadow: 0 2px 16px rgba(60, 16, 8, 0.5);
+}
+
+.rsvp-flow {
+  margin-top: clamp(40px, 7vh, 72px);
+}
+
+.rsvp-progress {
+  margin: 0 0 var(--space-6);
+  font-size: 13px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #fae8d9;
+  text-shadow: 0 2px 14px rgba(60, 16, 8, 0.55);
+}
+
+/* A fieldset, because these really are groups of related controls, but
+   stripped of the browser's box. */
+.rsvp-step {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* Without scripting every step is on the page at once, so they need
+   space between them. With scripting only the current one is shown.
+
+   The current step is a class, not the `hidden` attribute, so that
+   `hidden` is free to mean one thing only: this question does not apply
+   to you. steps.js relies on that separation. */
+.is-stepped .rsvp-step {
+  display: none;
+  margin-bottom: 0;
+}
+
+.is-stepped .rsvp-step.is-current {
+  display: block;
+  animation: rsvp-step-in 320ms var(--expo) both;
+}
+
+@keyframes rsvp-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-stepped .rsvp-step.is-current {
+    animation-duration: 1ms;
+  }
+}
+
+.rsvp-step + .rsvp-step,
+#rsvp-attending-details .rsvp-step {
+  margin-top: clamp(40px, 6vh, 64px);
+}
+
+.rsvp-q {
+  display: block;
+  padding: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(26px, 3.4vw, 40px);
+  line-height: 1.16;
+  color: #fffaf2;
+  text-shadow: 0 3px 26px rgba(60, 16, 8, 0.45);
+}
+
+.rsvp-q:focus-visible {
+  outline: 3px solid #ffe9c9;
+  outline-offset: 6px;
+  border-radius: 4px;
+}
+
+.rsvp-kicker {
+  display: block;
+  margin-bottom: var(--space-3);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #ffeedd;
+}
+
+.rsvp-label {
+  display: block;
+  margin: var(--space-6) 0 var(--space-2);
+  font-size: 15px;
+  color: #fcf3ea;
+  text-shadow: 0 2px 14px rgba(60, 16, 8, 0.5);
+}
+
+/* The input is the one solid thing on the page, which is what makes it
+   obvious where to type. */
+.rsvp-input {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--cream-edge);
+  border-radius: var(--radius);
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.rsvp-input--short {
+  max-width: 140px;
+}
+
+.rsvp-input:focus-visible {
+  outline: 3px solid #ffe9c9;
+  outline-offset: 2px;
+}
+
+/* Only after a failed attempt, so nothing is marked wrong before it has
+   been filled in. */
+.was-validated .rsvp-input:invalid {
+  border-color: #c0392b;
+  box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.28);
+}
+
+.rsvp-help {
+  margin: var(--space-3) 0 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: #faf0e5;
+  text-shadow: 0 2px 14px rgba(60, 16, 8, 0.5);
+}
+
+/* ---------- Yes or no ---------- */
+.rsvp-choices {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.rsvp-choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 18px 20px;
+  border: 1px solid rgba(255, 240, 224, 0.3);
+  border-radius: var(--radius-lg);
+  background: rgba(52, 18, 11, 0.4);
+  color: #fdf1e2;
+  font-family: var(--font-display);
+  font-size: clamp(17px, 1.7vw, 21px);
+  cursor: pointer;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease;
+}
+
+.rsvp-choice:hover {
+  background: rgba(52, 18, 11, 0.58);
+}
+
+.rsvp-choice input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  accent-color: #fdf1e2;
+}
+
+.rsvp-choice:has(input:checked) {
+  border-color: #ffe0bd;
+  background: rgba(52, 18, 11, 0.72);
+}
+
+.rsvp-choice:has(input:focus-visible) {
+  outline: 3px solid #ffe9c9;
+  outline-offset: 3px;
+}
+
+/* ---------- Review ---------- */
+.rsvp-review {
+  margin: var(--space-6) 0 0;
+}
+
+.rsvp-review > div {
+  padding: var(--space-4) 0;
+  border-top: 1px solid rgba(255, 240, 224, 0.25);
+}
+
+.rsvp-review dt {
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #eec9a8;
+  text-shadow: 0 2px 14px rgba(60, 16, 8, 0.5);
+}
+
+.rsvp-review dd {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(17px, 1.7vw, 21px);
+  color: #fff6ea;
+  text-shadow: 0 2px 18px rgba(60, 16, 8, 0.45);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Actions ---------- */
+.rsvp-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: clamp(36px, 6vh, 56px);
+}
+
+.rsvp-next,
+.rsvp-send {
+  padding: 15px 30px;
+  border: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 18px;
+  color: #fff4e6;
+  cursor: pointer;
+}
+
+.rsvp-next[hidden],
+.rsvp-send[hidden],
+.rsvp-back[hidden] {
+  display: none;
+}
+
+.rsvp-back {
+  order: -1;
+  padding: 15px 6px;
+  border: 0;
+  background: none;
+  color: #f0ddcd;
+  font-family: var(--font-body);
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.rsvp-back:hover {
+  color: #fff6ea;
+}
+
+.rsvp-next:focus-visible,
+.rsvp-send:focus-visible,
+.rsvp-back:focus-visible {
+  outline: 3px solid #ffe9c9;
+  outline-offset: 4px;
+}
+
+.form-status {
+  margin: var(--space-5) 0 0;
+  min-height: 1.4em;
+  font-size: 15.5px;
+  color: #f6e6d6;
+  text-shadow: 0 2px 14px rgba(60, 16, 8, 0.55);
+}
+
+.form-status.is-error {
+  color: #ffd7c9;
+}
+
+/* Off screen rather than display:none, so a bot's form parser still
+   finds it while nobody using the page ever does. */
+.rsvp-honey {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* The thank-you replaces the form, so it carries the page on its own. */
+.rsvp-done {
+  margin-top: clamp(40px, 7vh, 72px);
+}
+
+.rsvp-done b {
+  display: block;
+  margin-bottom: var(--space-4);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(28px, 3.6vw, 42px);
+  color: #fffaf2;
+  text-shadow: 0 3px 26px rgba(60, 16, 8, 0.45);
+}
+
+.rsvp-done .card-title {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(28px, 3.6vw, 42px);
+  color: #fffaf2;
+  text-shadow: 0 3px 26px rgba(60, 16, 8, 0.45);
+}
+
+.rsvp-done p {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.6;
+  color: #f4e7da;
+  text-shadow: 0 2px 16px rgba(60, 16, 8, 0.5);
 }
