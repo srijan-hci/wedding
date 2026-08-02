@@ -17,6 +17,7 @@ Writes to /tmp first. The repo lives under OneDrive, which throws
 TimeoutError when you write many files in a tight loop.
 """
 from PIL import Image
+import numpy as np
 import os
 
 SRC = "Assets"
@@ -42,6 +43,44 @@ JOBS = [
 # 900 covers phones and tablets without making them pay for pixels they
 # cannot show.
 VENUE = ("Venue image.png", "polaroid-venue", [1400, 900], 78, 90)
+
+# The three Polaroids in the details section.
+#
+# ⚠️ These need a different crop from everything above. They arrive with a
+# soft drop shadow already painted in, and `.card-shot img` adds its own
+# drop-shadow in CSS, so keeping the baked one would give every card two
+# shadows. Cropping to the solid rectangle also keeps the image box equal
+# to the Polaroid itself, which is what `.card-label`'s percentage offsets
+# assume: include the shadow margin and the label drifts up off the white
+# caption band.
+#
+# WebP only, no PNG fallback. Nothing in the markup uses <picture> for
+# these, so a fallback would be several megabytes nothing ever requests.
+CARDS = [
+    ("image 8.png",  "card-travel",    920, 82, 90),
+    ("image 23.png", "card-events",    920, 82, 90),
+    ("image 31.png", "card-bangalore", 920, 82, 90),
+]
+
+
+def trim_solid(im, threshold=250, coverage=0.5):
+    """Crop to the opaque rectangle, discarding any baked-in shadow.
+
+    trim() keeps every pixel that is not fully transparent, which for the
+    card artwork would keep the shadow too. Here a row or column counts as
+    part of the card only when most of it is opaque, which finds the edge
+    of the Polaroid and leaves the soft falloff outside.
+    """
+    if im.mode != "RGBA":
+        im = im.convert("RGBA")
+
+    solid = np.array(im.getchannel("A")) >= threshold
+    rows = np.where(solid.mean(axis=1) > coverage)[0]
+    cols = np.where(solid.mean(axis=0) > coverage)[0]
+
+    if not len(rows) or not len(cols):
+        return im
+    return im.crop((cols[0], rows[0], cols[-1] + 1, rows[-1] + 1))
 
 
 def trim(im):
@@ -105,6 +144,31 @@ for width in widths:
     kb = export(final, name, quality, alpha_quality)
     total += kb
     print(f"{name:20} {str(cut.size):13} {str(final.size):13} {kb:6.0f}K")
+
+# the three detail cards
+#
+# Every card is forced to one shared output size rather than scaled
+# independently. Their solid rectangles differ by a single pixel, which
+# would leave the three cards very slightly different heights in the grid,
+# and `.card-label` is positioned as a percentage of that height.
+card_size = None
+for filename, slug, longest, quality, alpha_quality in CARDS:
+    path = os.path.join(SRC, filename)
+    if not os.path.exists(path):
+        print(f"{slug:20} MISSING: {path}")
+        continue
+
+    cut = trim_solid(Image.open(path))
+    if card_size is None:
+        card_size = fit(cut, longest).size
+    final = cut.resize(card_size, Image.LANCZOS)
+
+    final.save(f"{OUT}/{slug}.webp", "WEBP", quality=quality,
+               alpha_quality=alpha_quality, method=6)
+    kb = os.path.getsize(f"{OUT}/{slug}.webp") / 1024
+    total += kb
+    cut.save(f"{OUT}/_source/{slug}.png", "PNG", optimize=True)
+    print(f"{slug:20} {str(cut.size):13} {str(final.size):13} {kb:6.0f}K")
 
 print("-" * 58)
 print(f"{'total webp':20} {'':13} {'':13} {total:6.0f}K")

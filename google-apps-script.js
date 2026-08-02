@@ -5,11 +5,16 @@
    into Google Apps Script so that RSVPs land in your own Google
    Sheet. It lives in the repo purely so it is not lost.
 
+   It writes into the "RSVPs" tab of the wedding planning
+   spreadsheet. It never reads, edits or touches any other tab,
+   so the guest list is safe.
+
    ----------------------------------------------------------------
    HOW TO SET IT UP (about five minutes, no coding needed)
 
-   1.  Go to sheets.new to create a new Google Sheet, and name it
-       something like "Wedding RSVPs".
+   1.  Open the wedding planning spreadsheet:
+       https://docs.google.com/spreadsheets/d/1xV8bFDqyMMbiC_yCEdOb3N2A32cIWFlQJVh0JY8Ejl0/edit
+       The "RSVPs" tab already exists with its heading row.
 
    2.  In the menu, choose  Extensions > Apps Script.
        A code editor opens in a new tab.
@@ -34,12 +39,15 @@
    8.  Click Deploy. Google will ask you to authorise it. It will
        warn that the app "isn't verified", which is expected,
        because you just wrote it yourself. Click Advanced, then
-       "Go to Wedding RSVPs (unsafe)", then Allow.
+       "Go to ... (unsafe)", then Allow.
 
    9.  Copy the "Web app" URL it shows you. It ends with /exec.
 
    10. Open rsvp.js in this repo and paste that URL between the
        quotes on the RSVP_ENDPOINT line.
+
+   11. Visit that /exec URL in a browser. It should say
+       "RSVP endpoint is running." That confirms step 8 worked.
 
    IMPORTANT: if you ever edit this script, you must redeploy it
    for the change to take effect. Use
@@ -48,24 +56,23 @@
    a different URL.
    ---------------------------------------------------------------- */
 
-/* The column order of your sheet. Add a field here and in the form
-   in index.html, and it will start being recorded. */
+/* The column order of the RSVPs tab. The left name must match the
+   `name` attribute of a field in rsvp/index.html; the right one is
+   the heading shown in the sheet. Add a field in both places and it
+   starts being recorded. Anything a guest sends that is not listed
+   here is ignored. */
 var COLUMNS = [
   ["submittedAt", "Submitted"],
   ["name", "Name"],
   ["email", "Email"],
-  ["phone", "Phone"],
-  ["travellingFrom", "Travelling from"],
   ["attending", "Attending"],
   ["guests", "Party size"],
-  ["guestNames", "Names of guests"],
-  ["days", "Days"],
   ["dietary", "Dietary needs"],
-  ["song", "Song request"],
   ["note", "Note"]
 ];
 
-var SHEET_NAME = "RSVPs";
+/* The tab to write into. The emoji is part of the name. */
+var SHEET_NAME = "\uD83D\uDC8C RSVPs";
 
 /* Runs every time the website posts the form. */
 function doPost(e) {
@@ -82,7 +89,7 @@ function doPost(e) {
       return params[column[0]] || "";
     });
 
-    sheet.appendRow(row);
+    sheet.getRange(nextRow_(sheet), 1, 1, row.length).setValues([row]);
     return json_({ result: "ok" });
   } catch (error) {
     return json_({ result: "error", message: String(error) });
@@ -97,22 +104,71 @@ function doGet() {
   return json_({ result: "ok", message: "RSVP endpoint is running." });
 }
 
+/* The row to write the next reply into.
+
+   ⚠️ Deliberately not appendRow(). appendRow() writes below the last row
+   the grid has ever been *touched* in, which is not the same as the last
+   row with anything in it. Clearing a row by hand leaves cells that are
+   empty but still counted, so appendRow() skips past them and every
+   future reply lands further down an increasingly empty sheet. Reading
+   the values back and finding the last one with real content in it costs
+   one extra read and heals that instead of compounding it. */
+function nextRow_(sheet) {
+  var last = sheet.getLastRow();
+  if (last < 1) return 1;
+
+  var values = sheet.getRange(1, 1, last, COLUMNS.length).getValues();
+
+  for (var r = values.length - 1; r >= 0; r--) {
+    for (var c = 0; c < values[r].length; c++) {
+      if (String(values[r][c]).trim() !== "") {
+        return r + 2; // r is 0-based, and we want the row after it.
+      }
+    }
+  }
+
+  return 1; // Nothing in the tab at all.
+}
+
 /* Finds the RSVPs tab, creating it with a header row the first
    time. The header is frozen so it stays visible as the list grows. */
 function getSheet_() {
   var book = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = book.getSheetByName(SHEET_NAME);
 
+  /* If the tab has been renamed, fall back to any tab with "RSVP" in
+     its name. Without this, a rename as small as dropping the emoji
+     would quietly start a second, empty tab beside the real one, and
+     replies would look like they had vanished. */
+  if (!sheet) {
+    var all = book.getSheets();
+    for (var i = 0; i < all.length; i++) {
+      if (all[i].getName().toUpperCase().indexOf("RSVP") !== -1) {
+        sheet = all[i];
+        break;
+      }
+    }
+  }
+
   if (!sheet) {
     sheet = book.insertSheet(SHEET_NAME);
   }
 
-  if (sheet.getLastRow() === 0) {
+  /* nextRow_, not getLastRow, for the same reason as above: a tab whose
+     cells have been touched but left empty still reports a last row. */
+  if (nextRow_(sheet) === 1) {
     var headers = COLUMNS.map(function (column) {
       return column[1];
     });
-    sheet.appendRow(headers);
-    sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold");
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  }
+
+  /* Kept separate from the block above, and safe to run every time.
+     The heading row was added by hand when the tab was set up, so a
+     "first run only" check would never have fired and the heading
+     would scroll away once the list got long. */
+  if (sheet.getFrozenRows() < 1) {
+    sheet.getRange(1, 1, 1, COLUMNS.length).setFontWeight("bold");
     sheet.setFrozenRows(1);
   }
 

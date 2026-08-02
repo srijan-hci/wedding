@@ -8,28 +8,29 @@
    ----------------------------------------------------------------
    SETUP: do this once, then paste the URL below.
 
-   1. Create a new Google Sheet. Name it something like
-      "Wedding RSVPs".
-   2. In that sheet, choose Extensions > Apps Script.
-   3. Delete whatever code is there and paste in the script from
-      google-apps-script.js in this repo.
-   4. Click Deploy > New deployment.
-   5. Next to "Select type", click the gear and choose "Web app".
-   6. Set "Execute as" to Me, and "Who has access" to Anyone.
-   7. Click Deploy, then Authorize access and allow it. Google will
-      warn that the app is not verified: that is expected, because
-      you wrote it. Click Advanced, then "Go to ... (unsafe)".
-   8. Copy the Web app URL. It ends in /exec.
-   9. Paste it between the quotes on the ENDPOINT line below.
+   The full walkthrough lives at the top of google-apps-script.js
+   in this repo. The short version:
 
-   To change the questions later, edit the form in index.html and
-   add the matching column in the Apps Script.
+   1. Open the wedding planning spreadsheet and choose
+      Extensions > Apps Script.
+   2. Paste in the contents of google-apps-script.js and save.
+   3. Deploy > New deployment > type "Web app".
+   4. Execute as Me, Who has access Anyone. Deploy, then authorise.
+   5. Copy the Web app URL. It ends in /exec.
+   6. Paste it between the quotes on the ENDPOINT line below.
+
+   Replies land in the "RSVPs" tab. No other tab is touched.
+
+   To change the questions later, edit the form in rsvp/index.html
+   and add the matching column in the Apps Script.
    ---------------------------------------------------------------- */
 
-/* PASTE YOUR APPS SCRIPT WEB APP URL HERE, between the quotes.
-   Until you do, the form will politely tell people to email instead,
-   rather than silently losing their reply. */
-var RSVP_ENDPOINT = "";
+/* The Apps Script Web app URL. Deployed from google-apps-script.js;
+   writes one row into the "RSVPs" tab of the planning spreadsheet.
+   If this is ever emptied, the form politely tells people to email
+   instead, rather than silently losing their reply. */
+var RSVP_ENDPOINT =
+  "https://script.google.com/macros/s/AKfycbyWqY8AlldZPx5sPeKqTJSxCBBQp4Z9-QqEuGalQh5a90mQveM26D89OS-EyXGd6iVHpg/exec";
 
 /* Shown whenever the form cannot be sent, so a reply is never lost. */
 var RSVP_FALLBACK_EMAIL = "hello@akriti-srijan.com";
@@ -95,21 +96,23 @@ var RSVP_FALLBACK_EMAIL = "hello@akriti-srijan.com";
     submit.disabled = true;
     setStatus("Sending...");
 
+    /* The round trip to Apps Script takes about five seconds on a good
+       connection, and considerably longer on a slow one. Deliberately no
+       timeout: cutting it off would report a failure for a reply that was
+       actually delivered, and the guest would send it twice. Instead just
+       say so, so a slow connection does not look like a frozen button. */
+    var stillGoing = setTimeout(function () {
+      setStatus("Still sending. This can take a moment on a slow connection.");
+    }, 6000);
+
     var data = new FormData(form);
-    // Checkboxes arrive as repeated entries; join them into one cell.
     var body = new URLSearchParams();
-    var days = [];
 
     data.forEach(function (value, key) {
       if (key === "website") return;
-      if (key === "days") {
-        days.push(value);
-        return;
-      }
       body.append(key, value);
     });
 
-    body.append("days", days.join(", "));
     body.append("submittedAt", new Date().toISOString());
 
     /* Sent as URL-encoded form data on purpose. That counts as a
@@ -128,9 +131,11 @@ var RSVP_FALLBACK_EMAIL = "hello@akriti-srijan.com";
       body: body.toString()
     })
       .then(function () {
+        clearTimeout(stillGoing);
         showThankYou();
       })
       .catch(function () {
+        clearTimeout(stillGoing);
         submit.disabled = false;
         setStatus(
           "Something went wrong sending that. Please try again, or email us at " +

@@ -242,6 +242,18 @@ card that opened it. Verified: 45 tabs each way, zero escapes.
 sheet at `translateY(100%)` and adding `.is-open`, or the transition is skipped
 and it jumps.
 
+**The card artwork is cropped differently from every other collage piece.**
+`card-travel`, `card-events` and `card-bangalore` come out of Figma with a soft
+drop shadow already painted in, and `.card-shot img` adds its own
+`drop-shadow()`. `prepare.py` therefore crops them with `trim_solid()`, which
+keeps only the opaque rectangle, rather than `trim()`, which keeps anything not
+fully transparent. Using the wrong one gives every card two shadows *and* moves
+the label: `.card-label` is positioned `bottom: 4.5%` of the image box, so any
+shadow margin baked into that box lifts the label off the white caption band.
+All three are forced to one shared output size for the same reason: their solid
+rectangles differ by a pixel, which would otherwise make the three cards
+fractionally different heights in the grid.
+
 ### The RSVP page
 
 `rsvp/` ships **one ordinary form** with every question visible and a
@@ -257,6 +269,57 @@ file knowing about the other: the flow simply becomes four steps instead of six.
 
 Submission is still the root `rsvp.js`. `steps.js` only decides which question
 you are looking at.
+
+### Where replies go
+
+GitHub Pages only serves files, so the form posts to a Google Apps Script that
+Srijan owns, which appends one row to the wedding planning spreadsheet:
+
+`docs.google.com/spreadsheets/d/1xV8bFDqyMMbiC_yCEdOb3N2A32cIWFlQJVh0JY8Ejl0`
+
+It writes to the **`💌 RSVPs`** tab and nothing else. **The `🧑‍🧑‍🧒‍🧒 Guest List`
+tab is hand-curated and must never be written to by anything automated.** Names
+there read like "Uma didi + family", so matching them against whatever a guest
+types would eventually clobber real data. Reconcile by eye instead.
+
+The columns are `Submitted, Name, Email, Attending, Party size, Dietary needs,
+Note`. **The left-hand keys in `COLUMNS` must match the `name` attributes in
+`rsvp/index.html` exactly.** Anything a guest sends that is not in `COLUMNS` is
+silently dropped, which is deliberate: it is what discards the honeypot. Add a
+question in both places or it will not be recorded.
+
+Two things about that script are load-bearing:
+
+- It looks the tab up by exact name, then falls back to **any** tab containing
+  "RSVP". Without the fallback, renaming the tab (even just dropping the emoji)
+  would quietly start a second, empty tab beside the real one, and replies would
+  look like they had vanished.
+- Bolding and freezing the header is a **separate, idempotent check**, not part
+  of the "first run" branch. The heading row was created by hand during setup, so
+  a first-run-only check would never have fired.
+
+**⚠️ Never use `appendRow()` here, and never use `getLastRow()` to decide where
+to write.** Both count the last row the grid has ever been *touched* in, which is
+not the last row with anything in it. Clearing cells (as opposed to deleting the
+rows) leaves them empty but still counted. This was found the hard way: after
+clearing eleven test rows, the next reply landed in **row 13** with a wall of
+blank rows above it, and every later reply would have marched further down.
+`nextRow_()` reads the values back and finds the last row with real content, so
+blank rows get reused instead of accumulating. It also means a guest's row can be
+cleared by hand without breaking anything afterwards.
+
+A submission takes roughly **five seconds** end to end, and longer on a slow
+connection. `rsvp.js` therefore swaps "Sending..." for a "still sending" line
+after six seconds. **There is deliberately no timeout**: cutting the request off
+would report a failure for a reply that was actually delivered, and the guest
+would send it twice.
+
+`RSVP_ENDPOINT` in `rsvp.js` is empty until the script is deployed. While it is
+empty the form does not fail silently: it tells people to email instead.
+
+**If you change the Apps Script you must redeploy it**, via Deploy > Manage
+deployments > pencil > New version. A brand new deployment would hand you a
+different URL.
 
 ## The light on the wall (`light.js`)
 
