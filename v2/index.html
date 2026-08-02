@@ -84,13 +84,30 @@
     <main class="content-layer">
       <!-- ===== HERO ===== -->
       <section class="hero" id="top">
-        <div class="hero-inner">
+        <!-- The stage is a fixed-ratio box. Every piece inside it, and the
+             headline itself, is positioned as a percentage of the stage, so
+             the whole composition scales as one locked unit rather than
+             drifting apart as the window changes shape. Sizes use cqw
+             (a percentage of the stage's own width) for the same reason.
+
+             DOM order IS stacking order. The Polaroid sits in the middle of
+             the list: everything before it is behind, everything after is in
+             front and overlaps its edges. The stop-motion assembly relies on
+             that split, so moving a piece across the Polaroid changes both
+             what it covers and which direction it flies in from. -->
+        <div class="hero-stage">
           <h1 class="headline">We&rsquo;re getting married!</h1>
 
-          <!-- Order matters: later pieces stack on top. The Polaroid is
-               last so it hides the whole stack at the centre while
-               everything is still bunched behind it. -->
           <div class="collage">
+            <!-- ---------- behind: flies outward from the Polaroid ---------- -->
+            <div class="layer">
+              <div class="piece p-kolam">
+                <picture>
+                  <source srcset="../Assets/collage/kolam.webp" type="image/webp" />
+                  <img src="../Assets/collage/kolam.png" alt="" width="380" height="322" />
+                </picture>
+              </div>
+            </div>
             <div class="layer">
               <div class="piece p-stamp">
                 <picture>
@@ -124,10 +141,34 @@
               </div>
             </div>
             <div class="layer">
+              <div class="piece p-stamp-blr">
+                <picture>
+                  <source srcset="../Assets/collage/stamp-bangalore.webp" type="image/webp" />
+                  <img src="../Assets/collage/stamp-bangalore.png" alt="" width="207" height="275" />
+                </picture>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="piece p-coconut">
+                <picture>
+                  <source srcset="../Assets/collage/coconut-bike.webp" type="image/webp" />
+                  <img src="../Assets/collage/coconut-bike.png" alt="" width="370" height="478" />
+                </picture>
+              </div>
+            </div>
+            <div class="layer">
               <div class="piece p-lotus">
                 <picture>
                   <source srcset="../Assets/collage/lotus.webp" type="image/webp" />
                   <img src="../Assets/collage/lotus.png" alt="" width="331" height="380" />
+                </picture>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="piece p-couple">
+                <picture>
+                  <source srcset="../Assets/collage/couple-garlands.webp" type="image/webp" />
+                  <img src="../Assets/collage/couple-garlands.png" alt="" width="444" height="358" />
                 </picture>
               </div>
             </div>
@@ -147,38 +188,8 @@
                 </picture>
               </div>
             </div>
-            <div class="layer">
-              <div class="piece p-couple">
-                <picture>
-                  <source srcset="../Assets/collage/couple-garlands.webp" type="image/webp" />
-                  <img src="../Assets/collage/couple-garlands.png" alt="" width="444" height="358" />
-                </picture>
-              </div>
-            </div>
-            <div class="layer">
-              <div class="piece p-fire">
-                <picture>
-                  <source srcset="../Assets/collage/sacred-fire.webp" type="image/webp" />
-                  <img src="../Assets/collage/sacred-fire.png" alt="" width="202" height="159" />
-                </picture>
-              </div>
-            </div>
-            <div class="layer">
-              <div class="piece p-chai">
-                <picture>
-                  <source srcset="../Assets/collage/chai.webp" type="image/webp" />
-                  <img src="../Assets/collage/chai.png" alt="" width="126" height="189" />
-                </picture>
-              </div>
-            </div>
-            <div class="layer">
-              <div class="piece p-dosa">
-                <picture>
-                  <source srcset="../Assets/collage/dosa-thali.webp" type="image/webp" />
-                  <img src="../Assets/collage/dosa-thali.png" alt="" width="427" height="409" />
-                </picture>
-              </div>
-            </div>
+
+            <!-- ---------- the anchor ---------- -->
             <div class="layer">
               <div class="piece p-polaroid">
                 <picture>
@@ -193,9 +204,49 @@
                 </picture>
               </div>
             </div>
-          </div>
 
-          <a class="scroll-cue" href="#venue">20 &amp; 21 February 2027</a>
+            <!-- ---------- in front: flies inward from the screen edges ---------- -->
+            <div class="layer">
+              <div class="piece p-chai">
+                <picture>
+                  <source srcset="../Assets/collage/chai.webp" type="image/webp" />
+                  <img src="../Assets/collage/chai.png" alt="" width="126" height="189" />
+                </picture>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="piece p-marigold-a">
+                <picture>
+                  <source srcset="../Assets/collage/marigold.webp" type="image/webp" />
+                  <img src="../Assets/collage/marigold.png" alt="" width="232" height="245" />
+                </picture>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="piece p-marigold-b">
+                <picture>
+                  <source srcset="../Assets/collage/marigold-three.webp" type="image/webp" />
+                  <img src="../Assets/collage/marigold-three.png" alt="" width="215" height="162" />
+                </picture>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="piece p-dosa">
+                <picture>
+                  <source srcset="../Assets/collage/dosa-thali.webp" type="image/webp" />
+                  <img src="../Assets/collage/dosa-thali.png" alt="" width="427" height="409" />
+                </picture>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="piece p-bangles">
+                <picture>
+                  <source srcset="../Assets/collage/bangles.webp" type="image/webp" />
+                  <img src="../Assets/collage/bangles.png" alt="" width="555" height="380" />
+                </picture>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

@@ -268,45 +268,61 @@ body {
 /* ============================================================
    THE COLLAGE
 
-   Every piece is pinned to one point and pushed out to its resting
-   place by its own --dx / --dy. At the start of the intro that offset
-   is zero and the piece is shrunk, so it sits hidden behind the
-   Polaroid. Animating the offset outward is what makes each one look
-   like it slides out from underneath.
+   A fixed-ratio stage. The stage keeps one aspect ratio and every piece
+   inside it, including the headline, is positioned as a percentage of
+   that box. So the whole composition scales as a single locked unit
+   instead of drifting apart as the window changes shape.
 
-   Stacking is DOM order, not z-index: pieces listed later in the HTML
-   sit on top. The Polaroid is last so it covers the whole stack while
-   everything is still bunched at the centre.
+   Sizes are in cqw, which is a percentage of the STAGE's width rather
+   than the viewport's. That matters once the stage stops filling the
+   window: with vw the type would keep growing after the artwork had
+   stopped, and the two would come apart.
 
-   Units are vmin, so the composition scales with the window.
+   Stacking is DOM order, not z-index. The Polaroid sits in the middle of
+   the list: everything before it is behind and flies outward from under
+   it, everything after is in front and flies inward from off-screen.
+
+   There are two arrangements, both deliberate, neither random. The wide
+   one matches the Figma. The tall one below 760px is repacked so the
+   pieces stay large enough to read on a phone.
    ============================================================ */
 .hero {
   position: relative;
-  height: 100vh;
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  padding: 0;
+  overflow: hidden;
 }
 
-/* The absolutely positioned children below measure against this box.
-   Without a fixed height here they would stretch to the full scrolling
-   height of the page and the collage would land somewhere near the
-   middle of the document. */
-.hero-inner {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
+.hero-stage {
+  position: relative;
+  width: 100%;
+  max-width: 1600px;
+  aspect-ratio: 1512 / 982;
+  /* Makes cqw inside resolve against this box. */
+  container-type: inline-size;
 }
 
 .headline {
   position: absolute;
-  top: 16vh;
-  left: 0;
-  width: 100%;
+  /* The 1% nudge right and the top value are both measured, not eyeballed:
+     the Figma headline's ink sits at x 153..1383, y 186 down. */
+  left: 5%;
+  top: 18.05%;
+  width: 92%;
   margin: 0;
-  padding: 0 var(--space-5);
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: clamp(38px, 8.2vw, 118px);
-  line-height: 1;
-  letter-spacing: -0.015em;
+  /* Solved, not guessed. The headline's INK spans x 153..1383 in the
+     1512-wide Figma, so 81.35% of the frame. Ours was measured the same
+     way, by thresholding the rendered pixels rather than reading the
+     layout box, because the layout box includes side bearing the eye
+     does not see. 114.31px gave 1084px of ink, so 1230px needs 129.7px,
+     which is 8.578cqw. Change the wording and this needs re-solving. */
+  font-size: 8.578cqw;
+  line-height: 0.94;
+  letter-spacing: -0.018em;
   text-align: center;
   color: #fffaf2;
   text-shadow: 0 3px 30px rgba(60, 16, 8, 0.4);
@@ -316,50 +332,42 @@ body {
   opacity: 0;
 }
 
-/* The point everything is measured from. Sitting below centre leaves
-   clean space for the headline above. */
 .collage {
   position: absolute;
-  left: 50%;
-  top: 56%;
-  width: 0;
-  height: 0;
+  inset: 0;
 }
 
+/* Wraps each piece so the mouse parallax has something to move that is
+   not the same element the intro is animating. Two transforms on one
+   element would fight. */
 .layer {
   position: absolute;
-  left: 0;
-  top: 0;
-  width: 0;
-  height: 0;
+  inset: 0;
   will-change: transform;
 }
 
 /* Each piece carries its own character:
-     --dx / --dy  where it rests, measured from the centre
-     --w          how wide it is
+     --x / --y    where its centre sits, in % of the stage
+     --w          how wide it is, in % of the stage
      --rot        how far it tilts
      --px / --py  how far it drifts with the cursor, and in which
                   direction. Negative drifts against the cursor, which
                   is what separates neighbouring pieces.
      --pr         how far it rocks
-     --pl         how quickly it chases the cursor. Lower is laggier,
-                  so the piece trails its neighbours instead of moving
-                  in lockstep. */
+     --pl         how quickly it chases the cursor. Lower is laggier, so
+                  the piece trails its neighbours instead of moving in
+                  lockstep. */
 .piece {
   position: absolute;
-  left: 0;
-  top: 0;
-  --dx: 0vmin;
-  --dy: 0vmin;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
   --rot: 0deg;
   --px: 1;
   --py: 1;
   --pr: 0;
   --pl: 0.08;
-  width: var(--w);
-  transform: translate(-50%, -50%) translate(var(--dx), var(--dy))
-    rotate(var(--rot));
+  transform: translate(-50%, -50%) rotate(var(--rot));
 }
 
 .js .piece {
@@ -370,26 +378,31 @@ body {
   display: block;
   width: 100%;
   height: auto;
-  /* Lifts each cut-out off the wall just enough to read as a sticker
-     rather than a flat paste-up. */
-  filter: drop-shadow(0 10px 18px rgba(58, 16, 8, 0.34));
 }
 
-/* ---------- Where each piece sits ---------- */
-.p-polaroid {
-  --w: 56vmin;
-  --rot: -2deg;
-  --px: 0.3;
-  --py: 0.22;
-  --pr: 0.18;
-  --pl: 0.06;
+/* ---------- Wide arrangement: measured off the Figma ----------
+   --x and --y are the centre of each piece as a percentage of the
+   1512 x 982 stage; --w is its width on the same scale. */
+
+/* behind the Polaroid */
+.p-kolam {
+  --x: 34.6%;
+  --y: 82.7%;
+  --w: 11.2%;
+  --rot: 0deg;
+  --px: 0.35;
+  --py: 0.3;
+  --pl: 0.05;
+  /* Chalk on a doorstep, not a watermark. It sits low and left where the
+     Figma puts it, clear of the Polaroid, so it actually reads. */
+  opacity: 0.85;
 }
 
 .p-stamp {
-  --w: 8.6vmin;
-  --dx: -50.5vmin;
-  --dy: -22.8vmin;
-  --rot: -3deg;
+  --x: 20%;
+  --y: 33.6%;
+  --w: 7.4%;
+  --rot: -4deg;
   --px: 0.9;
   --py: 0.5;
   --pr: -0.5;
@@ -397,108 +410,154 @@ body {
 }
 
 .p-bell {
-  --w: 7.6vmin;
-  --dx: -30.8vmin;
-  --dy: -21.3vmin;
+  --x: 29.4%;
+  --y: 35.9%;
+  --w: 6.2%;
   --rot: 2deg;
-  --px: -0.6;
-  --py: 0.85;
-  --pr: 0.7;
-  --pl: 0.075;
-}
-
-.p-sun {
-  --w: 11.7vmin;
-  --dx: -3.4vmin;
-  --dy: -25.2vmin;
-  --rot: 0deg;
-  --px: 0.45;
-  --py: 0.8;
-  --pr: 0.4;
+  --px: 0.75;
+  --py: 0.42;
+  --pr: 0.6;
   --pl: 0.07;
 }
 
+.p-sun {
+  --x: 44.2%;
+  --y: 32.7%;
+  --w: 10.8%;
+  --rot: -1deg;
+  --px: 0.5;
+  --py: 0.35;
+  --pr: -0.3;
+  --pl: 0.06;
+}
+
 .p-postcard {
-  --w: 16.3vmin;
-  --dx: 35.1vmin;
-  --dy: -15.6vmin;
+  --x: 71.8%;
+  --y: 44%;
+  --w: 14.2%;
   --rot: 3deg;
-  --px: 0.75;
-  --py: -0.5;
-  --pr: 0.55;
+  --px: 0.55;
+  --py: 0.3;
+  --pr: 0.35;
+  --pl: 0.062;
+}
+
+.p-stamp-blr {
+  --x: 79.9%;
+  --y: 36.4%;
+  --w: 6.5%;
+  --rot: -5deg;
+  --px: 0.85;
+  --py: 0.5;
+  --pr: -0.6;
   --pl: 0.09;
 }
 
-.p-lotus {
-  --w: 10.7vmin;
-  --dx: -48.6vmin;
-  --dy: -2.5vmin;
+.p-coconut {
+  --x: 17.5%;
+  --y: 52.2%;
+  --w: 12.2%;
   --rot: -2deg;
-  --px: 1.15;
-  --py: 0.55;
-  --pr: -0.35;
-  --pl: 0.095;
+  --px: 0.6;
+  --py: 0.45;
+  --pr: 0.3;
+  --pl: 0.065;
+}
+
+.p-lotus {
+  --x: 27.1%;
+  --y: 54.7%;
+  --w: 9.6%;
+  --rot: 1deg;
+  --px: 0.7;
+  --py: -0.4;
+  --pr: -0.45;
+  --pl: 0.075;
+}
+
+.p-couple {
+  --x: 21.3%;
+  --y: 73.4%;
+  --w: 13.2%;
+  --rot: -1deg;
+  --px: 0.65;
+  --py: -0.5;
+  --pr: 0.4;
+  --pl: 0.08;
 }
 
 .p-musicians {
-  --w: 16.3vmin;
-  --dx: 53.4vmin;
-  --dy: -2.5vmin;
+  --x: 84.3%;
+  --y: 52.7%;
+  --w: 12%;
   --rot: 2deg;
-  --px: 1.3;
-  --py: 0.7;
-  --pr: 0.5;
-  --pl: 0.1;
+  --px: 0.8;
+  --py: 0.4;
+  --pr: -0.4;
+  --pl: 0.078;
 }
 
 .p-rickshaw {
-  --w: 24.9vmin;
-  --dx: 42.9vmin;
-  --dy: 18.8vmin;
+  --x: 81.4%;
+  --y: 71.3%;
+  --w: 17.2%;
+  --rot: -1deg;
+  --px: 0.7;
+  --py: -0.45;
+  --pr: 0.3;
+  --pl: 0.072;
+}
+
+/* the anchor */
+.p-polaroid {
+  --x: 50%;
+  --y: 54.5%;
+  --w: 36.5%;
   --rot: -2deg;
-  --px: 1.45;
+  --px: 0.3;
+  --py: 0.22;
+  --pr: 0.18;
+  --pl: 0.06;
+}
+
+/* in front of the Polaroid */
+.p-chai {
+  --x: 30.3%;
+  --y: 64.7%;
+  --w: 4.9%;
+  --rot: 3deg;
+  --px: 0.95;
   --py: -0.6;
+  --pr: -0.7;
+  --pl: 0.095;
+}
+
+.p-marigold-a {
+  --x: 69.9%;
+  --y: 67.4%;
+  --w: 9.6%;
+  --rot: -3deg;
+  --px: 0.9;
+  --py: -0.55;
   --pr: 0.6;
   --pl: 0.09;
 }
 
-.p-couple {
-  --w: 21.4vmin;
-  --dx: -44.3vmin;
-  --dy: 19.3vmin;
-  --rot: 1deg;
-  --px: -0.85;
-  --py: 0.7;
-  --pr: -0.55;
-  --pl: 0.08;
-}
-
-.p-fire {
-  --w: 8.6vmin;
-  --dx: -47.6vmin;
-  --dy: 25.1vmin;
-  --rot: 0deg;
-  --px: -1;
-  --py: 0.95;
-  --pr: -0.8;
-  --pl: 0.11;
-}
-
-.p-chai {
-  --w: 4.7vmin;
-  --dx: -30.5vmin;
-  --dy: 7vmin;
-  --rot: -4deg;
-  --px: 0.7;
-  --py: 0.6;
-  --pr: 0.9;
-  --pl: 0.105;
+.p-marigold-b {
+  --x: 31.7%;
+  --y: 78.4%;
+  --w: 7.3%;
+  --rot: 4deg;
+  --px: 0.85;
+  --py: -0.6;
+  --pr: -0.5;
+  --pl: 0.088;
 }
 
 .p-dosa {
-  --w: 20.3vmin;
-  --dx: 0vmin;
-  --dy: 27.5vmin;
+  --x: 53.5%;
+  --y: 81.6%;
+  --w: 12.6%;
   --rot: 2deg;
   --px: 0.5;
   --py: -0.75;
@@ -506,90 +565,467 @@ body {
   --pl: 0.085;
 }
 
-/* ============================================================
-   THE INTRO
+.p-bangles {
+  --x: 69.2%;
+  --y: 81.8%;
+  --w: 13.6%;
+  --rot: -2deg;
+  --px: 0.75;
+  --py: -0.65;
+  --pr: -0.4;
+  --pl: 0.082;
+}
 
-   Beat 1  the Polaroid rises into frame
-   Beat 2  every other piece fans out from behind it, one at a time
-   Beat 3  the headline appears and the group eases back a fraction
+/* ---------- Tall arrangement ----------
+   A phone is nothing like a 1.5:1 letterbox. Scaling the wide layout
+   down would leave every sticker too small to recognise, so the stage
+   changes shape and the pieces are repacked around a bigger Polaroid.
+   Still one fixed composition, still no randomness. */
+@media (max-width: 760px) {
+  /* ---------- Tall arrangement ----------
+     Not a shrunken copy of the wide one. The pieces are repacked into a
+     taller box so they stay large enough to read on a phone, and the
+     whole collage is pushed down the stage so the headline has room to
+     sit above it rather than underneath it. */
+  .hero-stage {
+    aspect-ratio: 400 / 700;
+  }
+
+  .headline {
+    top: 4%;
+    left: 2%;
+    width: 96%;
+    font-size: 15cqw;
+    line-height: 0.98;
+  }
+
+  .p-kolam {
+    --x: 33%;
+    --y: 73.5%;
+    --w: 30%;
+  }
+  .p-stamp {
+    --x: 13%;
+    --y: 29.1%;
+    --w: 15%;
+  }
+  .p-bell {
+    --x: 28%;
+    --y: 27.1%;
+    --w: 12%;
+  }
+  .p-sun {
+    --x: 50%;
+    --y: 24.3%;
+    --w: 20%;
+  }
+  .p-postcard {
+    --x: 78%;
+    --y: 31.9%;
+    --w: 25%;
+  }
+  .p-stamp-blr {
+    --x: 90%;
+    --y: 24.7%;
+    --w: 13%;
+  }
+  .p-coconut {
+    --x: 12%;
+    --y: 45.5%;
+    --w: 24%;
+  }
+  .p-lotus {
+    --x: 20%;
+    --y: 58.3%;
+    --w: 19%;
+  }
+  .p-couple {
+    --x: 21%;
+    --y: 71.9%;
+    --w: 27%;
+  }
+  .p-musicians {
+    --x: 87%;
+    --y: 47.9%;
+    --w: 24%;
+  }
+  .p-rickshaw {
+    --x: 82%;
+    --y: 63.9%;
+    --w: 33%;
+  }
+  .p-polaroid {
+    --x: 50%;
+    --y: 49.5%;
+    --w: 68%;
+  }
+  .p-chai {
+    --x: 14%;
+    --y: 36.7%;
+    --w: 9%;
+  }
+  .p-marigold-a {
+    --x: 76%;
+    --y: 55.9%;
+    --w: 18%;
+  }
+  .p-marigold-b {
+    --x: 34%;
+    --y: 64.7%;
+    --w: 14%;
+  }
+  .p-dosa {
+    --x: 52%;
+    --y: 77.5%;
+    --w: 25%;
+  }
+  .p-bangles {
+    --x: 72%;
+    --y: 75.1%;
+    --w: 27%;
+  }
+}
+
+
+/* ============================================================
+   THE STOP-MOTION ASSEMBLY
+
+   The whole effect rests on one CSS feature: steps(). A normal easing
+   curve moves a piece through every intermediate position, which reads
+   as a smooth glide. steps(n) holds each position and then jumps, which
+   is exactly what a camera does when it photographs a paper cut-out,
+   moves it a little, and photographs it again.
+
+   Real stop motion is shot at 12 frames a second, so the step counts
+   below are chosen to land near that rate over the distance travelled.
+
+   Two groups move in opposite directions:
+
+     behind the Polaroid   start hidden at its centre, step OUTWARD
+     in front of it        start beyond the screen, step INWARD
+
+   The rotation runs as a SECOND animation on a different step count, so
+   position and angle never land on the same beat. That mismatch is what
+   stops it feeling like a machine: real cut-outs nudged by hand are
+   never perfectly registered.
    ============================================================ */
 :root {
-  --rise-delay: 250ms;
-  --rise-dur: 850ms;
-  --fan-dur: 780ms;
-  --fan-start: 1050ms;
-  --fan-step: 75ms;
-  --settle-delay: 2100ms;
-  --settle-dur: 900ms;
-  --headline-delay: 2200ms;
+  --frames: 14; /* position steps, roughly 12fps over the distance */
+  --frames-rot: 9; /* rotation steps: deliberately not a factor of 14 */
+  --assemble-dur: 820ms;
+  --polaroid-dur: 520ms;
+  --polaroid-delay: 40ms;
+  /* The fan starts well before the Polaroid has settled. Waiting for it
+     left over a second of nothing but a Polaroid slowly growing, and all
+     the actual movement crammed into the last third. */
+  --fan-start: 260ms;
+  --fan-step: 30ms;
+  --headline-delay: 900ms;
 }
 
+/* The Polaroid arrives first and alone, so there is something for the
+   rest of the composition to come out from behind. */
 .intro-play .p-polaroid {
-  animation: rise var(--rise-dur) var(--expo) var(--rise-delay) forwards;
+  animation: pol-in var(--polaroid-dur) steps(11, end) var(--polaroid-delay)
+    both;
 }
 
-@keyframes rise {
+@keyframes pol-in {
   from {
     opacity: 1;
-    transform: translate(-50%, -50%) translateY(78vh) scale(0.34) rotate(4deg);
+    transform: translate(-50%, -50%) translateY(20%) scale(0.8)
+      rotate(calc(var(--rot) + 5deg));
   }
   to {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1) rotate(var(--rot));
+    transform: translate(-50%, -50%) rotate(var(--rot));
   }
 }
 
-/* These start at opacity 1, not 0. The pieces are not fading in; they
-   are already solid, just hidden behind the Polaroid. That is what
-   sells the illusion of sliding out from underneath.
+/* Everything else. These start at opacity 1, not 0: the pieces are not
+   fading in, they are solid the whole time and simply hidden, either
+   behind the Polaroid or beyond the edge of the screen. That is what
+   sells the paper-cut-out illusion.
 
-   The stagger is carried by --fan-delay rather than by a more specific
-   selector. `:not(.p-polaroid)` counts towards specificity, so this rule
-   scores (0,3,0) and a plain `.intro-play .p-stamp` rule scores only
-   (0,2,0). The shorthand below resets animation-delay to 0, and being the
-   more specific rule it used to beat every per-piece delay: all eleven
-   pieces fanned out at once, before the Polaroid had finished rising.
-   A custom property sidesteps specificity entirely. */
+   ⚠️ The per-piece stagger rides on --fan-delay rather than on a more
+   specific selector. `:not()` counts towards specificity, so this rule
+   scores higher than a plain `.intro-play .p-stamp`, and the shorthand's
+   implicit `animation-delay: 0` used to beat every per-piece rule. Every
+   piece then animated at once. Do not "simplify" this back. */
 .intro-play .piece:not(.p-polaroid) {
-  animation: fan var(--fan-dur) var(--expo) var(--fan-delay, 0ms) forwards;
+  animation:
+    assemble var(--assemble-dur) steps(var(--frames), end) var(--fan-delay, 0ms)
+      both,
+    wobble var(--assemble-dur) steps(var(--frames-rot), end)
+      var(--fan-delay, 0ms) both,
+    reveal 1ms linear var(--fan-delay, 0ms) both;
 }
 
-@keyframes fan {
+/* Without this the pieces would be on screen from the very first frame,
+   bunched at the Polaroid's centre, waiting for their delay to elapse.
+   `animation-fill-mode: both` fills BACKWARDS during a delay, so the
+   `from` keyframe is painted the whole time the piece is meant to be
+   waiting. This flips them on at the exact moment they start moving, in
+   a single step, so nothing fades. */
+@keyframes reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Pieces behind the Polaroid: bunched at its centre, then stepping out.
+
+   ⚠️ Every default here is a var() FALLBACK, not a separate rule. There
+   used to be a `.piece:not(.p-polaroid) { --from-x: 0cqw; ... }` block
+   holding these defaults, and because `:not()` counts towards
+   specificity it scored (0,2,0) against each per-piece rule's (0,1,0).
+   It silently beat all seventeen of them, so no piece ever travelled and
+   the whole assembly collapsed into a plain zoom. This is the same trap
+   that --fan-delay hit. Do not reintroduce a defaults rule. */
+@keyframes assemble {
   from {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(0.3) rotate(0deg);
+    transform: translate(-50%, -50%)
+      translate(var(--from-x, 0cqw), var(--from-y, 0cqw))
+      scale(var(--from-scale, 0.6));
   }
   to {
     opacity: 1;
-    transform: translate(-50%, -50%) translate(var(--dx), var(--dy))
-      rotate(var(--rot));
+    transform: translate(-50%, -50%) translate(0, 0) scale(1);
   }
 }
 
-.p-stamp     { --fan-delay: calc(var(--fan-start) + 0 * var(--fan-step)); }
-.p-bell      { --fan-delay: calc(var(--fan-start) + 1 * var(--fan-step)); }
-.p-sun       { --fan-delay: calc(var(--fan-start) + 2 * var(--fan-step)); }
-.p-postcard  { --fan-delay: calc(var(--fan-start) + 3 * var(--fan-step)); }
-.p-lotus     { --fan-delay: calc(var(--fan-start) + 4 * var(--fan-step)); }
-.p-musicians { --fan-delay: calc(var(--fan-start) + 5 * var(--fan-step)); }
-.p-rickshaw  { --fan-delay: calc(var(--fan-start) + 6 * var(--fan-step)); }
-.p-couple    { --fan-delay: calc(var(--fan-start) + 7 * var(--fan-step)); }
-.p-fire      { --fan-delay: calc(var(--fan-start) + 8 * var(--fan-step)); }
-.p-chai      { --fan-delay: calc(var(--fan-start) + 9 * var(--fan-step)); }
-.p-dosa      { --fan-delay: calc(var(--fan-start) + 10 * var(--fan-step)); }
-
-.intro-play .collage {
-  animation: settle var(--settle-dur) var(--expo) var(--settle-delay) forwards;
-}
-
-@keyframes settle {
+@keyframes wobble {
+  from {
+    rotate: calc(var(--rot) + var(--from-rot, 8deg));
+  }
   to {
-    transform: translateY(1vh) scale(0.97);
+    rotate: var(--rot);
   }
 }
 
+/* Because `assemble` owns `transform`, the resting tilt has to be
+   applied through the separate `rotate` property or the two would
+   overwrite each other. */
+.intro-play .piece:not(.p-polaroid) {
+  rotate: var(--rot);
+}
+
+/* ---------- behind: emerge from under the Polaroid ----------
+   Every offset here is COMPUTED, not eyeballed: it is the exact vector
+   from the piece's resting centre back to the Polaroid's centre, so all
+   eleven start stacked underneath it and step outward to their places.
+
+   The unit is cqw, a percentage of the stage's width, because that is
+   the same coordinate space --x and --y live in. Percentages would not
+   work: inside translate() a percentage resolves against the element's
+   OWN box, so the same number means a different distance for every
+   piece. That was the bug: a "60%" nudge on a small sticker is 100px,
+   nowhere near the Polaroid.
+
+   Vertical offsets are also in cqw, scaled by 982/1512, because the
+   stage is that much shorter than it is wide. */
+.p-kolam {
+  --from-x: 15.4cqw;
+  --from-y: -18.3cqw;
+  --fan-delay: calc(var(--fan-start) + 0 * var(--fan-step));
+  --from-rot: -6deg;
+}
+.p-stamp {
+  --from-x: 30cqw;
+  --from-y: 13.6cqw;
+  --fan-delay: calc(var(--fan-start) + 2 * var(--fan-step));
+  --from-rot: 10deg;
+}
+.p-bell {
+  --from-x: 20.6cqw;
+  --from-y: 12.1cqw;
+  --fan-delay: calc(var(--fan-start) + 4 * var(--fan-step));
+  --from-rot: -12deg;
+}
+.p-sun {
+  --from-x: 5.8cqw;
+  --from-y: 14.2cqw;
+  --fan-delay: calc(var(--fan-start) + 5 * var(--fan-step));
+  --from-rot: 7deg;
+}
+.p-postcard {
+  --from-x: -21.8cqw;
+  --from-y: 6.8cqw;
+  --fan-delay: calc(var(--fan-start) + 7 * var(--fan-step));
+  --from-rot: -9deg;
+}
+.p-stamp-blr {
+  --from-x: -29.9cqw;
+  --from-y: 11.8cqw;
+  --fan-delay: calc(var(--fan-start) + 8 * var(--fan-step));
+  --from-rot: 11deg;
+}
+.p-coconut {
+  --from-x: 32.5cqw;
+  --from-y: 1.5cqw;
+  --fan-delay: calc(var(--fan-start) + 10 * var(--fan-step));
+  --from-rot: -8deg;
+}
+.p-lotus {
+  --from-x: 22.9cqw;
+  --from-y: -0.1cqw;
+  --fan-delay: calc(var(--fan-start) + 11 * var(--fan-step));
+  --from-rot: 9deg;
+}
+.p-couple {
+  --from-x: 28.7cqw;
+  --from-y: -12.3cqw;
+  --fan-delay: calc(var(--fan-start) + 13 * var(--fan-step));
+  --from-rot: -7deg;
+}
+.p-musicians {
+  --from-x: -34.3cqw;
+  --from-y: 1.2cqw;
+  --fan-delay: calc(var(--fan-start) + 14 * var(--fan-step));
+  --from-rot: 8deg;
+}
+.p-rickshaw {
+  --from-x: -31.4cqw;
+  --from-y: -10.9cqw;
+  --fan-delay: calc(var(--fan-start) + 15 * var(--fan-step));
+  --from-rot: -6deg;
+}
+
+/* ---------- in front: fly in from beyond the screen ----------
+   These sit on top of the Polaroid, so they cannot hide behind it. They
+   come from off-stage instead.
+
+   The distance is a sum of two units on purpose. The cqw part clears
+   the piece from its own resting place to the edge of the stage; the
+   vw / vh part clears the gap between the stage and the edge of the
+   window, which only exists on screens wider than the 1600px cap. One
+   unit alone would leave a piece visible on the bare wall beside the
+   stage on a very wide monitor.
+
+   Directions are spread deliberately. Sending all five in from the
+   bottom, which is what the nearest edge works out to be for most of
+   them, reads as a single mechanical sweep. */
+.p-chai {
+  --from-x: calc(-40.8cqw - 26vw);
+  --from-y: -1.7cqw;
+  --from-scale: 1;
+  --fan-delay: calc(var(--fan-start) + 1 * var(--fan-step));
+  --from-rot: 24deg;
+}
+.p-marigold-a {
+  --from-x: calc(42.9cqw + 26vw);
+  --from-y: -2.1cqw;
+  --from-scale: 1;
+  --fan-delay: calc(var(--fan-start) + 3 * var(--fan-step));
+  --from-rot: -21deg;
+}
+.p-marigold-b {
+  --from-x: calc(-43.4cqw - 26vw);
+  --from-y: -3.9cqw;
+  --from-scale: 1;
+  --fan-delay: calc(var(--fan-start) + 6 * var(--fan-step));
+  --from-rot: 19deg;
+}
+.p-dosa {
+  --from-x: -0.9cqw;
+  --from-y: calc(26.3cqw + 26vh);
+  --from-scale: 1;
+  --fan-delay: calc(var(--fan-start) + 9 * var(--fan-step));
+  --from-rot: -17deg;
+}
+.p-bangles {
+  --from-x: calc(45.6cqw + 26vw);
+  --from-y: -4.4cqw;
+  --from-scale: 1;
+  --fan-delay: calc(var(--fan-start) + 12 * var(--fan-step));
+  --from-rot: 16deg;
+}
+
+/* ---------- travel on a phone ----------
+   ⚠️ This has to come AFTER the wide travel values, not inside the
+   arrangement block further up. A media query adds no specificity, so
+   `.p-sun` inside `@media` and `.p-sun` outside it score the same and
+   source order decides. When these lived up with the rest of the phone
+   layout the desktop vectors below simply overwrote them, and pieces
+   started in the wrong place and were left uncovered by the Polaroid.
+
+   Same calculation as the wide one, run again against the 400 x 700
+   stage, so pieces still start stacked under the Polaroid or beyond the
+   edge of the phone. */
+@media (max-width: 760px) {
+  .p-kolam {
+    --from-x: 17cqw;
+    --from-y: -42.0cqw;
+  }
+  .p-stamp {
+    --from-x: 37cqw;
+    --from-y: 35.7cqw;
+  }
+  .p-bell {
+    --from-x: 22cqw;
+    --from-y: 39.2cqw;
+  }
+  .p-sun {
+    --from-x: 0cqw;
+    --from-y: 44.1cqw;
+  }
+  .p-postcard {
+    --from-x: -28cqw;
+    --from-y: 30.8cqw;
+  }
+  .p-stamp-blr {
+    --from-x: -40cqw;
+    --from-y: 43.4cqw;
+  }
+  .p-coconut {
+    --from-x: 38cqw;
+    --from-y: 7.0cqw;
+  }
+  .p-lotus {
+    --from-x: 30cqw;
+    --from-y: -15.4cqw;
+  }
+  .p-couple {
+    --from-x: 29cqw;
+    --from-y: -39.2cqw;
+  }
+  .p-musicians {
+    --from-x: -37cqw;
+    --from-y: 2.8cqw;
+  }
+  .p-rickshaw {
+    --from-x: -32cqw;
+    --from-y: -25.2cqw;
+  }
+  .p-chai {
+    --from-x: calc(-26.5cqw - 30vw);
+    --from-y: 4.5cqw;
+  }
+  .p-marigold-a {
+    --from-x: calc(41cqw + 30vw);
+    --from-y: -2.2cqw;
+  }
+  .p-marigold-b {
+    --from-x: calc(-49cqw - 30vw);
+    --from-y: -5.3cqw;
+  }
+  .p-dosa {
+    --from-x: -0.4cqw;
+    --from-y: calc(51.1cqw + 30vh);
+  }
+  .p-bangles {
+    --from-x: calc(49.5cqw + 30vw);
+    --from-y: -9.0cqw;
+  }
+}
+/* The headline is the one thing that does not stutter. It is type, not
+   paper, so it simply resolves once the cut-outs have landed. */
 .intro-play .headline {
-  animation: fadeUp 800ms var(--expo) var(--headline-delay) forwards;
+  animation: fadeUp 900ms var(--expo) var(--headline-delay) forwards;
 }
 
 @keyframes fadeUp {
@@ -609,41 +1045,11 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .intro-play .piece,
   .intro-play .headline,
-  .intro-play .scroll-cue,
   .intro-play .collage {
     animation-duration: 1ms !important;
     animation-delay: 0ms !important;
   }
 }
-
-/* ---------- Scroll cue ---------- */
-.scroll-cue {
-  position: absolute;
-  bottom: 3.5vh;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(255, 244, 232, 0.88);
-  text-decoration: none;
-  text-shadow: 0 1px 14px rgba(60, 16, 8, 0.6);
-}
-
-.js .scroll-cue {
-  opacity: 0;
-}
-
-.intro-play .scroll-cue {
-  animation: fadeUp 800ms var(--expo) calc(var(--headline-delay) + 400ms)
-    forwards;
-}
-
-.scroll-cue:hover {
-  color: #fff;
-}
-
 /* ============================================================
    SECTIONS
    Deliberately plain. Cream panels on the wall, one idea each.
@@ -1174,7 +1580,6 @@ textarea:focus-visible {
 }
 
 .site-nav a:focus-visible,
-.scroll-cue:focus-visible,
 .site-footer a:focus-visible {
   outline-color: #fff3e4;
 }
@@ -1210,65 +1615,12 @@ textarea:focus-visible {
    pieces inward, and drop the ones with nowhere left to go.
    ============================================================ */
 @media (max-width: 760px) {
-  .headline {
-    top: 12vh;
-    font-size: clamp(34px, 11vw, 62px);
-  }
-
-  .collage {
-    top: 55%;
-  }
-
-  .p-polaroid {
-    --w: 76vmin;
-  }
-
-  /* Both of these sit directly over the enlarged Polaroid at phone size, so
-     they are lifted until they clear its top edge. Measured at 390x844. */
-  .p-sun {
-    --w: 16vmin;
-    --dx: 0vmin;
-    --dy: -41vmin;
-  }
-
-  .p-postcard {
-    --w: 22vmin;
-    --dx: 33vmin;
-    --dy: -29vmin;
-  }
-
-  .p-lotus {
-    --w: 17vmin;
-    --dx: -32vmin;
-    --dy: -42vmin;
-  }
-
-  .p-couple {
-    --w: 30vmin;
-    --dx: -29vmin;
-    --dy: 33vmin;
-  }
-
-  .p-fire {
-    --w: 12vmin;
-    --dx: -33vmin;
-    --dy: 43vmin;
-  }
-
-  .p-rickshaw {
-    --w: 34vmin;
-    --dx: 29vmin;
-    --dy: 32vmin;
-  }
-
-  .p-stamp,
-  .p-bell,
-  .p-chai,
-  .p-musicians,
-  .p-dosa {
-    display: none;
-  }
-
+  /* Everything the collage needs on a phone now lives in the arrangement
+     block further up. What used to be here was the old vmin layout, which
+     survived the rewrite and silently overrode the new stage: it resized
+     the Polaroid in vmin, moved pieces with --dx / --dy variables that no
+     longer exist, and hid five pieces outright. Only the chrome tweaks
+     below are still wanted. */
   .site-nav {
     top: var(--space-4);
   }

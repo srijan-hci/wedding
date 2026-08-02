@@ -95,7 +95,7 @@
   // Type replayIntro() in the browser console to watch it again.
   window.replayIntro = function () {
     body.classList.remove("intro-play");
-    void document.querySelector(".hero-inner").offsetWidth;
+    void document.querySelector(".hero-stage").offsetWidth;
     body.classList.add("intro-play");
   };
 
