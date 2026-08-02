@@ -11,7 +11,7 @@ python3 -m http.server 8899
 
 | Script | What it does |
 |---|---|
-| `collage-shoot.py` | Screenshots `/v2/` once whole, then once per collage piece with that piece hidden. The pixel difference is an exact mask for the piece. |
+| `collage-shoot.py` | Screenshots the home page once whole, then once per collage piece with that piece hidden. The pixel difference is an exact mask for the piece. |
 | `collage-match.py` | Template-matches each of those masked pieces into `Assets/Testpage.png` and prints how far the design puts it from where we put it. Run `collage-shoot.py` first. |
 | `contrast-audit.py` | Measures real rendered contrast for every text run on both pages. |
 | `../Assets/collage/prepare.py` | Trims raw artwork to its alpha bounding box, resizes, and writes the WebP plus PNG fallback. |

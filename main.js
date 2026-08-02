@@ -1,10 +1,11 @@
 /* ============================================================
-   v2 behaviour
+   Page behaviour
 
-   Three small jobs:
+   Four small jobs:
      1. Play the intro once the images are actually ready.
      2. Drift the collage with the mouse afterwards.
-     3. Nav state, section reveals, drawers, and the click-to-load map.
+     3. Nav state and section reveals.
+     4. The three detail drawers.
 
    All of it degrades safely. Everything this file hides is hidden by
    a `.js`-scoped CSS rule, so if this never runs, nothing disappears.
@@ -106,7 +107,7 @@
      2. MOUSE PARALLAX
 
      The point is that no two pieces move alike. Each has its own
-     --px / --py / --pr / --pl in v2.css, and each keeps its OWN lagged
+     --px / --py / --pr / --pl in styles.css, and each keeps its OWN lagged
      copy of the cursor rather than sharing one, so the laggy pieces
      visibly trail the quick ones instead of the whole group sliding
      as a single slab.
@@ -252,22 +253,6 @@
 
     sections.forEach(function (item) {
       spy.observe(item.el);
-    });
-  }
-
-  /* Click-to-load map, so a heavy third-party embed never delays the
-     page for the many guests who will never scroll to it. */
-  var mapButton = document.querySelector(".map-placeholder");
-
-  if (mapButton) {
-    mapButton.addEventListener("click", function () {
-      var frame = document.createElement("iframe");
-      frame.src = mapButton.dataset.mapSrc;
-      frame.title = mapButton.dataset.mapTitle || "Map";
-      frame.loading = "lazy";
-      frame.referrerPolicy = "no-referrer-when-downgrade";
-      frame.allowFullscreen = true;
-      mapButton.replaceWith(frame);
     });
   }
 

@@ -610,7 +610,7 @@
   function resize() {
     /* Only ever called when the viewport has actually changed. Reading
        geometry costs a forced layout, and doing that inside the frame
-       loop while v2.js is writing transforms made the animation stutter.
+       loop while main.js is writing transforms made the animation stutter.
        See "Traps" in AGENTS.md. */
     var rect = layer ? layer.getBoundingClientRect() : canvas.getBoundingClientRect();
     var cssW = Math.max(1, Math.round(rect.width || window.innerWidth));
@@ -803,7 +803,7 @@
 
   /* The layer is position: fixed and sized in vw/vh, so the only things
      that can change its size are a viewport change or the --chrome-inset
-     v2.js sets on mobile. Both fire one of these. */
+     main.js sets on mobile. Both fire one of these. */
   function markResize() {
     needsResize = true;
   }

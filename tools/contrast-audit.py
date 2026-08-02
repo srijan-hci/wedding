@@ -103,8 +103,8 @@ with sync_playwright() as p:
         pg=ctx.new_page()
         pg.route("**/*.{js,css}", lambda r: r.continue_(headers={**r.request.headers,"Cache-Control":"no-cache"}))
         sc=[0,1100,2200,3300,4100] if tag=="desktop" else [0,900,1800,2700,3600,4400]
-        rows+=audit(pg,"http://localhost:8899/v2/",f"home-{tag}",sc)
-        rows+=audit(pg,"http://localhost:8899/v2/rsvp/",f"rsvp-{tag}",[0])
+        rows+=audit(pg,"http://localhost:8899/",f"home-{tag}",sc)
+        rows+=audit(pg,"http://localhost:8899/rsvp/",f"rsvp-{tag}",[0])
         ctx.close()
     br.close()
 fails=[r for r in rows if not r["pass_"]]

@@ -14,7 +14,7 @@ with sync_playwright() as p:
     def noc(route):
         route.continue_()
     pg.route("**/*.{js,css}", lambda r: r.continue_(headers={**r.request.headers, "Cache-Control":"no-cache"}))
-    pg.goto("http://localhost:8899/v2/", wait_until="domcontentloaded")
+    pg.goto("http://localhost:8899/", wait_until="domcontentloaded")
     pg.wait_for_timeout(2500)
 
     # kill the WebGL light + wall so the collage sits on a flat known bg,

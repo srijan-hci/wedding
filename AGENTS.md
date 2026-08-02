@@ -2,96 +2,86 @@
 
 ## Always build on the existing site
 
-This repo is one real website: `index.html` + `styles.css` + `Assets/`.
+This repo is one real website: `index.html`, `rsvp/`, `styles.css`, `main.js`,
+`light.js`, `Assets/`.
 
 **Default behaviour for every session: edit the existing site files directly.**
 
-Do NOT create standalone mockup, demo, prototype, sandbox, or `-v2` files
-(e.g. `intro-mockup.html`, `test.html`, `index-new.html`). New work layers
-onto the live page so it can be judged in context, against the real
-background, real assets, and real type.
+Do NOT create standalone mockup, demo, prototype, sandbox or `-v2` files
+(`index-new.html`, `test.html`, `intro-mockup.html`). New work layers onto the
+live page so it can be judged in context, against the real background, real
+assets and real type.
 
 Only create a separate file when the user explicitly asks for a throwaway
 comparison or an isolated experiment.
 
-**Sanctioned exception: `v2/`.** The user asked for a simpler alternative
-design to be built as an isolated subpage so the live site stays untouched
-while it is worked on. `v2/` is deliberate, not leftover scaffolding. Do not
-"tidy it away". See the `v2/` section below.
+If a change is large or risky, say so clearly and offer a way to switch it off,
+but still make it in the real page rather than a parallel copy.
 
-If a change is large or risky, say so clearly and offer a way to switch it
-off, but still make it in the real page rather than a parallel copy.
+**There used to be a `v2/` subpage.** It was a simpler alternative design,
+built in isolation so the live site stayed untouched while it was worked on. It
+won, and in August 2026 it was promoted to be the site: `v2/index.html` became
+`index.html`, `v2/v2.css` became `styles.css`, `v2/v2.js` became `main.js`, and
+`v2/rsvp/` became `rsvp/`. The original site was deleted in the same commit.
+
+If you need it, it is in the history at `1c96c07..e85ec6c`. It was
+`index.html` + `styles.css` + `sections.css` + `intro.css` + `intro.js` +
+`nav.js`, and it used a 2.6 MB `shadow-wall-720.mp4` where this one generates
+the same effect in WebGL. Do not resurrect any of it without a reason.
 
 ## Keeping additions removable
 
-When adding a self-contained feature (an intro animation, a new section),
-prefer putting it in its own CSS/JS file and wiring it into `index.html`
-with as few lines as possible. That keeps the live page authoritative while
-still making the feature easy to back out.
+When adding a self-contained feature, prefer putting it in its own CSS/JS file
+and wiring it in with as few lines as possible. That keeps the live page
+authoritative while still making the feature easy to back out.
 
 ## Structure
 
 | File | Purpose |
 |---|---|
-| `index.html` | The whole page. Layers: background photo, content, shadow video overlay. |
-| `styles.css` | Base styling and the three-layer page shell. |
-| `intro.css` / `intro.js` | The opening collage animation. Self-contained. |
-| `sections.css` | Design tokens, navigation, and every section below the hero. |
-| `nav.js` | Nav state, active-link highlighting, click-to-load map, scroll reveals. |
-| `rsvp.js` | The RSVP form. Holds the Google Apps Script URL. |
+| `index.html` | The invitation. Collage, date, venue, three detail cards, and the three drawers those cards open. |
+| `rsvp/index.html` | The RSVP page. One plain form that becomes one question at a time. |
+| `rsvp/steps.js` | The stepping only. Submission still belongs to `rsvp.js`. |
+| `styles.css` | Everything. Recoleta `@font-face`, tokens, the liquid glass, the collage stage, the stop-motion keyframes, the page below the collage, the drawers, the RSVP page. |
+| `main.js` | Intro timing, mouse parallax, nav state, section reveals, the drawers. |
+| `light.js` | The light and shadow on the wall. Self-contained WebGL, shaders included. |
+| `rsvp.js` | Form submission. Holds the Google Apps Script URL. Shared by the RSVP page. |
 | `google-apps-script.js` | Not used by the page. The script to paste into Google Apps Script so RSVPs land in a Google Sheet, with setup instructions. |
-| `Assets/` | Background photo (avif/jpg at 1200/1600/3200) and the shadow-wall video. |
-| `Assets/collage/` | The twelve v2 collage cut-outs, WebP with PNG fallback. Originals in `Assets/collage/_source/`. |
-| `Font/` | Recoleta, the display face used by v2. woff2 plus otf. |
-| `v2/` | The simpler alternative design. Self-contained: `index.html`, `v2.css`, `v2.js`, `light.js`. |
+| `Assets/` | The wall photograph, avif/jpg at 1200/1600/3200. |
+| `Assets/collage/` | The collage cut-outs, WebP with PNG fallback, plus `prepare.py` which made them. Originals in `Assets/collage/_source/`, gitignored. |
+| `Font/` | Recoleta. Only the three weights actually loaded are tracked. |
+| `tools/` | Measurement scripts. Nothing here ships. See `tools/README.md`. |
 
-The page is built from three stacked fixed layers:
-`.background-layer` (z 0) → `.content-layer` (z 10) → `.shadow-layer` (z 20,
-`mix-blend-mode: multiply`). Anything new needs a deliberate z-index
-relative to these.
+The page is four stacked fixed layers:
 
-Two consequences of that stack worth knowing before editing:
+```
+.background-layer   z 0    the wall photograph
+.content-layer      z 10   collage, headline, everything you read
+.light-layer        z 20   the drifting light, mix-blend-mode: multiply
+.site-nav           z 30   the pill nav
+.drawer-root        z 60   the detail sheets, over everything
+```
 
-1. **The hero must stay bounded.** `.intro` and `.hero-copy` are positioned
-   with `inset: 0`, so they fill their nearest positioned ancestor. That
-   ancestor is `.hero-section`, which is fixed at `100vh`. Remove that height
-   and the collage is flung to the middle of the whole document.
+Anything new needs a deliberate z-index relative to these.
 
-2. **Nothing inside `.content-layer` can paint above the shadow video.**
-   `.content-layer` creates a stacking context at z-index 10, and a child can
-   never escape above a sibling of its parent. That is why `.site-nav` is a
-   direct child of `<body>` at z-index 30 rather than living inside the
-   content.
+**The nav has to sit outside `.content-layer`.** That layer creates a stacking
+context at z-index 10, and a child can never paint above a sibling of its
+parent. So `.site-nav` is a direct child of `<body>`. Same for `.drawer-root`,
+which additionally has to cover the nav.
 
 Brand colour is `#a94332`.
 
-## Contrast under the shadow video
+## Contrast under the light
 
-The shadow video multiplies over the entire page, and multiply only ever
-darkens. Measured against the actual video file, the middle of the frame sits
-at about 69% brightness and more than half the area is below 70%.
+`.light-layer` multiplies over the entire page, and multiply only ever darkens.
+The shadow runs at the same strength the whole way down: the owner asked for
+the wall and the shadow to be unbroken from the collage to the footer, so
+nothing eases it and nothing should.
 
-That has two hard consequences:
-
-- **All body copy must be dark text on the light cream panels.** Light text on
-  the terracotta wall is reserved for large display type only (the hero and the
-  footer), never paragraphs.
-- **The ink colours in `sections.css` are deliberately darker than they look
-  like they need to be**, so body copy still clears roughly 5:1 in average
-  shadow. Do not lighten them back for aesthetic reasons without re-measuring.
-
-In the darkest ~1% of the frame, body copy still drops to about 3.6:1, which is
-under the WCAG AA threshold of 4.5:1. This is unavoidable while the shadow runs
-at full strength over the content: at that darkness even pure black text on the
-cream panel only reaches 4.5:1. Softening the shadow below the hero is the only
-real fix, and that is a deliberate design choice the owner has made against.
-
-**v2 no longer solves this by easing the light.** It used to, running the
-shadow at `--light-hero: 1` over the collage and easing to
-`--light-sections: 0.35` over the content. That easing is **gone**: the owner
-asked for the wall and the shadow to stay constant the whole way down, and the
-cream panels went with it. Every word below the collage is now cream on
-terracotta at full light.
+That means **every word on the site is cream on terracotta under a multiply
+blend**, which is a much tighter contrast budget than dark text on a light
+panel. An earlier version of this site solved the problem by putting body copy
+on cream panels and easing the light back below the hero. Both are gone.
 
 That is a much tighter contrast budget, and it was re-measured from scratch
 rather than assumed. The method matters, because a `mix-blend-mode: multiply`
@@ -122,28 +112,10 @@ page, the RSVP page and an open drawer. The colours are already near the top of
 their range, so if you add small text on the wall, measure it. Do not eyeball
 it.
 
-## The v2 subpage
+## The collage and the intro
 
-`v2/` is an alternative, much simpler design, live at `/v2/` once published.
-The user designed it in Figma and asked for it as an isolated subpage so the
-main site is never at risk. It is **not** wired into `index.html` and nothing
-in the root loads it.
-
-| File | Purpose |
-|---|---|
-| `v2/index.html` | Pill nav, the hero collage, the invitation block, three detail cards, and the three drawers those cards open. |
-| `v2/v2.css` | Recoleta `@font-face`, tokens, the liquid glass, the collage stage, the stop-motion keyframes, the page below the collage, the drawers, and the RSVP page. |
-| `v2/v2.js` | Intro timing, mouse parallax, nav state, section reveals, and the drawers. |
-| `v2/light.js` | The WebGL light on the wall. Self-contained, shaders included. See the next section. |
-| `v2/rsvp/index.html` | The RSVP page. One plain form that becomes one question at a time. |
-| `v2/rsvp/steps.js` | The stepping only. Submission still belongs to the root `rsvp.js`. |
-
-It reuses the root `rsvp.js` rather than duplicating the form logic, and
-references assets as `../Assets/...` and `../Font/...` (`../../` from
-`v2/rsvp/`). If v2 is ever promoted to be the main site, that is: move the
-files up a level and strip the `../`.
-
-Things worth knowing before editing v2:
+The design came from Figma (`Assets/Testpage.png`, gitignored). Things worth
+knowing before editing it:
 
 1. **The collage is a fixed-ratio stage, not viewport units.** `.hero-stage`
    has an `aspect-ratio` and `container-type: inline-size`; every piece is
@@ -219,8 +191,8 @@ Things worth knowing before editing v2:
    sizing is predictable. The `width`/`height` attributes in the HTML match the
    trimmed files. If you re-export from Figma, re-trim, or the sizes will lie.
 
-8. **The shadow video is gone from v2.** It was 2.6 MB of the page's 3.5 MB.
-   `v2/light.js` replaces it with a generated light field.
+8. **There is no shadow video.** The old site used one, 2.6 MB of its 3.5 MB
+   total. `light.js` generates the same effect instead.
 
 ### The liquid glass
 
@@ -272,7 +244,7 @@ and it jumps.
 
 ### The RSVP page
 
-`v2/rsvp/` ships **one ordinary form** with every question visible and a
+`rsvp/` ships **one ordinary form** with every question visible and a
 working submit button. `steps.js` is pure enhancement: if it never loads, the
 form still works and only the pacing is lost. Verified with JavaScript off.
 
@@ -286,11 +258,10 @@ file knowing about the other: the flow simply becomes four steps instead of six.
 Submission is still the root `rsvp.js`. `steps.js` only decides which question
 you are looking at.
 
-## The light on the wall (`v2/light.js`)
-## The light on the wall (`v2/light.js`)
+## The light on the wall (`light.js`)
 
-v1 darkens its wall with a 2.6 MB looping video of moving shadows. v2 does the
-same job in about 30 KB of code, and the result moves on its own and pools
+The wall used to be darkened by a 2.6 MB looping video of moving shadows. This
+does the same job in about 30 KB of code, and the result moves on its own and pools
 toward the cursor.
 
 This is a deliberate, close port of the hero effect on
@@ -396,9 +367,9 @@ LIGHT.vignetteRadius = 0.5    // takes effect next frame
 LIGHT.warm = '#FFE0B0'; LIGHT.refresh()   // colours are parsed once
 ```
 
-Strength over the hero versus the sections is not in here. It is two CSS
-variables, `--light-hero: 1` and `--light-sections: 0.35`, eased between by
-`v2.js` as you scroll.
+How much of the light reaches the page is not in here. It is one CSS variable,
+`--light-strength`, and it is the same the whole way down. It used to ease back
+below the hero; it deliberately does not any more.
 
 ### What is verified, and what to re-check if you change it
 
