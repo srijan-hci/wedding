@@ -1,0 +1,1288 @@
+/* ============================================================
+   v2 — the simpler version
+
+   One terracotta wall, a collage of real stickers, a Polaroid, one
+   headline, three links. That is the whole idea.
+
+   Layers, back to front:
+     .background-layer   z 0    the wall photograph
+     .content-layer      z 10   collage, headline, sections
+     .light-layer        z 20   the drifting light, multiply blend
+     .site-nav           z 30   the pill nav
+
+   The nav has to sit outside .content-layer to reach z 30, because a
+   child can never paint above a sibling of its parent. Same reason as
+   v1; see AGENTS.md.
+   ============================================================ */
+
+/* ---------- Recoleta ----------
+   Loaded from the local Font/ folder. Only the weights actually used
+   are declared, in woff2 with a woff fallback, so this costs about
+   110 KB rather than the 9 MB the whole family would.
+
+   Note for design tooling: the "overused font" check flags this. It is
+   a false positive. Recoleta is not one of the ubiquitous defaults the
+   rule targets (Inter, Roboto, Geist and friends); it is a licensed
+   face the owner chose deliberately and supplied the files for, and it
+   is the face in the approved design. Keeping it. */
+@font-face {
+  font-family: "Recoleta";
+  src: url("../Font/Recoleta-Regular.woff2") format("woff2"),
+    url("../Font/Recoleta-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Recoleta";
+  src: url("../Font/Recoleta-Medium.woff2") format("woff2"),
+    url("../Font/Recoleta-Medium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Recoleta";
+  src: url("../Font/Recoleta-SemiBold.woff2") format("woff2"),
+    url("../Font/Recoleta-SemiBold.woff") format("woff");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- Tokens ---------- */
+:root {
+  --wall: #a94332;
+  --wall-deep: #8f3527;
+  --cream: #fdf6ea;
+  --cream-warm: #f6ead6;
+  --cream-edge: #e5d4bb;
+  --ink: #33241a;
+  --ink-soft: #56422f;
+  /* Measured, not guessed: the light layer multiplies, so it darkens the
+     cream panels as well as the wall. At #7d6a56 the three faint-text uses
+     (.placeholder, .map-placeholder span, .optional) sat at 4.81:1 on an
+     untouched panel but fell to 3.39:1 once the light passed over it, under
+     the 4.5:1 AA threshold. This deeper brown holds 4.64:1 in that worst
+     case and 6.58:1 on a clean panel. All three uses are on cream, so
+     nothing loses contrast by going darker. */
+  --ink-faint: #655646;
+  /* Measured, not guessed: at #8a5f28 the 12.5px uppercase labels in the
+     venue detail list landed at 4.49:1 under the shadow video, a hair under
+     the 4.5:1 AA threshold. This deeper bronze takes them to 5.3:1. */
+  --brass: #7d5522;
+
+  --font-display: "Recoleta", ui-serif, Georgia, serif;
+  --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  --radius: 6px;
+  --radius-lg: 14px;
+  --content-max: 940px;
+
+  /* How much of the light reaches the page. 1 in the hero, which
+     gives exactly the 26% multiply microsoft.ai uses, then eased down
+     by v2.js over the sections so the body copy keeps its contrast.
+     This is the single dial: change these two numbers and everything
+     follows. The 26% itself lives in light.js as CONFIG.strength. */
+  --light-hero: 1;
+  --light-sections: 0.35;
+  --light-strength: var(--light-hero);
+
+  --expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--wall);
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  isolation: isolate;
+  background: var(--wall);
+  font-family: var(--font-body);
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ---------- The fixed layers ----------
+   Sized to the viewport plus --chrome-inset, which v2.js measures. On
+   phones the browser toolbars overlay the page, so every viewport unit
+   reports a height shorter than the physical screen and a 100vh layer
+   stops short of the bottom. Extending past it is the only way to
+   paint the wall behind the toolbar. Zero on desktop. */
+.background-layer,
+.light-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100vw;
+  height: calc(100vh + var(--chrome-inset, 0px));
+  pointer-events: none;
+}
+
+.background-layer {
+  z-index: 0;
+}
+
+/* Multiply, matching microsoft.ai. The canvas paints near-white where
+   the light pools and a gently tinted grey elsewhere, so multiplying
+   leaves the wall's own colour alone under the light and shades it
+   everywhere else. White in the canvas means "do not touch this
+   pixel", which is why the wall colour never shifts. */
+.light-layer {
+  z-index: 20;
+  overflow: hidden;
+  mix-blend-mode: multiply;
+  opacity: var(--light-strength);
+}
+
+.background-layer img,
+.light-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.light-canvas {
+  /* The canvas is drawn at half size and stretched. Everything in it is
+     soft enough that nobody can tell, and it costs a quarter as much. */
+  width: 100%;
+  height: 100%;
+}
+
+@supports not (mix-blend-mode: multiply) {
+  .light-layer {
+    display: none;
+  }
+}
+
+.content-layer {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+}
+
+/* ============================================================
+   PILL NAV
+   ============================================================ */
+.site-nav {
+  position: fixed;
+  top: var(--space-5);
+  left: 50%;
+  z-index: 30;
+  transform: translateX(-50%);
+}
+
+/* Hidden only when scripting is available, so that if JavaScript never
+   runs the nav is simply there from the start. */
+.js .site-nav {
+  opacity: 0;
+  transition: opacity 700ms ease;
+}
+
+.js .site-nav.is-ready {
+  opacity: 1;
+}
+
+.site-nav ul {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 6px;
+  border-radius: 999px;
+  /* The pill floats over both the terracotta wall and the cream panels, so
+     it has to be opaque enough to read against a light background too. At
+     0.28 the cream label all but vanished over the Venue panel. 0.72 keeps
+     the glassy feel while holding 6.3:1 against the lightest thing it can
+     ever sit on. */
+  background: rgba(60, 20, 12, 0.72);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  box-shadow: 0 2px 18px rgba(50, 16, 8, 0.22);
+  list-style: none;
+}
+
+.site-nav a {
+  display: block;
+  padding: 9px var(--space-5);
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: #fdf1e2;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+/* Hover darkens rather than lightens, so the cream label keeps its contrast.
+   The current section is the one that gets the solid cream chip, which makes
+   "where am I" unmistakable without colliding with the hover state. */
+.site-nav a:hover,
+.site-nav a:focus-visible {
+  background: rgba(30, 8, 4, 0.34);
+}
+
+.site-nav a.is-active {
+  background: rgba(253, 246, 234, 0.94);
+  color: #55200f;
+}
+
+.site-nav a.is-active:hover,
+.site-nav a.is-active:focus-visible {
+  background: #fdf6ea;
+}
+
+/* ============================================================
+   THE COLLAGE
+
+   Every piece is pinned to one point and pushed out to its resting
+   place by its own --dx / --dy. At the start of the intro that offset
+   is zero and the piece is shrunk, so it sits hidden behind the
+   Polaroid. Animating the offset outward is what makes each one look
+   like it slides out from underneath.
+
+   Stacking is DOM order, not z-index: pieces listed later in the HTML
+   sit on top. The Polaroid is last so it covers the whole stack while
+   everything is still bunched at the centre.
+
+   Units are vmin, so the composition scales with the window.
+   ============================================================ */
+.hero {
+  position: relative;
+  height: 100vh;
+}
+
+/* The absolutely positioned children below measure against this box.
+   Without a fixed height here they would stretch to the full scrolling
+   height of the page and the collage would land somewhere near the
+   middle of the document. */
+.hero-inner {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.headline {
+  position: absolute;
+  top: 16vh;
+  left: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0 var(--space-5);
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(38px, 8.2vw, 118px);
+  line-height: 1;
+  letter-spacing: -0.015em;
+  text-align: center;
+  color: #fffaf2;
+  text-shadow: 0 3px 30px rgba(60, 16, 8, 0.4);
+}
+
+.js .headline {
+  opacity: 0;
+}
+
+/* The point everything is measured from. Sitting below centre leaves
+   clean space for the headline above. */
+.collage {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  width: 0;
+  height: 0;
+}
+
+.layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  will-change: transform;
+}
+
+/* Each piece carries its own character:
+     --dx / --dy  where it rests, measured from the centre
+     --w          how wide it is
+     --rot        how far it tilts
+     --px / --py  how far it drifts with the cursor, and in which
+                  direction. Negative drifts against the cursor, which
+                  is what separates neighbouring pieces.
+     --pr         how far it rocks
+     --pl         how quickly it chases the cursor. Lower is laggier,
+                  so the piece trails its neighbours instead of moving
+                  in lockstep. */
+.piece {
+  position: absolute;
+  left: 0;
+  top: 0;
+  --dx: 0vmin;
+  --dy: 0vmin;
+  --rot: 0deg;
+  --px: 1;
+  --py: 1;
+  --pr: 0;
+  --pl: 0.08;
+  width: var(--w);
+  transform: translate(-50%, -50%) translate(var(--dx), var(--dy))
+    rotate(var(--rot));
+}
+
+.js .piece {
+  opacity: 0;
+}
+
+.piece img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Lifts each cut-out off the wall just enough to read as a sticker
+     rather than a flat paste-up. */
+  filter: drop-shadow(0 10px 18px rgba(58, 16, 8, 0.34));
+}
+
+/* ---------- Where each piece sits ---------- */
+.p-polaroid {
+  --w: 56vmin;
+  --rot: -2deg;
+  --px: 0.3;
+  --py: 0.22;
+  --pr: 0.18;
+  --pl: 0.06;
+}
+
+.p-stamp {
+  --w: 8.6vmin;
+  --dx: -50.5vmin;
+  --dy: -22.8vmin;
+  --rot: -3deg;
+  --px: 0.9;
+  --py: 0.5;
+  --pr: -0.5;
+  --pl: 0.085;
+}
+
+.p-bell {
+  --w: 7.6vmin;
+  --dx: -30.8vmin;
+  --dy: -21.3vmin;
+  --rot: 2deg;
+  --px: -0.6;
+  --py: 0.85;
+  --pr: 0.7;
+  --pl: 0.075;
+}
+
+.p-sun {
+  --w: 11.7vmin;
+  --dx: -3.4vmin;
+  --dy: -25.2vmin;
+  --rot: 0deg;
+  --px: 0.45;
+  --py: 0.8;
+  --pr: 0.4;
+  --pl: 0.07;
+}
+
+.p-postcard {
+  --w: 16.3vmin;
+  --dx: 35.1vmin;
+  --dy: -15.6vmin;
+  --rot: 3deg;
+  --px: 0.75;
+  --py: -0.5;
+  --pr: 0.55;
+  --pl: 0.09;
+}
+
+.p-lotus {
+  --w: 10.7vmin;
+  --dx: -48.6vmin;
+  --dy: -2.5vmin;
+  --rot: -2deg;
+  --px: 1.15;
+  --py: 0.55;
+  --pr: -0.35;
+  --pl: 0.095;
+}
+
+.p-musicians {
+  --w: 16.3vmin;
+  --dx: 53.4vmin;
+  --dy: -2.5vmin;
+  --rot: 2deg;
+  --px: 1.3;
+  --py: 0.7;
+  --pr: 0.5;
+  --pl: 0.1;
+}
+
+.p-rickshaw {
+  --w: 24.9vmin;
+  --dx: 42.9vmin;
+  --dy: 18.8vmin;
+  --rot: -2deg;
+  --px: 1.45;
+  --py: -0.6;
+  --pr: 0.6;
+  --pl: 0.09;
+}
+
+.p-couple {
+  --w: 21.4vmin;
+  --dx: -44.3vmin;
+  --dy: 19.3vmin;
+  --rot: 1deg;
+  --px: -0.85;
+  --py: 0.7;
+  --pr: -0.55;
+  --pl: 0.08;
+}
+
+.p-fire {
+  --w: 8.6vmin;
+  --dx: -47.6vmin;
+  --dy: 25.1vmin;
+  --rot: 0deg;
+  --px: -1;
+  --py: 0.95;
+  --pr: -0.8;
+  --pl: 0.11;
+}
+
+.p-chai {
+  --w: 4.7vmin;
+  --dx: -30.5vmin;
+  --dy: 7vmin;
+  --rot: -4deg;
+  --px: 0.7;
+  --py: 0.6;
+  --pr: 0.9;
+  --pl: 0.105;
+}
+
+.p-dosa {
+  --w: 20.3vmin;
+  --dx: 0vmin;
+  --dy: 27.5vmin;
+  --rot: 2deg;
+  --px: 0.5;
+  --py: -0.75;
+  --pr: 0.35;
+  --pl: 0.085;
+}
+
+/* ============================================================
+   THE INTRO
+
+   Beat 1  the Polaroid rises into frame
+   Beat 2  every other piece fans out from behind it, one at a time
+   Beat 3  the headline appears and the group eases back a fraction
+   ============================================================ */
+:root {
+  --rise-delay: 250ms;
+  --rise-dur: 850ms;
+  --fan-dur: 780ms;
+  --fan-start: 1050ms;
+  --fan-step: 75ms;
+  --settle-delay: 2100ms;
+  --settle-dur: 900ms;
+  --headline-delay: 2200ms;
+}
+
+.intro-play .p-polaroid {
+  animation: rise var(--rise-dur) var(--expo) var(--rise-delay) forwards;
+}
+
+@keyframes rise {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(78vh) scale(0.34) rotate(4deg);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(var(--rot));
+  }
+}
+
+/* These start at opacity 1, not 0. The pieces are not fading in; they
+   are already solid, just hidden behind the Polaroid. That is what
+   sells the illusion of sliding out from underneath.
+
+   The stagger is carried by --fan-delay rather than by a more specific
+   selector. `:not(.p-polaroid)` counts towards specificity, so this rule
+   scores (0,3,0) and a plain `.intro-play .p-stamp` rule scores only
+   (0,2,0). The shorthand below resets animation-delay to 0, and being the
+   more specific rule it used to beat every per-piece delay: all eleven
+   pieces fanned out at once, before the Polaroid had finished rising.
+   A custom property sidesteps specificity entirely. */
+.intro-play .piece:not(.p-polaroid) {
+  animation: fan var(--fan-dur) var(--expo) var(--fan-delay, 0ms) forwards;
+}
+
+@keyframes fan {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.3) rotate(0deg);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(var(--dx), var(--dy))
+      rotate(var(--rot));
+  }
+}
+
+.p-stamp     { --fan-delay: calc(var(--fan-start) + 0 * var(--fan-step)); }
+.p-bell      { --fan-delay: calc(var(--fan-start) + 1 * var(--fan-step)); }
+.p-sun       { --fan-delay: calc(var(--fan-start) + 2 * var(--fan-step)); }
+.p-postcard  { --fan-delay: calc(var(--fan-start) + 3 * var(--fan-step)); }
+.p-lotus     { --fan-delay: calc(var(--fan-start) + 4 * var(--fan-step)); }
+.p-musicians { --fan-delay: calc(var(--fan-start) + 5 * var(--fan-step)); }
+.p-rickshaw  { --fan-delay: calc(var(--fan-start) + 6 * var(--fan-step)); }
+.p-couple    { --fan-delay: calc(var(--fan-start) + 7 * var(--fan-step)); }
+.p-fire      { --fan-delay: calc(var(--fan-start) + 8 * var(--fan-step)); }
+.p-chai      { --fan-delay: calc(var(--fan-start) + 9 * var(--fan-step)); }
+.p-dosa      { --fan-delay: calc(var(--fan-start) + 10 * var(--fan-step)); }
+
+.intro-play .collage {
+  animation: settle var(--settle-dur) var(--expo) var(--settle-delay) forwards;
+}
+
+@keyframes settle {
+  to {
+    transform: translateY(1vh) scale(0.97);
+  }
+}
+
+.intro-play .headline {
+  animation: fadeUp 800ms var(--expo) var(--headline-delay) forwards;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Anyone who has asked their system to reduce motion sees the finished
+   composition immediately, with no movement at all. The mouse parallax
+   is switched off for them too, in v2.js. */
+@media (prefers-reduced-motion: reduce) {
+  .intro-play .piece,
+  .intro-play .headline,
+  .intro-play .scroll-cue,
+  .intro-play .collage {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+  }
+}
+
+/* ---------- Scroll cue ---------- */
+.scroll-cue {
+  position: absolute;
+  bottom: 3.5vh;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 244, 232, 0.88);
+  text-decoration: none;
+  text-shadow: 0 1px 14px rgba(60, 16, 8, 0.6);
+}
+
+.js .scroll-cue {
+  opacity: 0;
+}
+
+.intro-play .scroll-cue {
+  animation: fadeUp 800ms var(--expo) calc(var(--headline-delay) + 400ms)
+    forwards;
+}
+
+.scroll-cue:hover {
+  color: #fff;
+}
+
+/* ============================================================
+   SECTIONS
+   Deliberately plain. Cream panels on the wall, one idea each.
+   ============================================================ */
+.section {
+  position: relative;
+  padding: var(--space-6) var(--space-5) 0;
+  scroll-margin-top: 88px;
+}
+
+.section:last-of-type {
+  padding-bottom: var(--space-6);
+}
+
+.panel {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-9) clamp(var(--space-5), 5vw, var(--space-8));
+  border-radius: var(--radius-lg);
+  background: var(--cream);
+  box-shadow: 0 1px 2px rgba(51, 36, 26, 0.06),
+    0 16px 40px rgba(51, 36, 26, 0.14);
+}
+
+.section-head {
+  max-width: 60ch;
+  margin: 0 auto var(--space-7);
+  text-align: center;
+}
+
+.section-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(30px, 4.4vw, 50px);
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.section-lede {
+  margin: var(--space-4) 0 0;
+  font-size: 16.5px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+
+.panel p {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+/* The light multiplies over the cream panels, so a link sitting under it
+   loses contrast. The brand red #a94332 measured 5.53:1 on an untouched
+   panel but only 3.66:1 once the light passed over, under the 4.5:1 AA
+   threshold. --wall-deep is the same red a shade darker, already in the
+   palette, and holds 4.78:1 in that worst case. Hover goes deeper still so
+   the state change stays visible. */
+.panel a {
+  color: var(--wall-deep);
+  text-underline-offset: 3px;
+}
+
+.panel a:hover {
+  color: #75281a;
+}
+
+.panel strong {
+  color: var(--ink);
+}
+
+.placeholder {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+/* ---------- Venue ---------- */
+.venue-grid {
+  display: grid;
+  gap: var(--space-7);
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
+}
+
+@media (max-width: 780px) {
+  .venue-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.map-frame {
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--cream-edge);
+  border-radius: var(--radius);
+  background: var(--cream-warm);
+}
+
+.map-frame iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* Click to load, so a heavy third-party map never delays the page and
+   nobody's IP goes to Google before they have asked for a map. */
+.map-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  padding: var(--space-6);
+  border: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(138, 95, 40, 0.06) 0 10px,
+    transparent 10px 20px
+  );
+  font-family: var(--font-body);
+  text-align: center;
+  cursor: pointer;
+}
+
+.map-placeholder:hover {
+  background-color: rgba(138, 95, 40, 0.08);
+}
+
+.map-placeholder b {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 19px;
+  color: var(--ink);
+}
+
+.map-placeholder span {
+  max-width: 24ch;
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+.detail-list {
+  margin: 0;
+}
+
+.detail-list > div {
+  display: grid;
+  gap: 2px var(--space-5);
+  grid-template-columns: minmax(110px, 150px) 1fr;
+  padding: var(--space-4) 0;
+  border-bottom: 1px dashed rgba(138, 95, 40, 0.3);
+}
+
+.detail-list > div:last-child {
+  border-bottom: 0;
+}
+
+.detail-list dt {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brass);
+}
+
+.detail-list dd {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 560px) {
+  .detail-list > div {
+    grid-template-columns: 1fr;
+  }
+}
+
+.note {
+  margin: var(--space-6) 0 0;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid rgba(169, 67, 50, 0.35);
+  border-radius: var(--radius);
+  background: rgba(169, 67, 50, 0.06);
+  font-size: 14.5px;
+}
+
+/* ---------- Dates ---------- */
+.dates {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-5);
+  margin-top: var(--space-7);
+}
+
+.date-card {
+  flex: 1 1 240px;
+  padding: var(--space-6);
+  border: 1px solid var(--cream-edge);
+  border-radius: var(--radius);
+  background: var(--cream-warm);
+  text-align: center;
+}
+
+.date-card b {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 24px;
+  color: var(--ink);
+}
+
+.date-card span {
+  display: block;
+  margin-top: 6px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+/* ---------- FAQs ---------- */
+.faq-list {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.faq-item {
+  border-bottom: 1px solid var(--cream-edge);
+}
+
+.faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5) 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 19px;
+  color: var(--ink);
+  cursor: pointer;
+  list-style: none;
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item summary::after {
+  content: "";
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  border-right: 1.5px solid var(--brass);
+  border-bottom: 1.5px solid var(--brass);
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 220ms ease;
+}
+
+.faq-item[open] summary::after {
+  transform: translateY(2px) rotate(-135deg);
+}
+
+.faq-item summary:hover {
+  color: var(--wall);
+}
+
+.faq-answer {
+  padding: 0 0 var(--space-5);
+}
+
+.faq-answer p {
+  margin: 0;
+  max-width: 68ch;
+}
+
+/* ---------- Form ---------- */
+.rsvp-form {
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+/* Moved off screen rather than display:none, because some bots skip
+   hidden fields. Kept out of the tab order and the accessibility tree
+   so no real person ever meets it. */
+.rsvp-hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.field-grid {
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.field {
+  margin: 0 0 var(--space-5);
+}
+
+.field-grid .field {
+  margin-bottom: 0;
+}
+
+.field-grid + .field,
+.field-grid + fieldset,
+fieldset + .field,
+.if-attending {
+  margin-top: var(--space-5);
+}
+
+.field label,
+fieldset legend {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.optional {
+  margin-left: 6px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--ink-faint);
+}
+
+.rsvp-form input[type="text"],
+.rsvp-form input[type="email"],
+.rsvp-form input[type="number"],
+.rsvp-form select,
+.rsvp-form textarea {
+  display: block;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--cream-edge);
+  border-radius: var(--radius);
+  background: #fffdf9;
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.rsvp-form textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.rsvp-form input:focus,
+.rsvp-form select:focus,
+.rsvp-form textarea:focus {
+  border-color: var(--brass);
+  box-shadow: 0 0 0 3px rgba(138, 95, 40, 0.16);
+  outline: none;
+}
+
+/* Only flag an invalid field once the guest has actually tried to
+   submit, never while they are still typing. */
+.rsvp-form.was-validated input:invalid,
+.rsvp-form.was-validated select:invalid {
+  border-color: var(--wall);
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  flex: 1 1 200px;
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--cream-edge);
+  border-radius: var(--radius);
+  background: #fffdf9;
+  font-size: 15.5px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.choice input {
+  flex-shrink: 0;
+  margin: 2px 0 0;
+  width: 17px;
+  height: 17px;
+  accent-color: var(--wall);
+}
+
+.choice:has(input:checked) {
+  border-color: var(--brass);
+  background: rgba(138, 95, 40, 0.1);
+  color: var(--ink);
+}
+
+.if-attending[hidden] {
+  display: none;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--cream-edge);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4) var(--space-7);
+  border: 0;
+  border-radius: 999px;
+  background: var(--wall);
+  color: var(--cream);
+  font-family: var(--font-display);
+  font-size: 17px;
+  cursor: pointer;
+  transition: background-color 200ms ease;
+}
+
+.btn:hover,
+.btn:focus-visible {
+  background: var(--wall-deep);
+}
+
+.btn[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.form-status {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.form-status:empty {
+  display: none;
+}
+
+.form-status.is-error {
+  color: var(--wall);
+}
+
+.rsvp-done {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: var(--space-7) var(--space-6);
+  border: 1px solid rgba(138, 95, 40, 0.4);
+  border-radius: var(--radius);
+  background: rgba(138, 95, 40, 0.08);
+  text-align: center;
+}
+
+.rsvp-done b {
+  display: block;
+  margin-bottom: var(--space-3);
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--ink);
+}
+
+/* ---------- Footer ----------
+   Light type on the wall, so it must be large and generously spaced to
+   survive the light blend. Nothing small or dense out here. */
+.site-footer {
+  position: relative;
+  z-index: 10;
+  padding: var(--space-8) var(--space-5) var(--space-9);
+  text-align: center;
+}
+
+.site-footer b {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(24px, 3vw, 34px);
+  color: #fff6ea;
+  text-shadow: 0 2px 22px rgba(60, 16, 8, 0.5);
+}
+
+.site-footer p {
+  margin: var(--space-3) 0 0;
+  font-size: 14.5px;
+  color: rgba(255, 244, 232, 0.92);
+  text-shadow: 0 1px 14px rgba(60, 16, 8, 0.55);
+}
+
+.site-footer a {
+  color: inherit;
+  text-underline-offset: 4px;
+}
+
+/* ---------- Focus ---------- */
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.site-nav a:focus-visible,
+.scroll-cue:focus-visible,
+.site-footer a:focus-visible {
+  outline-color: #fff3e4;
+}
+
+/* ---------- Reveals ----------
+   The class is added by v2.js at runtime, so if scripting never runs
+   nothing is ever left hidden. */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 800ms var(--expo), transform 800ms var(--expo);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ============================================================
+   SMALL SCREENS
+
+   Phones are far narrower than they are tall, so vmin shrinks
+   everything. Enlarge the middle of the composition, pull the outer
+   pieces inward, and drop the ones with nowhere left to go.
+   ============================================================ */
+@media (max-width: 760px) {
+  .headline {
+    top: 12vh;
+    font-size: clamp(34px, 11vw, 62px);
+  }
+
+  .collage {
+    top: 55%;
+  }
+
+  .p-polaroid {
+    --w: 76vmin;
+  }
+
+  /* Both of these sit directly over the enlarged Polaroid at phone size, so
+     they are lifted until they clear its top edge. Measured at 390x844. */
+  .p-sun {
+    --w: 16vmin;
+    --dx: 0vmin;
+    --dy: -41vmin;
+  }
+
+  .p-postcard {
+    --w: 22vmin;
+    --dx: 33vmin;
+    --dy: -29vmin;
+  }
+
+  .p-lotus {
+    --w: 17vmin;
+    --dx: -32vmin;
+    --dy: -42vmin;
+  }
+
+  .p-couple {
+    --w: 30vmin;
+    --dx: -29vmin;
+    --dy: 33vmin;
+  }
+
+  .p-fire {
+    --w: 12vmin;
+    --dx: -33vmin;
+    --dy: 43vmin;
+  }
+
+  .p-rickshaw {
+    --w: 34vmin;
+    --dx: 29vmin;
+    --dy: 32vmin;
+  }
+
+  .p-stamp,
+  .p-bell,
+  .p-chai,
+  .p-musicians,
+  .p-dosa {
+    display: none;
+  }
+
+  .site-nav {
+    top: var(--space-4);
+  }
+
+  .site-nav a {
+    padding: 8px var(--space-4);
+    font-size: 15px;
+  }
+
+  .section {
+    padding: var(--space-4) var(--space-4) 0;
+  }
+
+  .panel {
+    padding: var(--space-8) var(--space-5);
+  }
+}

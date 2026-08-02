@@ -16,3 +16,27 @@ Assets/shadow-wall-540.mp4
 
 # Design-hook tooling cache
 .impeccable/
+
+# Raw collage artwork. Every one of these is trimmed, resized and exported to
+# Assets/collage/ as WebP with a PNG fallback; those derivatives are what the
+# site loads and what gets published. The originals stay local so the repo is
+# not carrying tens of megabytes of source PNGs.
+Assets/collage/_source/
+Assets/*.png
+!Assets/background-*.png
+Assets/Venue.png
+
+# Figma exports used as design reference, not site assets.
+Assets/Testpage.png
+
+# Recoleta ships in 7 weights x 2 families x 4 formats. v2 loads exactly three
+# weights in woff2 with a woff fallback, so only those six files are tracked.
+# The rest is 4.4 MB of dead weight.
+Font/*
+!Font/Recoleta-Regular.woff2
+!Font/Recoleta-Regular.woff
+!Font/Recoleta-Medium.woff2
+!Font/Recoleta-Medium.woff
+!Font/Recoleta-SemiBold.woff2
+!Font/Recoleta-SemiBold.woff
+

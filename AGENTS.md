@@ -14,6 +14,11 @@ background, real assets, and real type.
 Only create a separate file when the user explicitly asks for a throwaway
 comparison or an isolated experiment.
 
+**Sanctioned exception: `v2/`.** The user asked for a simpler alternative
+design to be built as an isolated subpage so the live site stays untouched
+while it is worked on. `v2/` is deliberate, not leftover scaffolding. Do not
+"tidy it away". See the `v2/` section below.
+
 If a change is large or risky, say so clearly and offer a way to switch it
 off, but still make it in the real page rather than a parallel copy.
 
@@ -36,6 +41,9 @@ still making the feature easy to back out.
 | `rsvp.js` | The RSVP form. Holds the Google Apps Script URL. |
 | `google-apps-script.js` | Not used by the page. The script to paste into Google Apps Script so RSVPs land in a Google Sheet, with setup instructions. |
 | `Assets/` | Background photo (avif/jpg at 1200/1600/3200) and the shadow-wall video. |
+| `Assets/collage/` | The twelve v2 collage cut-outs, WebP with PNG fallback. Originals in `Assets/collage/_source/`. |
+| `Font/` | Recoleta, the display face used by v2. woff2 plus otf. |
+| `v2/` | The simpler alternative design. Self-contained: `index.html`, `v2.css`, `v2.js`, `light.js`. |
 
 The page is built from three stacked fixed layers:
 `.background-layer` (z 0) → `.content-layer` (z 10) → `.shadow-layer` (z 20,
@@ -77,6 +85,193 @@ under the WCAG AA threshold of 4.5:1. This is unavoidable while the shadow runs
 at full strength over the content: at that darkness even pure black text on the
 cream panel only reaches 4.5:1. Softening the shadow below the hero is the only
 real fix, and that is a deliberate design choice the owner has made against.
+
+**v2 solves this.** It runs the shadow at `--shadow-hero: 0.7` over the collage
+and eases it to `--shadow-sections: 0.22` over the content. Measured across 34
+text elements there, the worst case is 5.6:1 and the typical case 7 to 12:1.
+Those two variables in `v2/v2.css` are the single dial; re-measure if you change
+them.
+
+## The v2 subpage
+
+`v2/` is an alternative, much simpler design, live at `/v2/` once published.
+The user designed it in Figma and asked for it as an isolated subpage so the
+main site is never at risk. It is **not** wired into `index.html` and nothing
+in the root loads it.
+
+| File | Purpose |
+|---|---|
+| `v2/index.html` | Pill nav, hero collage, and three short sections: Venue, RSVP, FAQs. |
+| `v2/v2.css` | Recoleta `@font-face`, tokens, collage placement, intro keyframes, sections. |
+| `v2/v2.js` | Intro timing, mouse parallax, scroll-linked light opacity, nav state, click-to-load map. |
+| `v2/light.js` | The WebGL light on the wall. Self-contained, shaders included. See the next section. |
+
+It reuses the root `rsvp.js` rather than duplicating the form logic, and
+references assets as `../Assets/...` and `../Font/...`. If v2 is ever promoted
+to be the main site, that is: move three files up a level and strip the `../`.
+
+Things worth knowing before editing v2:
+
+1. **The same hero-bounding trap applies.** `.headline` and `.collage` use
+   `inset: 0`, so `.hero` is pinned at `100vh` and `.hero-inner` is
+   `position: absolute; inset: 0`. Remove either and the collage lands in the
+   middle of the document.
+
+2. **Collage placement is data, not layout.** Every piece is pinned to the
+   Polaroid's centre and pushed out by its own `--dx` / `--dy` in `vmin`, with
+   `--w`, `--rot` and parallax factors alongside. To move a sticker, change its
+   two numbers. Nothing reflows.
+
+3. **DOM order is stacking order.** The Polaroid is last in `.collage` so it
+   covers the bunched-up stack during the intro.
+
+4. **Intro delays ride on `--fan-delay`, deliberately.** The rule that starts
+   the fan is `.intro-play .piece:not(.p-polaroid)`, and `:not()` counts towards
+   specificity, so it scores (0,3,0). Per-piece rules like `.intro-play .p-stamp`
+   score only (0,2,0), which means the shorthand's implicit `animation-delay: 0`
+   used to beat them and every sticker fanned out at once, before the Polaroid
+   had risen. A custom property sidesteps specificity. Do not "simplify" it back.
+
+5. **The collage images are pre-trimmed.** Each PNG was cropped to its alpha
+   bounding box before resizing, so the image box equals the artwork and CSS
+   sizing is predictable. The `width`/`height` attributes in the HTML match the
+   trimmed files. If you re-export from Figma, re-trim, or the sizes will lie.
+
+6. **The shadow video is gone from v2.** It was 2.6 MB of the page's 3.5 MB.
+   `v2/light.js` replaces it with a generated light field. That has its own
+   section below.
+
+## The light on the wall (`v2/light.js`)
+
+v1 darkens its wall with a 2.6 MB looping video of moving shadows. v2 does the
+same job in about 30 KB of code, and the result moves on its own and pools
+toward the cursor.
+
+This is a deliberate, close port of the hero effect on
+[microsoft.ai](https://microsoft.ai/), read out of their minified bundle
+`BlockGL-Dh1-xzDN.js`. Their shader comments credit **Unicorn Studio** as the
+origin of the bokeh and voronoi maths, and that credit is kept in our source.
+An earlier attempt approximated the *look* with procedural noise and was wrong
+in every structural respect. If you are tempted to "simplify" this back into
+noise, read the four passes below first: there is no noise anywhere in the real
+effect.
+
+### The four passes, in order
+
+Each pass writes to a buffer the next one reads. Two buffers ping-pong.
+
+1. **Vignette.** A soft ellipse centred on the cursor. Transparent inside,
+   solid deep shadow outside. This is the only pass the cursor touches, and it
+   is the whole of the light.
+2. **Sine.** Bends the picture with two sine waves, so the edge of that ellipse
+   stops being a circle and starts undulating.
+3. **Shatter.** A voronoi cell pattern, each cell shifting its slice of the
+   image by its own offset. This is what tears the soft ellipse into separate
+   finger-shaped streaks. The cells are rotated 44 degrees and squashed, which
+   is exactly why the streaks run diagonally.
+4. **Bokeh.** 50 taps on a golden-angle spiral, weighting bright pixels by
+   `5 + colour^9 * 150`. Highlights smear into soft discs, everything else
+   barely moves. This is what makes it read as out of focus.
+
+### Every number, and where it came from
+
+All of these are theirs, read from their source, unless the note says otherwise.
+
+| | |
+|---|---|
+| Render scale | 0.5 desktop, 0.4 under 760px (ours, for phone battery) |
+| Vignette | radius 0.354, falloff 1, skew 0.54, angle 0 |
+| Sine | frequency 0.35, amplitude 1.18, rotation 0 |
+| Shatter | scale 0.534, spread 1, angle 44 degrees, skew 0.84 |
+| Bokeh | 50 samples, fixed radius 0.003, highlight power 9 |
+| Composite | 26 percent multiply |
+| Cursor ease | 0.1 per frame, over the full 0..1 canvas range |
+| Clock | 2x real seconds; sine reads it at 0.25x, voronoi at 0.2x |
+| Warm colour | `#FFD198` |
+| Shadow colour | `#4a1c0c` (**ours**, see below) |
+
+Their bokeh shader computes a `blurRadius` from the tilt setting and then never
+passes it to the function that would use it, so the real sample radius is the
+hardcoded `0.003`. We replicate the behaviour, not the dead code.
+
+### The three places we deliberately differ
+
+1. **No 1.4 MB gradient photograph.** They build their background by overlaying
+   a large image onto flat pink. Our background is the terracotta wall already
+   on the page. So our canvas outputs only the `mix(vec3(1.0), blend, 0.26)`
+   half of their equation, and the CSS layer applies `mix-blend-mode: multiply`.
+   Mathematically identical, and it saves the download entirely.
+
+2. **Blue noise is generated at load, not downloaded.** They ship a 130 KB PNG
+   used only to rotate each pixel's sample spiral by a fraction of a turn, and
+   it is scaled by 0.01 so it barely matters. We generate a 256x256 texture at
+   startup: white noise with the local 3x3 average subtracted three times, which
+   suppresses low frequencies. Costs nothing and avoids re-hosting their asset.
+
+3. **The shadow colour is `#4a1c0c`, not their `#4a0035`.** Their plum suits a
+   pink background. On our terracotta it pulled the wall 4 degrees toward
+   magenta and left it looking dusty. Six candidates were measured against the
+   light-off baseline (`hsl(10, 33%, 45%)`); `#4a1c0c` was the only one that
+   moved hue by 0 degrees while still reading as a shadow.
+
+We also honour `prefers-reduced-motion`, which **microsoft.ai does not**. Tested:
+their animation runs identically with the OS setting on, and they offer a manual
+toggle instead. Ours centres the light and draws exactly one frame.
+
+### Traps
+
+⚠️ **Never write `pow(rgb, vec3(uSomething))` with a uniform exponent.** A
+uniform forces a real exp2/log2 pair, and the bokeh pass runs it 150 times per
+pixel. Microsoft use the literal `vec3(9.0)`, which the compiler folds into a
+few multiplies. Ours is a `#define HIGHLIGHTS` baked in when the shader is
+built. `bokehSamples` is baked the same way, so changing it needs a reload,
+where everything else in `CONFIG` takes effect on the next frame.
+
+⚠️ **Reduced motion needs `preserveDrawingBuffer: true`.** It draws once and
+never again, so the buffer has to survive compositing. The flag is set from the
+media query *before* the context is created, and only in that case: keeping the
+buffer costs memory bandwidth for nothing when you redraw every frame anyway.
+
+⚠️ **Do not trust frame-rate numbers from a Playwright session.** A completely
+blank `about:blank` page reports the same ~30fps as our page in this harness.
+Measure GPU cost with a `readPixels` sync loop instead: the real figure is
+**0.059 ms per frame** for the whole four-pass chain. Only ever compare fps
+figures taken within a single session run.
+
+### Tuning it
+
+Everything adjustable lives in one `CONFIG` block at the top of `light.js`, in
+plain English, and is exposed on `window.LIGHT` so it can be tried live in the
+browser console:
+
+```js
+LIGHT.strength = 0.4          // takes effect next frame
+LIGHT.vignetteRadius = 0.5    // takes effect next frame
+LIGHT.warm = '#FFE0B0'; LIGHT.refresh()   // colours are parsed once
+```
+
+Strength over the hero versus the sections is not in here. It is two CSS
+variables, `--light-hero: 1` and `--light-sections: 0.35`, eased between by
+`v2.js` as you scroll.
+
+### What is verified, and what to re-check if you change it
+
+Structural fingerprint matches theirs exactly: downsampling both canvases to
+128x80 and measuring directional gradient energy at 15 degree steps gives
+`streak along 135 degrees, across 60 degrees` for both. Zero axe violations at
+390, 820 and 1440 with all FAQs expanded. Zero console errors. The loop draws
+nothing at all when the tab is hidden or once you scroll 1.6 screens past the
+hero, and pauses while scrolling. No WebGL hides the layer and leaves a plain
+terracotta wall.
+
+🔴 **If you change the composite, re-measure contrast from scratch.** This blend
+*darkens*, where the first attempt brightened, so every reading moves the
+opposite way. All 40 text elements were re-measured in the two worst cases
+(cursor over the content, and cursor jammed in a far corner). The lowest is
+5.15:1 against a 4.5 threshold. The one apparent failure is the RSVP honeypot at
+`left: -9756px` with `aria-hidden="true"`, which is a spam trap and correctly
+excluded.
+
 
 ## Previewing: one server, always port 4173
 

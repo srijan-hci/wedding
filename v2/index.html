@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="Akriti and Srijan are getting married on 20 and 21 February 2027 at Tharavadu Mane, Bangalore."
+    />
+    <title>Akriti &amp; Srijan &middot; 20 &amp; 21 February 2027</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+
+    <!-- The Polaroid is the first thing the eye lands on and the trigger
+         for the whole intro, so fetch it before anything else asks. -->
+    <link
+      rel="preload"
+      as="image"
+      href="../Assets/collage/polaroid-couple.webp"
+      type="image/webp"
+    />
+    <link rel="stylesheet" href="v2.css" />
+
+    <!-- Marks that scripting is available, so CSS can safely hide things
+         that only JavaScript knows how to reveal. Inline and in the head
+         so it runs before first paint and nothing flashes. -->
+    <script>
+      document.documentElement.classList.add("js");
+    </script>
+  </head>
+
+  <body>
+    <!-- ===== THE WALL ===== -->
+    <picture class="background-layer" aria-hidden="true">
+      <source
+        media="(max-width: 600px)"
+        type="image/avif"
+        srcset="../Assets/background-1200.avif"
+      />
+      <source
+        media="(max-width: 600px)"
+        type="image/jpeg"
+        srcset="../Assets/background-1200.jpg"
+      />
+      <source
+        type="image/avif"
+        srcset="
+          ../Assets/background-1200.avif 1200w,
+          ../Assets/background-1600.avif 1600w,
+          ../Assets/background-3200.avif 3200w
+        "
+        sizes="100vw"
+      />
+      <img
+        src="../Assets/background-1600.jpg"
+        srcset="
+          ../Assets/background-1200.jpg 1200w,
+          ../Assets/background-1600.jpg 1600w,
+          ../Assets/background-3200.jpg 3200w
+        "
+        sizes="100vw"
+        alt=""
+        width="3200"
+        height="1684"
+        decoding="async"
+        fetchpriority="high"
+      />
+    </picture>
+
+    <!-- ===== NAV =====
+         A direct child of <body>, not of .content-layer, because a child
+         can never paint above a sibling of its parent, and this needs to
+         sit above the light layer. -->
+    <nav class="site-nav" aria-label="Main">
+      <ul>
+        <li><a href="#venue">Venue</a></li>
+        <li><a href="#rsvp">RSVP</a></li>
+        <li><a href="#faqs">FAQs</a></li>
+      </ul>
+    </nav>
+
+    <main class="content-layer">
+      <!-- ===== HERO ===== -->
+      <section class="hero" id="top">
+        <div class="hero-inner">
+          <h1 class="headline">We&rsquo;re getting married!</h1>
+
+          <!-- Order matters: later pieces stack on top. The Polaroid is
+               last so it hides the whole stack at the centre while
+               everything is still bunched behind it. -->
+          <div class="collage">
+            <div class="layer">
+              <div class="piece p-stamp">
+                <picture>
+                  <source srcset="../Assets/collage/stamp-temple.webp" type="image/webp" />
+                  <img src="../Assets/collage/stamp-temple.png" alt="" width="221" height="286" />
+                </picture>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="piece p-bell">
+                <picture>
+                  <source srcset="../Assets/collage/bell-peacock.webp" type="image/webp" />
+                  <img src="../Assets/collage/bell-peacock.png" alt="" width="147" height="329" />
+                </picture>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="piece p-sun">
+                <picture>
+                  <source srcset="../Assets/collage/sun-face.webp" type="image/webp" />
+                  <img src="../Assets/collage/sun-face.png" alt="" width="240" height="237" />
+                </picture>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="piece p-postcard">
+                <picture>
+                  <source srcset="../Assets/collage/postcard-ganesha.webp" type="image/webp" />
+                  <img src="../Assets/collage/postcard-ganesha.png" alt="" width="310" height="477" />
+                </picture>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="piece p-lotus">
+                <picture>
+                  <source srcset="../Assets/collage/lotus.webp" type="image/webp" />
+                  <img src="../Assets/collage/lotus.png" alt="" width="331" height="380" />
+                </picture>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="piece p-musicians">
+                <picture>
+                  <source srcset="../Assets/collage/musicians.webp" type="image/webp" />
+                  <img src="../Assets/collage/musicians.png" alt="" width="355" height="295" />
+                </picture>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="piece p-rickshaw">
+                <picture>
+                  <source srcset="../Assets/collage/auto-rickshaw.webp" type="image/webp" />
+                  <img src="../Assets/collage/auto-rickshaw.png" alt="" width="501" height="337" />
+                </picture>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="piece p-couple">
+                <picture>
+                  <source srcset="../Assets/collage/couple-garlands.webp" type="image/webp" />
+                  <img src="../Assets/collage/couple-garlands.png" alt="" width="444" height="358" />
+                </picture>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="piece p-fire">
+                <picture>
+                  <source srcset="../Assets/collage/sacred-fire.webp" type="image/webp" />
+                  <img src="../Assets/collage/sacred-fire.png" alt="" width="202" height="159" />
+                </picture>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="piece p-chai">
+                <picture>
+                  <source srcset="../Assets/collage/chai.webp" type="image/webp" />
+                  <img src="../Assets/collage/chai.png" alt="" width="126" height="189" />
+                </picture>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="piece p-dosa">
+                <picture>
+                  <source srcset="../Assets/collage/dosa-thali.webp" type="image/webp" />
+                  <img src="../Assets/collage/dosa-thali.png" alt="" width="427" height="409" />
+                </picture>
+              </div>
+            </div>
+            <div class="layer">
+              <div class="piece p-polaroid">
+                <picture>
+                  <source srcset="../Assets/collage/polaroid-couple.webp" type="image/webp" />
+                  <img
+                    src="../Assets/collage/polaroid-couple.png"
+                    alt="Akriti and Srijan in a field of sunflowers"
+                    width="1132"
+                    height="920"
+                    fetchpriority="high"
+                  />
+                </picture>
+              </div>
+            </div>
+          </div>
+
+          <a class="scroll-cue" href="#venue">20 &amp; 21 February 2027</a>
+        </div>
+      </section>
+
+      <!-- ===== VENUE ===== -->
+      <section class="section" id="venue" aria-labelledby="venue-title">
+        <div class="panel">
+          <header class="section-head">
+            <h2 class="section-title" id="venue-title">Tharavadu Mane, Bangalore</h2>
+            <p class="section-lede">
+              A <em>tharavadu</em> is the ancestral home of a Kerala family:
+              four wings around an open courtyard, tiled roofs, carved wooden
+              pillars. <em>Mane</em> is Kannada for house. It is a semi-outdoor
+              heritage home rather than a banquet hall, which is exactly why we
+              chose it.
+            </p>
+          </header>
+
+          <div class="venue-grid">
+            <div class="map-frame" id="venue-map">
+              <!-- Click to load. A Google Maps embed pulls in a lot of
+                   third-party script and delays the page, and sends every
+                   visitor's IP to Google before they have asked for a map.
+
+                   WHEN THE ADDRESS IS CONFIRMED: update data-map-src with the
+                   venue's real embed URL. In Google Maps, find the venue, then
+                   Share > Embed a map, and copy the URL out of the iframe. -->
+              <button
+                class="map-placeholder"
+                type="button"
+                data-map-src="https://www.google.com/maps?q=Nagawara+Lake,+Bengaluru,+Karnataka&amp;output=embed"
+                data-map-title="Map of the area around the venue in Bangalore"
+              >
+                <b>Show the map</b>
+                <span>Loads Google Maps, centred on the neighbourhood</span>
+              </button>
+            </div>
+
+            <div>
+              <dl class="detail-list">
+                <div>
+                  <dt>Address</dt>
+                  <dd>
+                    <span class="placeholder"
+                      >To be confirmed. We are waiting on the full street
+                      address from the venue.</span
+                    >
+                  </dd>
+                </div>
+                <div>
+                  <dt>Area</dt>
+                  <dd>North Bangalore, near Nagawara Lake</dd>
+                </div>
+                <div>
+                  <dt>From the airport</dt>
+                  <dd>
+                    Around 30 to 35&nbsp;km from Kempegowda International
+                    (BLR), about an hour by car outside peak traffic.
+                  </dd>
+                </div>
+                <div>
+                  <dt>Getting there</dt>
+                  <dd>
+                    Uber and Ola cover the area well. We will arrange shuttles
+                    from the main guest hotels.
+                  </dd>
+                </div>
+              </dl>
+
+              <p class="note">
+                Please do not book a hotel based on distance yet. The map is
+                centred on the neighbourhood, not the building, and we are
+                still waiting on the exact address.
+              </p>
+            </div>
+          </div>
+
+          <div class="dates">
+            <div class="date-card">
+              <b>Saturday 20 February</b>
+              <span>Haldi, mehendi and sangeet</span>
+            </div>
+            <div class="date-card">
+              <b>Sunday 21 February</b>
+              <span>The ceremony and the reception</span>
+            </div>
+          </div>
+
+          <p class="note">
+            Timings and dress codes are still being worked out. We will put
+            them here as soon as they are settled, and everyone who has
+            replied will get an email.
+          </p>
+        </div>
+      </section>
+
+      <!-- ===== RSVP ===== -->
+      <section class="section" id="rsvp" aria-labelledby="rsvp-title">
+        <div class="panel">
+          <header class="section-head">
+            <h2 class="section-title" id="rsvp-title">Will you be there?</h2>
+            <p class="section-lede">
+              Please let us know by
+              <strong><span class="placeholder">date to be confirmed</span></strong
+              >. If your plans change afterwards, just send the form again.
+            </p>
+          </header>
+
+          <form class="rsvp-form" id="rsvp-form" novalidate>
+            <!-- Honeypot. Real people never see this; bots fill in every
+                 field they find, so anything arriving with it set is
+                 discarded silently. -->
+            <div class="rsvp-hp" aria-hidden="true">
+              <label for="rsvp-website">Do not fill this in</label>
+              <input type="text" id="rsvp-website" name="website" tabindex="-1" autocomplete="off" />
+            </div>
+
+            <div class="field-grid">
+              <p class="field">
+                <label for="rsvp-name">Your name</label>
+                <input type="text" id="rsvp-name" name="name" required autocomplete="name" />
+              </p>
+              <p class="field">
+                <label for="rsvp-email">Email</label>
+                <input type="email" id="rsvp-email" name="email" required autocomplete="email" />
+              </p>
+            </div>
+
+            <fieldset>
+              <legend>Can you come?</legend>
+              <div class="choice-row">
+                <label class="choice">
+                  <input type="radio" name="attending" value="Yes" required />
+                  <span>Yes, joyfully</span>
+                </label>
+                <label class="choice">
+                  <input type="radio" name="attending" value="No" />
+                  <span>Sadly not</span>
+                </label>
+              </div>
+            </fieldset>
+
+            <!-- Only relevant to people who are coming, so v2.js hides and
+                 disables all of it when "Sadly not" is chosen. -->
+            <div class="if-attending" id="rsvp-attending-details">
+              <div class="field-grid">
+                <p class="field">
+                  <label for="rsvp-guests">How many of you?</label>
+                  <input type="number" id="rsvp-guests" name="guests" min="1" max="12" value="1" />
+                </p>
+                <p class="field">
+                  <label for="rsvp-from">Travelling from</label>
+                  <select id="rsvp-from" name="travellingFrom">
+                    <option value="">Please choose</option>
+                    <option>Within India</option>
+                    <option>United States</option>
+                    <option>Elsewhere</option>
+                  </select>
+                </p>
+              </div>
+
+              <fieldset>
+                <legend>Which days can you make?</legend>
+                <div class="choice-row">
+                  <label class="choice">
+                    <input type="checkbox" name="days" value="Sat 20 Feb" />
+                    <span>Saturday 20 February</span>
+                  </label>
+                  <label class="choice">
+                    <input type="checkbox" name="days" value="Sun 21 Feb" />
+                    <span>Sunday 21 February</span>
+                  </label>
+                </div>
+              </fieldset>
+
+              <p class="field">
+                <label for="rsvp-diet">
+                  Anything we should know about food?
+                  <span class="optional">allergies, vegan, anything at all</span>
+                </label>
+                <input type="text" id="rsvp-diet" name="dietary" />
+              </p>
+            </div>
+
+            <p class="field">
+              <label for="rsvp-note">
+                Anything else?
+                <span class="optional">optional</span>
+              </label>
+              <textarea id="rsvp-note" name="note" rows="3"></textarea>
+            </p>
+
+            <div class="form-actions">
+              <button class="btn" type="submit" id="rsvp-submit">Send our RSVP</button>
+              <p class="form-status" id="rsvp-status" role="status" aria-live="polite"></p>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ===== FAQs ===== -->
+      <section class="section" id="faqs" aria-labelledby="faqs-title">
+        <div class="panel">
+          <header class="section-head">
+            <h2 class="section-title" id="faqs-title">Questions</h2>
+          </header>
+
+          <div class="faq-list">
+            <details class="faq-item">
+              <summary>What should I wear?</summary>
+              <div class="faq-answer">
+                <p>
+                  Anything bright and festive. Indian clothes are very welcome
+                  but never expected, and Western formal is perfectly
+                  appropriate at every event. Avoid pure white or all black for
+                  the ceremony, and leave head-to-toe red to the bride. Wear
+                  shoes you can slip off easily.
+                </p>
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary>Do I need to come to both days?</summary>
+              <div class="faq-answer">
+                <p>
+                  No, come to whatever you can. If you can only make one, the
+                  ceremony and reception on Sunday 21 February are the heart of
+                  it.
+                </p>
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary>I have never been to an Indian wedding. What happens?</summary>
+              <div class="faq-answer">
+                <p>
+                  Saturday is haldi, where turmeric is smeared on us by
+                  everyone we love, then mehendi, where henna is drawn on
+                  hands and feet, then sangeet, which is music and dancing and
+                  both families performing routines. Sunday is the ceremony
+                  around a sacred fire, which runs long and during which guests
+                  quite normally talk, move about and eat, followed by the
+                  reception.
+                </p>
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary>I am flying from the USA. What do I need?</summary>
+              <div class="faq-answer">
+                <p>
+                  Fly into Bengaluru (BLR) and apply for an e-Tourist Visa at
+                  <a
+                    href="https://indianvisaonline.gov.in/evisa/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >indianvisaonline.gov.in/evisa</a
+                  >. That is the only official site, so type it in by hand:
+                  there are convincing look-alikes that charge large fees. Apply
+                  from 120 days before you travel. February in Bangalore is
+                  lovely, around 27°C by day and 14°C at night, so pack light
+                  clothes and something warm for the evenings.
+                </p>
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary>Can I bring my partner or my children?</summary>
+              <div class="faq-answer">
+                <p>
+                  Your invitation will say who it covers. Children are genuinely
+                  welcome at Indian weddings and there will be plenty of them.
+                  If you are unsure, just ask us on the form.
+                </p>
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary>What about gifts?</summary>
+              <div class="faq-answer">
+                <p>
+                  Your being there, especially if you are flying a long way, is
+                  more than enough. We will add details here nearer the time for
+                  anyone who would like to.
+                </p>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="site-footer">
+      <b>Akriti &amp; Srijan</b>
+      <p>20 &amp; 21 February 2027 &middot; Tharavadu Mane, Bangalore</p>
+      <p><a href="mailto:hello@akriti-srijan.com">hello@akriti-srijan.com</a></p>
+    </footer>
+
+    <!-- ===== THE LIGHT ===== -->
+    <div class="light-layer" aria-hidden="true">
+      <canvas class="light-canvas"></canvas>
+    </div>
+
+    <script src="v2.js"></script>
+    <script src="light.js"></script>
+    <script src="../rsvp.js"></script>
+  </body>
+</html>
