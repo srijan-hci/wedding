@@ -2138,3 +2138,23 @@ textarea:focus-visible {
   color: #f4e7da;
   text-shadow: 0 2px 16px rgba(60, 16, 8, 0.5);
 }
+
+/* Three Polaroids side by side works at the Figma's 1512, where each is
+   318px wide. On a phone the same grid leaves them about 92px across
+   with the label wrapping onto two lines, which is neither readable nor
+   comfortably tappable. They stack instead. */
+@media (max-width: 760px) {
+  .card-row {
+    grid-template-columns: 1fr;
+    gap: clamp(28px, 8vw, 44px);
+    justify-items: center;
+  }
+
+  .card {
+    max-width: 260px;
+  }
+
+  .card-label {
+    font-size: 15px;
+  }
+}
