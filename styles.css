@@ -9,7 +9,7 @@
      .content-layer      z 10   collage, headline, page
      .light-layer        z 20   the drifting light, multiply blend
      .site-nav           z 30   the pill nav
-     .drawer-root        z 60   the detail sheets, over everything
+     .drawer-root        z 60   the detail Polaroids, over everything
 
    The nav has to sit outside .content-layer to reach z 30, because a
    child can never paint above a sibling of its parent.
@@ -408,6 +408,48 @@ body {
 .site-nav a.is-active:hover,
 .site-nav a.is-active:focus-visible {
   background: #fdf6ea;
+}
+
+/* ---------- Secondary nav ----------
+   The RSVP page has one real next action at a time: Continue, then Send
+   it. "Back to the invitation" is a way out, not the thing to do, so it
+   keeps the same glass pill and drops its weight: less tint, a fainter
+   lip, a softer shadow, and smaller type. Scoped to the modifier class,
+   so the nav on the invitation itself is untouched. */
+.site-nav--secondary ul.glass {
+  padding: 4px;
+  background: rgba(52, 18, 11, 0.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 240, 224, 0.2),
+    inset 0 -1px 0 rgba(255, 224, 200, 0.06),
+    0 3px 12px rgba(46, 14, 7, 0.14);
+}
+
+/* The dispersion fringe is the loudest part of the glass. Dimmed rather
+   than removed, so the pill still reads as the same material. */
+.site-nav--secondary ul.glass::after {
+  opacity: 0.2;
+}
+
+.site-nav--secondary a {
+  padding: 7px var(--space-4);
+  font-size: 15px;
+  color: rgba(253, 241, 226, 0.84);
+}
+
+.site-nav--secondary a:hover,
+.site-nav--secondary a:focus-visible {
+  background: rgba(30, 8, 4, 0.3);
+  color: #fff6ea;
+}
+
+/* Without backdrop-filter the base pill falls back to near-solid. Left
+   at that, the secondary version would come out heavier than the
+   primary one it is meant to sit behind. */
+@supports not (backdrop-filter: blur(1px)) {
+  .site-nav--secondary ul.glass {
+    background: rgba(52, 18, 11, 0.72);
+  }
 }
 
 /* ============================================================
@@ -833,53 +875,100 @@ body {
 
 
 /* ============================================================
-   THE STOP-MOTION ASSEMBLY
+   THE ASSEMBLY
 
-   The whole effect rests on one CSS feature: steps(). A normal easing
-   curve moves a piece through every intermediate position, which reads
-   as a smooth glide. steps(n) holds each position and then jumps, which
-   is exactly what a camera does when it photographs a paper cut-out,
-   moves it a little, and photographs it again.
+   The composition builds in three phases, and the whole thing is read as
+   DEPTH rather than as movement across a flat page. Nothing jumps: every
+   piece is on a continuous easing curve.
 
-   Real stop motion is shot at 12 frames a second, so the step counts
-   below are chosen to land near that rate over the distance travelled.
+     1. THE POLAROID RISES.   It comes up from slightly below, slightly
+        small, and settles. It arrives alone so the rest of the
+        composition has something to come out from behind.
 
-   Two groups move in opposite directions:
+     2. THE PIECES BEHIND IT GROW OUTWARD.   They start stacked under the
+        Polaroid at roughly half size and scale up as they push out to
+        their places, which reads as them coming forward from deep
+        behind it.
 
-     behind the Polaroid   start hidden at its centre, step OUTWARD
-     in front of it        start beyond the screen, step INWARD
+     3. THE PIECES IN FRONT SETTLE DOWN ONTO IT.   The reverse move.
+        They start oversized, as though floating close to the lens, and
+        shrink back onto the collage, finishing on top of the Polaroid.
 
-   The rotation runs as a SECOND animation on a different step count, so
-   position and angle never land on the same beat. That mismatch is what
-   stops it feeling like a machine: real cut-outs nudged by hand are
-   never perfectly registered.
+   Phases 2 and 3 take exactly the same time per piece. They are the
+   same gesture run in opposite directions, so giving one of them a
+   longer duration made the composition feel lopsided.
+
+   Every piece fades in as it travels, and every piece overshoots its
+   target slightly and drops back. Rotation runs as a SECOND animation
+   from the same curve, so a piece straightens out as it travels rather
+   than arriving already square, and gets the same small bounce.
    ============================================================ */
 :root {
-  --frames: 14; /* position steps, roughly 12fps over the distance */
-  --frames-rot: 9; /* rotation steps: deliberately not a factor of 14 */
-  --assemble-dur: 820ms;
-  --polaroid-dur: 520ms;
-  --polaroid-delay: 40ms;
-  /* The fan starts well before the Polaroid has settled. Waiting for it
-     left over a second of nothing but a Polaroid slowly growing, and all
-     the actual movement crammed into the last third. */
-  --fan-start: 260ms;
-  --fan-step: 30ms;
-  --headline-delay: 900ms;
+  /* Phase 1 */
+  --polaroid-dur: 900ms;
+  --polaroid-delay: 60ms;
+
+  /* ONE travel duration, shared by phase 2 and phase 3. A piece takes
+     exactly as long to come out from behind the Polaroid as another one
+     takes to settle onto it, so the two halves feel like one gesture
+     rather than a fast move followed by a slow one. Change this and
+     both phases change together, which is the point. */
+  --travel-dur: 1400ms;
+
+  /* Phase 2. Starts well before the Polaroid has finished settling:
+     waiting for it left a second of nothing but a Polaroid growing. */
+  --back-start: 380ms;
+  --back-step: 55ms;
+  --back-scale: 0.5; /* how small a behind piece starts */
+
+  /* Phase 3. Overlaps the tail of phase 2, so the two never read as
+     separate events. */
+  --front-start: 1250ms;
+  --front-step: 95ms;
+  --front-scale: 1.42; /* how large a front piece starts */
+
+  --headline-delay: 1350ms;
+
+  /* Two curves, one per direction of travel. Both end just past their
+     target and drop back, which is the bounce. The overshoot is small
+     on purpose: it lands on scale, position and tilt at once, so a
+     value that looks gentle on any one of them reads as far too much
+     when all three do it together.
+
+     EMERGE decelerates hard. A piece leaves the Polaroid quickly and
+     then eases a long way into place, which is what makes it feel
+     pushed rather than dragged. Its overshoot takes each piece a hair
+     past full size before it drops back.
+
+     SETTLE is close to linear through the middle. That is the whole
+     point of phase 3: the piece has to stay visibly larger than its
+     final size for most of the duration and shrink continuously. An
+     ease-out curve here (the obvious first choice) did nearly all the
+     shrinking in the first fifth and then sat still, which reads as a
+     snap, not a drift. Its overshoot dips each piece just under full
+     size as it lands, like paper touching down. */
+  --ease-emerge: cubic-bezier(0.34, 1.35, 0.64, 1);
+  --ease-settle: cubic-bezier(0.45, 0.03, 0.55, 1.25);
 }
 
 /* The Polaroid arrives first and alone, so there is something for the
    rest of the composition to come out from behind. */
 .intro-play .p-polaroid {
-  animation: pol-in var(--polaroid-dur) steps(11, end) var(--polaroid-delay)
+  animation: pol-in var(--polaroid-dur) var(--ease-emerge) var(--polaroid-delay)
     both;
 }
 
+/* The opacity finishes at 40%, well before the movement does, so the
+   Polaroid is solid for most of its rise rather than fading the whole
+   way up. */
 @keyframes pol-in {
   from {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(9%) scale(0.86)
+      rotate(calc(var(--rot) + 4deg));
+  }
+  40% {
     opacity: 1;
-    transform: translate(-50%, -50%) translateY(20%) scale(0.8)
-      rotate(calc(var(--rot) + 5deg));
   }
   to {
     opacity: 1;
@@ -887,10 +976,12 @@ body {
   }
 }
 
-/* Everything else. These start at opacity 1, not 0: the pieces are not
-   fading in, they are solid the whole time and simply hidden, either
-   behind the Polaroid or beyond the edge of the screen. That is what
-   sells the paper-cut-out illusion.
+/* Everything except the Polaroid.
+
+   All three animations run for the same --travel-dur, and the opacity
+   ramp is a FRACTION of it rather than a fixed number of milliseconds,
+   so the fade is welded to the scale: change the duration and the two
+   still finish in proportion.
 
    ⚠️ The per-piece stagger rides on --fan-delay rather than on a more
    specific selector. `:not()` counts towards specificity, so this rule
@@ -899,19 +990,26 @@ body {
    piece then animated at once. Do not "simplify" this back. */
 .intro-play .piece:not(.p-polaroid) {
   animation:
-    assemble var(--assemble-dur) steps(var(--frames), end) var(--fan-delay, 0ms)
-      both,
-    wobble var(--assemble-dur) steps(var(--frames-rot), end)
+    assemble var(--travel-dur) var(--piece-ease, var(--ease-emerge))
       var(--fan-delay, 0ms) both,
-    reveal 1ms linear var(--fan-delay, 0ms) both;
+    wobble var(--travel-dur) var(--piece-ease, var(--ease-emerge))
+      var(--fan-delay, 0ms) both,
+    reveal calc(var(--travel-dur) * var(--fade-ratio, 0.45)) ease-out
+      var(--fan-delay, 0ms) both;
 }
 
 /* Without this the pieces would be on screen from the very first frame,
    bunched at the Polaroid's centre, waiting for their delay to elapse.
    `animation-fill-mode: both` fills BACKWARDS during a delay, so the
    `from` keyframe is painted the whole time the piece is meant to be
-   waiting. This flips them on at the exact moment they start moving, in
-   a single step, so nothing fades. */
+   waiting. This fades them in over the first part of their travel
+   instead.
+
+   --fade-ratio sets how much of the travel the fade covers. It is 0.45
+   for the pieces behind the Polaroid, which are mostly hidden by it
+   while it runs, and 0.8 for the ones in front, which have nothing to
+   hide behind: those fade almost the whole way down, so the opacity
+   climbs while the piece shrinks and the two read as one move. */
 @keyframes reveal {
   from {
     opacity: 0;
@@ -935,7 +1033,7 @@ body {
     opacity: 1;
     transform: translate(-50%, -50%)
       translate(var(--from-x, 0cqw), var(--from-y, 0cqw))
-      scale(var(--from-scale, 0.6));
+      scale(var(--from-scale, var(--back-scale)));
   }
   to {
     opacity: 1;
@@ -976,118 +1074,138 @@ body {
 .p-kolam {
   --from-x: 15.4cqw;
   --from-y: -18.3cqw;
-  --fan-delay: calc(var(--fan-start) + 0 * var(--fan-step));
+  --fan-delay: calc(var(--back-start) + 0 * var(--back-step));
   --from-rot: -6deg;
 }
 .p-stamp {
   --from-x: 30cqw;
   --from-y: 13.6cqw;
-  --fan-delay: calc(var(--fan-start) + 2 * var(--fan-step));
+  --fan-delay: calc(var(--back-start) + 8 * var(--back-step));
   --from-rot: 10deg;
 }
 .p-bell {
   --from-x: 20.6cqw;
   --from-y: 12.1cqw;
-  --fan-delay: calc(var(--fan-start) + 4 * var(--fan-step));
+  --fan-delay: calc(var(--back-start) + 2 * var(--back-step));
   --from-rot: -12deg;
 }
 .p-sun {
   --from-x: 5.8cqw;
   --from-y: 14.2cqw;
-  --fan-delay: calc(var(--fan-start) + 5 * var(--fan-step));
+  --fan-delay: calc(var(--back-start) + 4 * var(--back-step));
   --from-rot: 7deg;
 }
 .p-postcard {
   --from-x: -21.8cqw;
   --from-y: 6.8cqw;
-  --fan-delay: calc(var(--fan-start) + 7 * var(--fan-step));
+  --fan-delay: calc(var(--back-start) + 1 * var(--back-step));
   --from-rot: -9deg;
 }
 .p-stamp-blr {
   --from-x: -29.9cqw;
   --from-y: 11.8cqw;
-  --fan-delay: calc(var(--fan-start) + 8 * var(--fan-step));
+  --fan-delay: calc(var(--back-start) + 5 * var(--back-step));
   --from-rot: 11deg;
 }
 .p-coconut {
   --from-x: 32.5cqw;
   --from-y: 1.5cqw;
-  --fan-delay: calc(var(--fan-start) + 10 * var(--fan-step));
+  --fan-delay: calc(var(--back-start) + 9 * var(--back-step));
   --from-rot: -8deg;
 }
 .p-lotus {
   --from-x: 22.9cqw;
   --from-y: -0.1cqw;
-  --fan-delay: calc(var(--fan-start) + 11 * var(--fan-step));
+  --fan-delay: calc(var(--back-start) + 6 * var(--back-step));
   --from-rot: 9deg;
 }
 .p-couple {
   --from-x: 28.7cqw;
   --from-y: -12.3cqw;
-  --fan-delay: calc(var(--fan-start) + 13 * var(--fan-step));
+  --fan-delay: calc(var(--back-start) + 10 * var(--back-step));
   --from-rot: -7deg;
 }
 .p-musicians {
   --from-x: -34.3cqw;
   --from-y: 1.2cqw;
-  --fan-delay: calc(var(--fan-start) + 14 * var(--fan-step));
+  --fan-delay: calc(var(--back-start) + 3 * var(--back-step));
   --from-rot: 8deg;
 }
 .p-rickshaw {
   --from-x: -31.4cqw;
   --from-y: -10.9cqw;
-  --fan-delay: calc(var(--fan-start) + 15 * var(--fan-step));
+  --fan-delay: calc(var(--back-start) + 7 * var(--back-step));
   --from-rot: -6deg;
 }
 
-/* ---------- in front: fly in from beyond the screen ----------
-   These sit on top of the Polaroid, so they cannot hide behind it. They
-   come from off-stage instead.
+/* ---------- in front: settle down onto the Polaroid ----------
+   These sit on top of the Polaroid, so they cannot hide behind it and
+   they cannot be the thing that reveals it. They are the last beat
+   instead: they start oversized, as though floating close to the lens,
+   and shrink back onto the collage.
 
-   The distance is a sum of two units on purpose. The cqw part clears
-   the piece from its own resting place to the edge of the stage; the
-   vw / vh part clears the gap between the stage and the edge of the
-   window, which only exists on screens wider than the 1600px cap. One
-   unit alone would leave a piece visible on the bare wall beside the
-   stage on a very wide monitor.
+   The start offset is not eyeballed, it is perspective. An object
+   moving away from a camera travels TOWARDS the centre of the frame, so
+   run backwards, a piece that begins close to the lens begins offset
+   OUTWARD from the vanishing point. Using the Polaroid's centre
+   (50%, 54.5%) as that point:
 
-   Directions are spread deliberately. Sending all five in from the
-   bottom, which is what the nearest edge works out to be for most of
-   them, reads as a single mechanical sweep. */
+     offset = (rest position - 50%, 54.5%) x (--front-scale - 1) x 0.7
+
+   The 0.7 damps it: the geometrically exact offset at 1.42x threw the
+   lower pieces clean off the bottom of the stage.
+
+   Vertical numbers are multiplied by 0.6495 as well, because the stage
+   is 982/1512 as tall as it is wide and cqw measures WIDTH.
+
+   ⚠️ --from-scale, --piece-ease and --fade-ratio are set
+   once for all five in the grouped rule below, NOT per piece. Do not
+   also set them in the individual blocks: the two rules score the same,
+   so it would come down to source order. */
+.p-chai,
+.p-marigold-a,
+.p-marigold-b,
+.p-dosa,
+.p-bangles {
+  --from-scale: var(--front-scale);
+  --piece-ease: var(--ease-settle);
+  /* Nearly the whole descent, because these have the bare wall behind
+     them rather than the Polaroid. A short fade would land them solid
+     while still oversized, which reads as a pop. */
+  --fade-ratio: 0.8;
+}
+
 .p-chai {
-  --from-x: calc(-40.8cqw - 26vw);
-  --from-y: -1.7cqw;
-  --from-scale: 1;
-  --fan-delay: calc(var(--fan-start) + 1 * var(--fan-step));
-  --from-rot: 24deg;
+  --from-x: -5.5cqw;
+  --from-y: 1.9cqw;
+  --fan-delay: calc(var(--front-start) + 0 * var(--front-step));
+  --from-rot: 6deg;
 }
 .p-marigold-a {
-  --from-x: calc(42.9cqw + 26vw);
-  --from-y: -2.1cqw;
-  --from-scale: 1;
-  --fan-delay: calc(var(--fan-start) + 3 * var(--fan-step));
-  --from-rot: -21deg;
+  --from-x: 5.6cqw;
+  --from-y: 2.3cqw;
+  --fan-delay: calc(var(--front-start) + 1 * var(--front-step));
+  --from-rot: -5deg;
 }
 .p-marigold-b {
-  --from-x: calc(-43.4cqw - 26vw);
-  --from-y: -3.9cqw;
-  --from-scale: 1;
-  --fan-delay: calc(var(--fan-start) + 6 * var(--fan-step));
-  --from-rot: 19deg;
-}
-.p-dosa {
-  --from-x: -0.9cqw;
-  --from-y: calc(26.3cqw + 26vh);
-  --from-scale: 1;
-  --fan-delay: calc(var(--fan-start) + 9 * var(--fan-step));
-  --from-rot: -17deg;
+  --from-x: -5.1cqw;
+  --from-y: 4.4cqw;
+  --fan-delay: calc(var(--front-start) + 2 * var(--front-step));
+  --from-rot: 5deg;
 }
 .p-bangles {
-  --from-x: calc(45.6cqw + 26vw);
-  --from-y: -4.4cqw;
-  --from-scale: 1;
-  --fan-delay: calc(var(--fan-start) + 12 * var(--fan-step));
-  --from-rot: 16deg;
+  --from-x: 5.4cqw;
+  --from-y: 5cqw;
+  --fan-delay: calc(var(--front-start) + 3 * var(--front-step));
+  --from-rot: 4deg;
+}
+/* Last, because it is the largest and it sits dead centre, so it makes
+   the best final beat. */
+.p-dosa {
+  --from-x: 1cqw;
+  --from-y: 4.9cqw;
+  --fan-delay: calc(var(--front-start) + 4 * var(--front-step));
+  --from-rot: -4deg;
 }
 
 /* ---------- travel on a phone ----------
@@ -1099,8 +1217,10 @@ body {
    started in the wrong place and were left uncovered by the Polaroid.
 
    Same calculation as the wide one, run again against the 400 x 700
-   stage, so pieces still start stacked under the Polaroid or beyond the
-   edge of the phone. */
+   stage: the pieces behind still start stacked under the Polaroid, and
+   the five in front still start offset outward from its centre. The
+   vertical numbers change the most, because a phone stage is 1.75x as
+   tall as it is wide where the wide one is 0.65x. */
 @media (max-width: 760px) {
   .p-kolam {
     --from-x: 17cqw;
@@ -1146,25 +1266,27 @@ body {
     --from-x: -32cqw;
     --from-y: -25.2cqw;
   }
+  /* Damped further than the geometry asks for. The exact offset put the
+     glass half off the left edge of a phone at its largest. */
   .p-chai {
-    --from-x: calc(-26.5cqw - 30vw);
-    --from-y: 4.5cqw;
+    --from-x: -6cqw;
+    --from-y: -6.3cqw;
   }
   .p-marigold-a {
-    --from-x: calc(41cqw + 30vw);
-    --from-y: -2.2cqw;
+    --from-x: 7.3cqw;
+    --from-y: 3.1cqw;
   }
   .p-marigold-b {
-    --from-x: calc(-49cqw - 30vw);
-    --from-y: -5.3cqw;
+    --from-x: -4.5cqw;
+    --from-y: 7.5cqw;
   }
   .p-dosa {
-    --from-x: -0.4cqw;
-    --from-y: calc(51.1cqw + 30vh);
+    --from-x: 0.6cqw;
+    --from-y: 13.7cqw;
   }
   .p-bangles {
-    --from-x: calc(49.5cqw + 30vw);
-    --from-y: -9.0cqw;
+    --from-x: 6.2cqw;
+    --from-y: 12.5cqw;
   }
 }
 /* The headline is the one thing that does not stutter. It is type, not
@@ -1510,24 +1632,39 @@ textarea:focus-visible {
 }
 
 /* ============================================================
-   DETAIL DRAWERS
+   DETAIL MODALS
 
-   Bottom sheets. The motion is measured off the reference the owner
-   picked rather than invented: translateY(100%) to 0 over 500ms on
-   cubic-bezier(0.32, 0.72, 0, 1), which is the standard iOS sheet curve,
-   with the scrim fading over the same 500ms. Rounded top 32px on a
-   phone, 48px on a desktop. It stays a bottom sheet at every width; it
-   does not become a centred modal on a large screen.
+   A Polaroid, not a bottom sheet. Each card opens a centred card
+   wearing the same warm white frame as the artwork printed on the
+   cards themselves: a thin margin on three sides, a slightly deeper
+   band along the bottom, and every word sitting in the photo window,
+   which is the only part that scrolls.
 
-   One deliberate improvement on the reference: that one sets
-   aria-modal="true" but does not actually trap focus, so tabbing walks
-   straight out into the page behind it. This one traps focus properly
-   and hands it back to the card that opened it. See main.js.
+   The frame is padding on .drawer rather than a border, so the window
+   can carry its own paper colour and inset edge without a border and a
+   background drifting out of step at the corners.
+
+   It stays the same shape at every width. On a phone it simply gets
+   narrower; it does not turn back into a sheet.
+
+   One deliberate improvement on the reference this was modelled on:
+   that one sets aria-modal="true" but does not actually trap focus, so
+   tabbing walks straight out into the page behind it. This one traps
+   focus properly and hands it back to the card that opened it. See
+   main.js.
    ============================================================ */
 .drawer-root {
   position: fixed;
   inset: 0;
   z-index: 60;
+  /* One explicit cell, so the Polaroid's max-height: 100% has a
+     definite track to measure against rather than an auto one. The
+     padding is the gutter the card is never allowed to touch. */
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  padding: clamp(20px, 4vw, 48px);
 }
 
 .drawer-root[hidden] {
@@ -1548,20 +1685,37 @@ textarea:focus-visible {
   opacity: 1;
 }
 
+/* ---------- The Polaroid ----------
+   --pol-edge is the white margin on three sides, --pol-foot the band
+   beneath the window. On a real Polaroid the foot is roughly four
+   times the edge. That is a great deal of empty white to ask for on a
+   card carrying this much reading, so it is held to about double:
+   enough to read as a Polaroid, not enough to waste a screen. */
 .drawer {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  --pol-edge: clamp(11px, 1.5vw, 17px);
+  --pol-foot: clamp(24px, 2.8vw, 34px);
+  /* relative, not absolute: it is the grid's only in-flow child, so the
+     grid centres it, and it still paints above the absolute scrim. */
+  position: relative;
   display: flex;
   flex-direction: column;
-  max-height: 95vh;
-  border-radius: 48px 48px 0 0;
-  background: var(--cream);
-  box-shadow: 0 -18px 60px rgba(28, 8, 4, 0.42);
-  transform: translateY(100%);
-  transition: transform 500ms cubic-bezier(0.32, 0.72, 0, 1);
-  will-change: transform;
+  width: min(100%, 620px);
+  max-height: min(100%, 860px);
+  padding: var(--pol-edge) var(--pol-edge) var(--pol-foot);
+  border-radius: 4px;
+  /* Not flat white. Real instant film is warm at the top and cooler at
+     the foot, and the gradient is what stops a 620px slab of #fff
+     reading as a browser dialog. */
+  background: linear-gradient(#fffdf9, #f3ede1);
+  box-shadow:
+    0 32px 70px rgba(28, 8, 4, 0.45),
+    0 4px 14px rgba(28, 8, 4, 0.26);
+  opacity: 0;
+  transform: translateY(18px) scale(0.965);
+  transition:
+    transform 500ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 320ms ease;
+  will-change: transform, opacity;
 }
 
 .drawer[hidden] {
@@ -1569,42 +1723,34 @@ textarea:focus-visible {
 }
 
 .drawer.is-open {
-  transform: translateY(0);
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 
-/* Purely a visual affordance for "this came up from the bottom". There
-   is no drag gesture yet, so it is hidden from assistive technology
-   rather than announced as something you can grab. */
-.drawer-grip {
-  flex: none;
-  width: 44px;
-  height: 4px;
-  margin: 14px auto 0;
-  border-radius: 999px;
-  background: rgba(51, 36, 26, 0.22);
+/* The last line fading into the foot rather than being guillotined by
+   it. It sits over the window's bottom padding, so at the end of the
+   scroll there is nothing behind it to veil. */
+.drawer::after {
+  content: "";
+  position: absolute;
+  right: var(--pol-edge);
+  bottom: var(--pol-foot);
+  left: var(--pol-edge);
+  height: 34px;
+  border-radius: 0 0 2px 2px;
+  background: linear-gradient(rgba(253, 246, 234, 0), var(--cream));
+  pointer-events: none;
 }
 
-.drawer-head {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-5);
-  padding: var(--space-5) clamp(20px, 4vw, 56px) var(--space-4);
-  border-bottom: 1px solid var(--cream-edge);
-}
-
-.drawer-head h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: clamp(22px, 3vw, 34px);
-  line-height: 1.15;
-  color: var(--ink);
-}
-
+/* The close button rides the top-right corner of the frame, half on
+   and half off. Anywhere inside the window and it would sit over the
+   text scrolling beneath it, which reads as a bug rather than a
+   button. Out here it never covers a word. */
 .drawer-close {
-  flex: none;
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  z-index: 2;
   display: grid;
   place-items: center;
   width: 44px;
@@ -1624,33 +1770,79 @@ textarea:focus-visible {
   color: var(--ink);
 }
 
+/* The global button:focus-visible rule squares the corners off so a
+   rectangular ring hugs the element. This one is a circle, so the
+   radius has to be put back or the ring boxes it in. */
 .drawer-close:focus-visible {
   outline: 3px solid var(--wall);
   outline-offset: 2px;
+  border-radius: 999px;
 }
 
-/* The only scrolling region. The sheet itself must not scroll or the
-   header would leave with it.
+/* ---------- The photo window ----------
+   The only scrolling region. The frame itself must never scroll or the
+   white border would slide away with the text.
 
-   The reading column is capped and centred rather than left-aligned:
-   on a wide screen the sheet is the full width of the window, and text
-   pinned to the left edge of a 1500px sheet reads as broken rather than
-   as a deliberate measure. */
+   min-height: 0 is not optional. A flex child defaults to
+   min-height: auto, which means "never shrink below your content", so
+   without it the window grows to fit every word, the card outgrows the
+   screen, and nothing scrolls at all. */
 .drawer-body {
   flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding: var(--space-6) clamp(20px, 4vw, 56px) clamp(40px, 6vw, 72px);
+  padding: clamp(26px, 3.4vw, 42px) clamp(20px, 3vw, 38px)
+    clamp(30px, 3.8vw, 48px);
+  border-radius: 2px;
+  background: var(--cream);
+  /* A hairline instead of a border, so the window's edge does not add
+     to its width and push the frame out of square. */
+  box-shadow: inset 0 0 0 1px rgba(51, 36, 26, 0.08);
   color: var(--ink-soft);
   font-size: 16.5px;
   line-height: 1.62;
+  /* The default grey bar reads as browser furniture sitting on top of
+     the photograph. Thinned and warmed so it belongs to the paper. */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(51, 36, 26, 0.26) transparent;
+}
+
+/* Safari, which does not read the two properties above. The transparent
+   border plus background-clip is the only way to inset a WebKit thumb
+   from its track. */
+.drawer-body::-webkit-scrollbar {
+  width: 11px;
+}
+
+.drawer-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.drawer-body::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: rgba(51, 36, 26, 0.26);
+  background-clip: content-box;
 }
 
 .drawer-body > * {
-  max-width: 68ch;
+  max-width: 62ch;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* The title scrolls with the text rather than sitting in a fixed
+   header. The card is small enough that a pinned header would eat a
+   third of the reading area. */
+.drawer-title {
+  margin: 0 auto var(--space-4);
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(25px, 3vw, 33px);
+  line-height: 1.15;
+  color: var(--ink);
 }
 
 .drawer-lede {
@@ -1741,14 +1933,31 @@ textarea:focus-visible {
   margin: var(--space-2) 0 0;
 }
 
+/* On a phone the card keeps its shape and simply gets tighter: a
+   thinner white margin so the reading area is not squeezed, and a
+   smaller corner button so it does not crowd the screen edge. The
+   root's gutter grows rather than shrinks, so there is visible scrim
+   above and below and it still reads as a card resting on the page
+   rather than a sheet filling it. */
 @media (max-width: 760px) {
+  .drawer-root {
+    padding: 46px 20px;
+  }
+
   .drawer {
-    max-height: calc(100dvh - 1.5rem);
-    border-radius: 32px 32px 0 0;
+    --pol-edge: 9px;
+    --pol-foot: 20px;
+  }
+
+  .drawer-close {
+    top: -8px;
+    right: -8px;
+    width: 40px;
+    height: 40px;
   }
 }
 
-/* The sheet arrives instantly for anyone who has asked for less motion.
+/* The card arrives instantly for anyone who has asked for less motion.
    It still arrives: this is a disclosure, not decoration, so removing it
    would remove the content. */
 @media (prefers-reduced-motion: reduce) {
@@ -1879,42 +2088,85 @@ textarea:focus-visible {
   border-radius: 4px;
 }
 
-.rsvp-kicker {
-  display: block;
-  margin-bottom: var(--space-3);
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: #ffeedd;
-}
-
+/* Underline fields group by proximity, not by a box, so the gap above a
+   label has to beat the gap below it. Otherwise the label reads as
+   belonging to the line above it rather than to its own. */
 .rsvp-label {
   display: block;
-  margin: var(--space-6) 0 var(--space-2);
+  margin: var(--space-7) 0 4px;
   font-size: 15px;
   color: #fcf3ea;
   text-shadow: 0 2px 14px rgba(60, 16, 8, 0.5);
 }
 
-/* The input is the one solid thing on the page, which is what makes it
-   obvious where to type. */
+/* A single rule to write on rather than a boxed field. A cream box is
+   the most legible thing possible, but it is also the most dated, and it
+   is the only object on the page that does not belong to the
+   photograph. The line keeps the affordance and loses the form.
+
+   Legibility is bought back three ways instead: the same text shadow the
+   rest of the page uses, a warm underline bright enough to read over the
+   busiest part of the wall, and a brighter one still on focus. */
 .rsvp-input {
   display: block;
   width: 100%;
-  padding: 14px 16px;
-  border: 1px solid var(--cream-edge);
-  border-radius: var(--radius);
-  background: var(--cream);
-  color: var(--ink);
+  padding: 2px 4px 10px;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 240, 224, 0.45);
+  border-radius: 0;
+  background: transparent;
+  color: #fffaf2;
+  caret-color: #ffe9c9;
   font-family: var(--font-body);
   font-size: 17px;
   line-height: 1.5;
+  text-shadow: 0 2px 14px rgba(60, 16, 8, 0.55);
   /* Inherited alignment does not cross into a form control, so the
      typed text has to be centred by hand or it sits left in an
      otherwise centred page. */
   text-align: center;
+  transition: border-color 200ms ease;
+}
+
+/* The stepper arrows are the last piece of browser chrome on the page,
+   and nobody books a table for 7 by clicking a 6px triangle. The field
+   stays type="number", so validation and the numeric keypad on a phone
+   are unaffected: only the widget goes. */
+.rsvp-input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.rsvp-input[type="number"]::-webkit-outer-spin-button,
+.rsvp-input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+/* Chrome paints its own pale yellow over an autofilled field, which
+   would put the box straight back on name and email. The inset shadow
+   is the only way to override that fill, and the absurd transition
+   delay stops it flashing in before the shadow lands. */
+.rsvp-input:-webkit-autofill,
+.rsvp-input:-webkit-autofill:hover,
+.rsvp-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fffaf2;
+  -webkit-box-shadow: 0 0 0 1000px rgba(52, 18, 11, 0.001) inset;
+  caret-color: #ffe9c9;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* A textarea with only a bottom rule leaves the line stranded three
+   rows below whatever was typed, and parks the browser's resize grabber
+   on top of it. field-sizing lets the field grow with its content, so
+   the line stays under the last line of text and the grabber is no
+   longer needed. Browsers without it fall back to the rows attribute
+   and scroll, which is fine for a sentence about nuts. */
+textarea.rsvp-input {
+  resize: none;
+  field-sizing: content;
+  min-height: 2.4em;
 }
 
 /* Narrower than its column, so it needs the auto margins to sit in the
@@ -1924,16 +2176,38 @@ textarea:focus-visible {
   margin-inline: auto;
 }
 
+.rsvp-input:hover {
+  border-bottom-color: rgba(255, 240, 224, 0.7);
+}
+
+/* A ring is the wrong focus indicator here. With no box to hug, the
+   outline encloses empty space and, on a tall field, collides with the
+   label above it. The line itself does the job instead: brightened and
+   doubled in weight, which is unmistakable and cannot overlap anything.
+
+   box-shadow rather than a 2px border, because changing border width
+   would move the text by a pixel every time you tab into a field. */
 .rsvp-input:focus-visible {
-  outline: 3px solid #ffe9c9;
-  outline-offset: 2px;
+  outline: none;
+  border-bottom-color: #ffe9c9;
+  box-shadow: 0 1px 0 0 #ffe9c9;
+}
+
+/* Windows high contrast throws away both the border colour and the
+   shadow, so there the ring is the only indicator left. */
+@media (forced-colors: active) {
+  .rsvp-input:focus-visible {
+    outline: 2px solid;
+    outline-offset: 2px;
+  }
 }
 
 /* Only after a failed attempt, so nothing is marked wrong before it has
-   been filled in. */
+   been filled in. A red line rather than a red ring: there is no box
+   left to draw a ring around. */
 .was-validated .rsvp-input:invalid {
-  border-color: #c0392b;
-  box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.28);
+  border-bottom-color: #ff9d8a;
+  box-shadow: 0 1px 0 0 #ff9d8a;
 }
 
 .rsvp-help {

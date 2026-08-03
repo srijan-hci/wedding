@@ -83,10 +83,12 @@
   function play() {
     body.classList.add("intro-play");
 
-    // The nav and the fan-out should not compete for attention, so the
-    // nav arrives as the last piece lands. On a page with no collage,
-    // such as /rsvp, there is nothing to wait for, so it arrives at once.
-    var navDelay = reduced || !collage ? 0 : 1900;
+    // The nav and the assembly should not compete for attention, so the
+    // nav arrives once the pieces behind the Polaroid have all landed,
+    // while the five in front are still drifting down. Waiting for those
+    // to finish too left the page feeling stalled. On a page with no
+    // collage, such as /rsvp, there is nothing to wait for.
+    var navDelay = reduced || !collage ? 0 : 2600;
     window.setTimeout(function () {
       if (nav) nav.classList.add("is-ready");
     }, navDelay);
@@ -285,18 +287,22 @@
   }
 
   /* ============================================================
-     4. THE DETAIL DRAWERS
+     4. THE DETAIL MODALS
 
-     Three bottom sheets, one per card.
+     Three Polaroids, one per card.
 
      The focus trap is the reason this is more than twenty lines. The
      reference this was modelled on sets aria-modal="true" but leaves
-     focus loose, so a keyboard user tabs straight out of the sheet and
-     into the page behind it, which is still visible through the scrim
-     and still scrollable-looking but inert. That is worse than no dialog
-     at all, because there is no way to tell where you are. Here Tab and
-     Shift+Tab wrap inside the sheet, Escape closes it, and focus returns
-     to the exact card that opened it.
+     focus loose, so a keyboard user tabs straight out of the dialog
+     and into the page behind it, which is still visible through the
+     scrim and still scrollable-looking but inert. That is worse than
+     no dialog at all, because there is no way to tell where you are.
+     Here Tab and Shift+Tab wrap inside the card, Escape closes it, and
+     focus returns to the exact Polaroid that opened it.
+
+     The variable names still say "drawer". These were bottom sheets
+     until the card became a Polaroid, and the class is load-bearing
+     across three files, so renaming it is a job of its own.
      ============================================================ */
   var drawerRoot = document.querySelector(".drawer-root");
 
@@ -322,7 +328,7 @@
         });
     }
 
-    /* Locking the page behind the sheet. Setting overflow on <html> and
+    /* Locking the page behind the card. Setting overflow on <html> and
        <body> is what actually holds on iOS Safari, where either one on
        its own is ignored. */
     function lockScroll() {
@@ -350,9 +356,10 @@
       drawer.hidden = false;
       lockScroll();
 
-      /* Two frames, not one. The first paints the sheet at
-         translateY(100%); only after that has been committed does adding
-         the class produce a transition rather than an instant jump. */
+      /* Two frames, not one. The first paints the card at its starting
+         opacity and scale; only after that has been committed does
+         adding the class produce a transition rather than an instant
+         jump. */
       requestAnimationFrame(function () {
         requestAnimationFrame(function () {
           drawerRoot.classList.add("is-open");
@@ -382,8 +389,8 @@
         trigger.setAttribute("aria-expanded", "false");
       }
 
-      /* Wait for the slide out before hiding, so it does not vanish
-         mid-animation. transitionend alone is not safe: if the sheet is
+      /* Wait for the fade out before hiding, so it does not vanish
+         mid-animation. transitionend alone is not safe: if the card is
          off screen the browser may never fire it, so a timer backs it
          up and whichever lands first wins. */
       var done = false;
@@ -422,7 +429,7 @@
       var last = items[items.length - 1];
       var active = document.activeElement;
 
-      /* Focus can end up outside the sheet entirely, for instance after
+      /* Focus can end up outside the card entirely, for instance after
          clicking the scrim, so pull it back rather than assuming it is
          on one of the two ends. */
       if (!openDrawer.contains(active)) {

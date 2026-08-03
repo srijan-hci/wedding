@@ -39,11 +39,11 @@ authoritative while still making the feature easy to back out.
 
 | File | Purpose |
 |---|---|
-| `index.html` | The invitation. Collage, date, venue, three detail cards, and the three drawers those cards open. |
+| `index.html` | The invitation. Collage, date, venue, three detail cards, and the three Polaroid modals those cards open. |
 | `rsvp/index.html` | The RSVP page. One plain form that becomes one question at a time. |
 | `rsvp/steps.js` | The stepping only. Submission still belongs to `rsvp.js`. |
-| `styles.css` | Everything. Recoleta `@font-face`, tokens, the liquid glass, the collage stage, the stop-motion keyframes, the page below the collage, the drawers, the RSVP page. |
-| `main.js` | Intro timing, mouse parallax, nav state, section reveals, the drawers. |
+| `styles.css` | Everything. Recoleta `@font-face`, tokens, the liquid glass, the collage stage, the stop-motion keyframes, the page below the collage, the detail modals, the RSVP page. |
+| `main.js` | Intro timing, mouse parallax, nav state, section reveals, the detail modals. |
 | `light.js` | The light and shadow on the wall. Self-contained WebGL, shaders included. |
 | `rsvp.js` | Form submission. Holds the Google Apps Script URL. Shared by the RSVP page. |
 | `google-apps-script.js` | Not used by the page. The script to paste into Google Apps Script so RSVPs land in a Google Sheet, with setup instructions. |
@@ -59,7 +59,7 @@ The page is four stacked fixed layers:
 .content-layer      z 10   collage, headline, everything you read
 .light-layer        z 20   the drifting light, mix-blend-mode: multiply
 .site-nav           z 30   the pill nav
-.drawer-root        z 60   the detail sheets, over everything
+.drawer-root        z 60   the detail Polaroids, over everything
 ```
 
 Anything new needs a deliberate z-index relative to these.
@@ -108,9 +108,9 @@ Two traps, both of which produced alarming and completely false failures:
 
 Current state: 71 text runs across both pages at 390 and 1512, **zero below
 threshold**, and zero axe-core violations at 390, 820 and 1440 on the home
-page, the RSVP page and an open drawer. The colours are already near the top of
-their range, so if you add small text on the wall, measure it. Do not eyeball
-it.
+page, the RSVP page and an open detail modal. The colours are already near the
+top of their range, so if you add small text on the wall, measure it. Do not
+eyeball it.
 
 ## The collage and the intro
 
@@ -225,22 +225,54 @@ the same page with the glass switched off: +0.1ms median at 1x CPU, +4.7ms at
 6x throttling. Absolute frame times in headless Chrome are meaningless; only
 the delta within one session is.
 
-### The drawers
+### The detail modals
 
-Bottom sheets, one per detail card. The motion is measured off the reference
-the user chose rather than invented: `translateY(100%)` to 0 over 500ms on
-`cubic-bezier(0.32, 0.72, 0, 1)`, scrim black 40% with an 8px blur over the
-same 500ms, 32px rounded top on a phone and 48px on a desktop, and it stays a
-bottom sheet at every width.
+A Polaroid, not a bottom sheet. Each card opens a centred card wearing the same
+warm white frame as the artwork printed on the cards themselves: a thin margin
+on three sides, a slightly deeper band along the bottom, and every word sitting
+in the photo window, which is the only part that scrolls. It fades and scales
+in over 500ms on `cubic-bezier(0.32, 0.72, 0, 1)`, scrim black 40% with an 8px
+blur. It stays the same shape at every width; on a phone it simply gets
+narrower.
 
-**One deliberate improvement on that reference:** it sets `aria-modal="true"`
-but does not trap focus, so a keyboard user tabs straight out into the inert
-page behind. Ours traps focus in both directions and hands it back to the exact
-card that opened it. Verified: 45 tabs each way, zero escapes.
+The frame is `padding` on `.drawer` driven by two custom properties,
+`--pol-edge` (the three-sided margin) and `--pol-foot` (the band below the
+window), not a `border`. A border would add to the element's width and the
+window's own edge would drift out of square with it. A real Polaroid's foot is
+about four times its edge; here it is about double, because four times is a lot
+of empty white to ask for on a card carrying this much reading.
 
-`hidden` on a drawer means "closed". Two frames are needed between painting the
-sheet at `translateY(100%)` and adding `.is-open`, or the transition is skipped
-and it jumps.
+**⚠️ `.drawer-body` needs `min-height: 0`.** A flex child defaults to
+`min-height: auto`, meaning "never shrink below your content". Without it the
+window grows to fit every word, the card outgrows the screen, and nothing
+scrolls at all.
+
+**The close button sits on the top-right corner, half on and half off the
+frame.** Anywhere inside the window and it would sit over text scrolling
+underneath it, which reads as a bug rather than a button. It also has to
+restate `border-radius: 999px` in its `:focus-visible` rule, because the global
+`button:focus-visible` sets `border-radius: 2px` so a rectangular ring hugs the
+element, which boxes in a circle.
+
+`.drawer-root` is a one-cell grid with `place-items: center`, not just a fixed
+box. The single explicit row and column is what gives `.drawer`'s
+`max-height: 100%` a definite track to measure against; against an auto track
+the percentage has nothing to resolve to.
+
+**One deliberate improvement on the reference this was modelled on:** it sets
+`aria-modal="true"` but does not trap focus, so a keyboard user tabs straight
+out into the inert page behind. Ours traps focus in both directions and hands
+it back to the exact card that opened it. Verified: 45 tabs each way, zero
+escapes.
+
+`hidden` on a modal means "closed". Two frames are needed between painting the
+card at its starting opacity and adding `.is-open`, or the transition is
+skipped and it jumps.
+
+**The class is still `drawer`.** These were bottom sheets before the card
+became a Polaroid, and the name is load-bearing in `index.html`, `styles.css`
+and `main.js`, so renaming it is a job of its own rather than a detail of a
+visual change.
 
 **The card artwork is cropped differently from every other collage piece.**
 `card-travel`, `card-events` and `card-bangalore` come out of Figma with a soft
@@ -681,11 +713,11 @@ Everything below is either waiting on the owner or is copy nobody has approved.
 - **The venue spelling.** Figma "Tharvadu Mane", site "Tharavadu Mane".
 - **"Please RSVP by 28 August 2026"** was lifted from the Figma and never
   confirmed.
-- **The venue street address in the Travel drawer is still a placeholder.**
+- **The venue street address in the Travel modal is still a placeholder.**
 - **The closing paragraph** ("Come for the food, stay for the dancing...") was
   written by an assistant, not by the couple.
-- **All three drawers** were condensed from an earlier version of the site and
-  have never been fact-checked. Treat every logistic in them as a draft.
+- **All three detail modals** were condensed from an earlier version of the site
+  and have never been fact-checked. Treat every logistic in them as a draft.
 
 **Offered and not yet answered:** on the RSVP page the two long answers
 (dietary needs, note) now centre their text as it is typed, which reads oddly

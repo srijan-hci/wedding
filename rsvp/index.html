@@ -58,14 +58,16 @@
       />
     </picture>
 
-    <nav class="site-nav" aria-label="Main">
+    <!-- The secondary modifier keeps the same glass pill but at a lower
+         weight, so it never competes with Continue or Send it. -->
+    <nav class="site-nav site-nav--secondary" aria-label="Main">
       <ul class="glass">
         <li><a href="../">Back to the invitation</a></li>
       </ul>
     </nav>
 
     <main class="content-layer rsvp-page">
-      <h1 class="rsvp-title">Will you be there?</h1>
+      <h1 class="rsvp-title">RSVP</h1>
       <p class="rsvp-sub">
         20 &amp; 21 February 2027 &middot; Tharavadu Mane, Bangalore
       </p>
@@ -77,10 +79,7 @@
         <p class="rsvp-progress" data-progress aria-live="polite" hidden></p>
 
         <fieldset class="rsvp-step" data-step>
-          <legend class="rsvp-q">
-            <span class="rsvp-kicker">First things first</span>
-            What&rsquo;s your name?
-          </legend>
+          <legend class="rsvp-q">What&rsquo;s your name?</legend>
           <label class="rsvp-label" for="rsvp-name">Full name</label>
           <input
             class="rsvp-input"
@@ -105,10 +104,7 @@
         </fieldset>
 
         <fieldset class="rsvp-step" data-step>
-          <legend class="rsvp-q">
-            <span class="rsvp-kicker">The important bit</span>
-            Can you make it?
-          </legend>
+          <legend class="rsvp-q">Can you make it?</legend>
           <div class="rsvp-choices">
             <label class="rsvp-choice">
               <input type="radio" name="attending" value="Yes" required />
@@ -126,10 +122,7 @@
              two compose without either knowing about the other. -->
         <div id="rsvp-attending-details">
           <fieldset class="rsvp-step" data-step>
-            <legend class="rsvp-q">
-              <span class="rsvp-kicker">Numbers</span>
-              How many of you are coming?
-            </legend>
+            <legend class="rsvp-q">How many of you are coming?</legend>
             <label class="rsvp-label" for="rsvp-guests">
               Including yourself
             </label>
@@ -146,15 +139,12 @@
             />
             <p class="rsvp-help">
               Your invitation says who it covers. If you are not sure, put what
-              you hope for and tell us below.
+              you hope for and we will follow up.
             </p>
           </fieldset>
 
           <fieldset class="rsvp-step" data-step>
-            <legend class="rsvp-q">
-              <span class="rsvp-kicker">At the table</span>
-              Anything we should know about food?
-            </legend>
+            <legend class="rsvp-q">Anything we should know about food?</legend>
             <label class="rsvp-label" for="rsvp-dietary">
               Allergies, or what you do and don&rsquo;t eat
             </label>
@@ -171,25 +161,8 @@
           </fieldset>
         </div>
 
-        <fieldset class="rsvp-step" data-step>
-          <legend class="rsvp-q">
-            <span class="rsvp-kicker">Optional</span>
-            Anything you&rsquo;d like to tell us?
-          </legend>
-          <label class="rsvp-label" for="rsvp-note">A note for us</label>
-          <textarea
-            class="rsvp-input"
-            id="rsvp-note"
-            name="note"
-            rows="4"
-          ></textarea>
-        </fieldset>
-
         <fieldset class="rsvp-step" data-step data-review>
-          <legend class="rsvp-q">
-            <span class="rsvp-kicker">Nearly done</span>
-            Does this look right?
-          </legend>
+          <legend class="rsvp-q">Does this look right?</legend>
           <dl class="rsvp-review" data-review-list></dl>
         </fieldset>
 

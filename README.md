@@ -14,8 +14,8 @@ python3 -m http.server 8899
 |---|---|
 | `index.html` | The invitation. Collage, date, venue, three detail cards. |
 | `rsvp/` | The RSVP form, one question at a time. |
-| `styles.css` | Everything. Tokens, the collage stage, the glass, the drawers. |
-| `main.js` | Intro timing, mouse parallax, nav state, the drawers. |
+| `styles.css` | Everything. Tokens, the collage stage, the glass, the detail modals. |
+| `main.js` | Intro timing, mouse parallax, nav state, the detail modals. |
 | `light.js` | The light and shadow on the wall. WebGL, shaders included. |
 | `rsvp.js` | Form submission. **Needs an endpoint before it works.** |
 | `Assets/` | The wall, and the collage artwork. |
