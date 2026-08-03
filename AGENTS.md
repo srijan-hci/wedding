@@ -699,12 +699,11 @@ Everything below is either waiting on the owner or is copy nobody has approved.
 
 **Waiting on the owner:**
 
-- **The Apps Script needs redeploying.** `google-apps-script.js` in this repo is
-  correct, but Google is still running an older copy that uses `appendRow()`.
-  A live test reply landed in row 14 with blank rows above it. Until it is
-  redeployed, replies are still recorded, just in the wrong place. Extensions >
-  Apps Script, paste the file, then Deploy > Manage deployments > pencil >
-  New version.
+Nothing right now. The Apps Script was redeployed on 3 August 2026 and the
+`nextRow_()` fix is confirmed live: two replies a minute apart landed in rows 2
+and 3, and after row 3 was cleared the next reply **reused** row 3 rather than
+skipping to row 4. That reuse is the exact behaviour `appendRow()` got wrong,
+so it is the test worth repeating if the script is ever changed again.
 
 **Unconfirmed copy currently on the live site:**
 
