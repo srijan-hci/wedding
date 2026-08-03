@@ -42,7 +42,7 @@ authoritative while still making the feature easy to back out.
 | `index.html` | The invitation. Collage, date, venue, three detail cards, and the three Polaroid modals those cards open. |
 | `rsvp/index.html` | The RSVP page. One plain form that becomes one question at a time. |
 | `rsvp/steps.js` | The stepping only. Submission still belongs to `rsvp.js`. |
-| `styles.css` | Everything. Recoleta `@font-face`, tokens, the liquid glass, the collage stage, the stop-motion keyframes, the page below the collage, the detail modals, the RSVP page. |
+| `styles.css` | Everything. Recoleta `@font-face`, tokens, the liquid glass, the collage stage, the assembly keyframes, the page below the collage, the detail modals, the RSVP page. |
 | `main.js` | Intro timing, mouse parallax, nav state, section reveals, the detail modals. |
 | `light.js` | The light and shadow on the wall. Self-contained WebGL, shaders included. |
 | `rsvp.js` | Form submission. Holds the Google Apps Script URL. Shared by the RSVP page. |
@@ -114,7 +114,9 @@ eyeball it.
 
 ## The collage and the intro
 
-The design came from Figma (`Assets/Testpage.png`, gitignored). Things worth
+The design came from Figma. The original wide arrangement was solved against
+`Assets/Testpage.png`; the current one was re-solved against a later reference
+the owner supplied by hand (not in the repo, both are gitignored). Things worth
 knowing before editing it:
 
 1. **The collage is a fixed-ratio stage, not viewport units.** `.hero-stage`
@@ -126,42 +128,110 @@ knowing before editing it:
    `cqw` rather than `vw` matters: the stage caps at `max-width: 1600px`, so
    with `vw` the type would keep growing after the artwork had stopped.
 
+   **The stage is capped by window HEIGHT as well as width**, via
+   `width: min(100%, 1600px, (100svh - var(--stage-breath) * 1.5) *
+   var(--stage-ar))`. Without the height term a 1600px stage is 1039px tall,
+   taller than most laptop windows, and the bottom of the collage was simply
+   cut off by the hero's `overflow: hidden`.
+
+   ⚠️ `--stage-ar` is the `aspect-ratio` written again as a plain number,
+   because a ratio cannot be used as a multiplier in `calc`. **Change one and
+   you must change the other**, in both the wide block and the phone block, or
+   the stage stops fitting.
+
+   `--stage-breath` is the band reserved at the top of the window, and it is
+   declared on **`.hero`**, not on `.hero-stage`. Both elements need it and
+   custom properties inherit downward only, so a value set on the stage is
+   invisible to its own parent: setting it there made `.hero`'s padding
+   silently resolve to zero and the fix appeared to do nothing.
+
+   The nav is still allowed to overlap the stage's empty top area, as the
+   design has it. What the band reserves is only enough that the HEADLINE
+   clears the nav, which is far less than clearing the whole stage. It is
+   needed because the nav is a fixed pixel size while everything in the stage
+   is a percentage of it, so on a short window the headline rises to meet it.
+   Measured before the fix: at 360x640 the headline sat 36px **on top of** the
+   nav, and at 1280x640 the gap was 15px.
+
+   `.hero` reserves that band as `padding` rather than centring the stage in
+   the whole window. Centring wasted the space twice, leaving a gap under the
+   nav *and* an equal gap below the collage.
+
    There are **two** deliberate arrangements, wide and tall, neither random and
    neither a scaled copy of the other. The user explicitly does not want the
    same collage everywhere.
 
 2. **The positions are measured, not eyeballed.** Every `--x` / `--y` / `--w`
-   in the wide arrangement was solved against `Assets/Testpage.png` by isolating
-   each piece (screenshot the page twice, once with the piece hidden, and use
-   the pixel difference as a mask) and template-matching it into the design.
-   All seventeen land within 10px. The headline is exact: its ink spans
-   x 153..1383 in both.
+   in the wide arrangement was solved against the design by template-matching
+   each piece's own asset into the reference screenshot.
 
-   If you change the headline wording, `font-size: 8.578cqw` has to be
+   ⚠️ **Match on GRADIENT MAGNITUDE, not colour.** Flat regions correlate with
+   almost anything: matching on colour put the sun face on top of the postcard
+   and the dosa up in the sky, both at plausible-looking scores above 0.94.
+   Constrain the search to a window around each piece's current position too,
+   since this is a refinement of an existing composition and a piece crossing
+   the frame is a bug rather than a finding.
+
+   Two pieces resist that method and were done differently:
+
+   * **The dosa** is occluded on three sides, by the Polaroid above and the
+     newspaper to its right, so there is not enough of it visible to lock on.
+     Every candidate scored about the same, scattered across the bottom of the
+     frame. Read off a gridded crop instead: visible left edge 48.3%, lowest
+     point 90.5%, artwork very nearly square.
+   * **The kolam** is a symmetric, repeating chalk pattern at 0.85 opacity, so
+     edge matching slides between periods and lands on a wrong one. Match it
+     on **whiteness** with `TM_CCOEFF_NORMED` and the Polaroid frame and the
+     couple illustration blanked out first, since both are white too. That
+     moved it from a wrong 9.5% to the correct 17.8%.
+
+     ⚠️ Do **not** use a masked `TM_CCORR_NORMED` for this. The wall has zero
+     whiteness, so the normalisation divides by ~0 and every candidate comes
+     back as `FLT_MAX`.
+
+   If you change the headline wording, `font-size: 8.075cqw` has to be
    re-solved. Measure the rendered INK, not the layout box: the box includes
    side bearing the eye does not see, which is what made the first attempt 12%
-   too narrow.
+   too narrow. `canvas` `measureText().actualBoundingBox*` gives it exactly and
+   avoids a screenshot round trip; remember to add `letter-spacing` back on,
+   because `measureText` ignores it.
 
 3. **DOM order is stacking order, and it drives the animation.** The Polaroid
-   sits in the middle of `.collage`. Everything before it is behind and steps
-   outward from underneath; everything after is in front and steps inward from
-   off screen.
+   sits in the middle of `.collage`. Everything before it is behind and scales
+   up and outward from underneath; everything after is in front and scales down
+   onto it.
+
+   Which side a piece belongs on is a fact about the artwork, not a
+   preference, so check the design before moving one. The **dosa is behind**
+   (the Polaroid's white frame is drawn over the top of the bowl) and the
+   **bell is in front** (its skirt is drawn over that same frame). Both were
+   on the wrong side and both were spotted by the owner, not by the matcher.
+
+   ⚠️ Moving a piece across the Polaroid means four edits, not one: the
+   `<div class="layer">` in `index.html`, its arrangement rule, its entry in
+   the grouped front-piece rule, and its travel vector, which is computed by a
+   different formula on each side. Miss the markup and you get **two copies**
+   of the piece, which is easy to miss on screen because they overlap.
 
 4. **⚠️ The `:not()` specificity trap, which has now bitten twice.**
    `.intro-play .piece:not(.p-polaroid)` scores (0,3,0) because `:not()` counts.
    A per-piece rule like `.p-stamp` scores (0,1,0) and loses.
 
    * First time: the shorthand's implicit `animation-delay: 0` beat every
-     per-piece delay and all seventeen pieces animated at once. Fixed by moving
+     per-piece delay and all the pieces animated at once. Fixed by moving
      delays onto `--fan-delay`.
    * Second time: a `.piece:not(.p-polaroid)` block holding "default" travel
-     values beat all seventeen `--from-x` / `--from-y` / `--from-scale` /
-     `--from-rot` rules, so no piece ever travelled and the assembly was
+     values beat every `--from-x` / `--from-y` / `--from-scale` /
+     `--from-rot` rule, so no piece ever travelled and the assembly was
      silently just a zoom. Fixed by deleting that block and putting the
      defaults in `var()` fallbacks inside the keyframe.
 
    **Do not reintroduce a defaults rule for anything a per-piece rule sets.**
    Put the default in the `var()` fallback.
+
+   A plain duplicate is just as dangerous and does not need `:not()` at all: a
+   second `.p-dosa` arrangement rule left further down the file quietly won on
+   source order and undid the new one.
 
 5. **Media queries add no specificity, so source order decides.** The phone
    travel vectors originally sat with the rest of the phone layout, above the
@@ -169,30 +239,101 @@ knowing before editing it:
    towards where the Polaroid sits on a desktop. The phone overrides now sit
    *after* the wide block, with a comment saying why.
 
-6. **The stop-motion is `steps()`, on two different counts.** `--frames: 14`
-   for position and `--frames-rot: 9` for rotation, deliberately not a factor of
-   14, so angle and position never land on the same beat. That mismatch is what
-   stops it reading as machinery. `assemble` owns `transform`, so the resting
-   tilt has to ride on the separate `rotate` property or the two overwrite each
-   other.
+6. **The assembly is smooth, in three phases.** It used to be stop-motion
+   `steps()`; it is not any more. The Polaroid rises first, then the pieces
+   behind it scale up from `--back-scale` and push outward, then the pieces in
+   front start at `--front-scale` and shrink onto it.
 
-   A third animation, `reveal`, flips opacity in one step at each piece's own
-   delay. Without it `animation-fill-mode: both` fills backwards and every piece
-   is painted at its start position from frame zero.
+   Phases 2 and 3 share **one** `--travel-dur`, deliberately: they are the same
+   gesture in opposite directions, and giving one a longer duration made the
+   composition feel lopsided. Opacity is welded to the travel by a proportional
+   `--fade-ratio` rather than a fixed millisecond fade, so the two can never
+   drift apart.
 
-   Travel distances are computed, not guessed: the exact vector back to the
-   Polaroid's centre for the pieces behind it, and a `cqw + vw` sum for the ones
-   in front so they clear the window at any width. Percentages do **not** work
-   inside `translate()`: they resolve against the element's own box, so the same
-   number means a different distance for every piece.
+   Both easing curves overshoot slightly and drop back, which is the bounce.
+   Keep it near 3%: it lands on scale, position and tilt at once, so a value
+   that looks gentle on any one of them is far too much when all three do it
+   together. Measured: behind pieces peak at 1.020x, front pieces dip to
+   0.986x. `cubic-bezier(0.34, 1.18, ...)` yields only about 1% and is
+   effectively invisible.
+
+   ⚠️ An ease-out for phase 3 is the obvious choice and it is wrong. It does
+   nearly all the shrinking in the first fifth and then sits still, which reads
+   as a snap. A near-symmetric ease-in-out is what makes it read as a gradual
+   drift.
+
+   `assemble` owns `transform`, so the resting tilt has to ride on the separate
+   `rotate` property or the two overwrite each other. A third animation,
+   `reveal`, handles opacity. Without it `animation-fill-mode: both` fills
+   backwards and every piece is painted at its start position from frame zero.
+
+   Travel distances are computed, not guessed. Behind a piece it is the exact
+   vector back to the Polaroid's centre; in front it is perspective, because an
+   object receding from a camera drifts toward the vanishing point, so run
+   backwards a piece that starts close to the lens starts offset *outward*:
+
+   ```
+   offset = (rest position - Polaroid centre) x (--front-scale - 1) x 0.7
+   ```
+
+   The 0.7 damps it; the geometrically exact offset threw the lower pieces off
+   the bottom of the stage. Vertical values are additionally scaled by 982/1512
+   on desktop and 700/400 on the phone, because `cqw` measures the stage's
+   WIDTH. Percentages do **not** work inside `translate()`: they resolve
+   against the element's own box, so the same number means a different distance
+   for every piece.
+
+   **The order of the whole intro is collage, then headline, then nav**, and
+   the numbers are tied to each other: the last front piece finishes at 3125ms,
+   so `--headline-delay` is 3000ms, `navDelay` in `main.js` is 3300ms and the
+   parallax fallback is 3300ms. Change `--front-start`, `--front-step` or
+   `--travel-dur` and all three have to move with it.
 
 7. **The collage images are pre-trimmed.** Each PNG was cropped to its alpha
    bounding box before resizing, so the image box equals the artwork and CSS
    sizing is predictable. The `width`/`height` attributes in the HTML match the
    trimmed files. If you re-export from Figma, re-trim, or the sizes will lie.
 
+   `prepare.py` knows about more pieces than the page uses. `marigold-two`
+   sat in `_source/` unexported and unplaced for months before the owner
+   noticed it missing from under the Ganesha postcard. `sacred-fire` is still
+   in that state. If a piece looks absent from the design, check `prepare.py`
+   and `_source/` before concluding the artwork does not exist.
+
 8. **There is no shadow video.** The old site used one, 2.6 MB of its 3.5 MB
    total. `light.js` generates the same effect instead.
+
+9. **The hero is top-pinned, not centred, and that is load-bearing.** `.hero`
+   uses `align-content: start` with `--stage-top` / `--stage-foot` padding, and
+   `.hero-stage` takes its width from
+   `min(100%, 1600px, (100svh - top - foot) * --content-scale * --stage-ar)`.
+
+   Centring looks like the obvious choice and is the wrong one: it inverts the
+   constraint. Centred, growing the stage pushes the headline *up* into the
+   nav, so the stage has to stay small to keep them apart. Pinned, growing it
+   pushes the headline *down*, so the only remaining limit is the bottom of the
+   artwork. Switching to pinned made the collage about 10 percent larger at
+   every width for free, and closed the portrait-tablet gap from 281px to 53px.
+
+   `--content-scale` exists because the lowest piece sits at 92 percent of the
+   stage box, so the bottom 8 percent is empty wall. `1.087` (= 1/0.92) sizes
+   the budget against the *artwork* rather than the box. The phone equivalent
+   is `1.19` (= 1/0.84). **Re-measure both if the bottom of the composition
+   changes.**
+
+   ⚠️ `--stage-top`, `--stage-foot` and `--content-scale` must be declared on
+   `.hero`, not `.hero-stage`. Custom properties inherit downward only, so a
+   value set on the child is invisible to the parent's own padding and the
+   whole formula silently resolves to zero.
+
+   ⚠️ The aspect ratio is written twice, as `aspect-ratio: 1512 / 982` and as
+   `--stage-ar: 1.5397`, because a CSS ratio cannot be used as a multiplier in
+   `calc`. Change one and you must change the other, in both the wide and the
+   phone block.
+
+   Measured, nothing clipped at any size: nav-to-headline is 50 to 151px from
+   320x568 up to 1920x1080, and the stage reaches its full 1600px cap at
+   1080-tall.
 
 ### The liquid glass
 

@@ -83,12 +83,11 @@
   function play() {
     body.classList.add("intro-play");
 
-    // The nav and the assembly should not compete for attention, so the
-    // nav arrives once the pieces behind the Polaroid have all landed,
-    // while the five in front are still drifting down. Waiting for those
-    // to finish too left the page feeling stalled. On a page with no
+    // The nav, the assembly and the headline should not compete for
+    // attention, so they arrive in that reading order: collage, then
+    // headline at 3000ms, then the nav just behind it. On a page with no
     // collage, such as /rsvp, there is nothing to wait for.
-    var navDelay = reduced || !collage ? 0 : 2600;
+    var navDelay = reduced || !collage ? 0 : 3300;
     window.setTimeout(function () {
       if (nav) nav.classList.add("is-ready");
     }, navDelay);
@@ -195,8 +194,9 @@
       if (event.target === collage) startParallax();
     });
   }
-  // Belt and braces: if that animation never fires, start anyway.
-  window.setTimeout(startParallax, 3400);
+  // Belt and braces: if that animation never fires, start anyway. This has
+  // to land after the last piece settles, which is 3125ms.
+  window.setTimeout(startParallax, 3300);
 
   /* ============================================================
      3. THE LIGHT, CONSTANT

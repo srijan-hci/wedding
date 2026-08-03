@@ -476,15 +476,61 @@ body {
 .hero {
   position: relative;
   display: grid;
-  place-items: center;
+  /* Pinned to the top, not centred. Centring made the stage's own size
+     fight its position: growing it pushed the headline UP into the nav,
+     so the stage had to stay small. Pinned, growing it pushes the
+     headline DOWN and away from the nav, so the only limit left is the
+     bottom of the artwork. */
+  justify-items: center;
+  align-content: start;
   min-height: 100svh;
-  padding: 0;
+  /* Declared HERE, not on .hero-stage, because both need them and custom
+     properties inherit downward only: a value set on the stage is
+     invisible to its own parent. Setting them there made this padding
+     silently resolve to zero. */
+  --stage-top: 40px;
+  --stage-foot: 24px;
+  /* 1 / 0.92. The lowest piece sits at 92% of the stage height, so the
+     bottom 8% of the box is empty wall. Sizing the stage against the
+     whole box therefore threw away 8% of the artwork for nothing. This
+     scales the height budget back up so it is the ARTWORK that lands on
+     the bottom margin, not the empty box.
+
+     ⚠️ Re-measure this if the bottom of the composition changes. Today
+     the lowest piece is p-bangles. A multiplier rather than a division
+     because multiplying by a unitless custom property has the wider
+     browser support. */
+  --content-scale: 1.087;
+  padding: var(--stage-top) 0 var(--stage-foot);
   overflow: hidden;
 }
 
 .hero-stage {
   position: relative;
-  width: 100%;
+
+  /* The stage is sized by whichever runs out first, width or height, so the
+     whole collage is always on screen. Height is the one that used to be
+     ignored: a 1600px stage at this ratio is 1039px tall, which is taller
+     than most laptop windows, so the bottom of the collage was cut off.
+
+     --stage-ar has to be the aspect-ratio below written as a number, because
+     a ratio cannot be used as a multiplier in calc. The two are changed
+     together or the stage stops fitting.
+
+     --stage-top, --stage-foot and --content-scale are declared on `.hero`,
+     because that element needs them for its padding too. The nav is still
+     allowed to overlap the stage's empty top area, as the design has it;
+     what --stage-top reserves is only enough that the HEADLINE clears the
+     nav on a narrow window, where the stage is limited by width and the
+     headline therefore sits high. Before any of this, at 360x640 the
+     headline sat 36px ON TOP of the nav. */
+  --stage-ar: 1.5397; /* 1512 / 982 */
+  width: min(
+    100%,
+    1600px,
+    (100svh - var(--stage-top) - var(--stage-foot)) * var(--content-scale) *
+      var(--stage-ar)
+  );
   max-width: 1600px;
   aspect-ratio: 1512 / 982;
   /* Makes cqw inside resolve against this box. */
@@ -501,13 +547,12 @@ body {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 500;
-  /* Solved, not guessed. The headline's INK spans x 153..1383 in the
-     1512-wide Figma, so 81.35% of the frame. Ours was measured the same
-     way, by thresholding the rendered pixels rather than reading the
-     layout box, because the layout box includes side bearing the eye
-     does not see. 114.31px gave 1084px of ink, so 1230px needs 129.7px,
-     which is 8.578cqw. Change the wording and this needs re-solving. */
-  font-size: 8.578cqw;
+  /* Solved, not guessed. Measure the rendered INK, not the layout box:
+     the box includes side bearing the eye does not see, which is what
+     made an earlier attempt 12% too narrow. At 8.578cqw the ink spanned
+     81.4% of the stage; this is one step down from that, at 76.6%.
+     Change the wording and this needs re-solving. */
+  font-size: 8.075cqw;
   line-height: 0.94;
   letter-spacing: -0.018em;
   text-align: center;
@@ -567,15 +612,23 @@ body {
   height: auto;
 }
 
-/* ---------- Wide arrangement: measured off the Figma ----------
+/* ---------- Wide arrangement: measured off the design ----------
    --x and --y are the centre of each piece as a percentage of the
-   1512 x 982 stage; --w is its width on the same scale. */
+   1512 x 982 stage; --w is its width on the same scale.
+
+   Solved, not eyeballed. Each piece was template-matched into the
+   reference on its GRADIENT MAGNITUDE rather than its colour, because
+   flat areas correlate with almost anything: matching on colour put the
+   sun face on top of the postcard and the dosa up in the sky. The search
+   was also constrained to a window around each piece's previous position,
+   since this is a refinement of an existing composition rather than a
+   rearrangement, so a piece crossing the frame is a bug not a finding. */
 
 /* behind the Polaroid */
 .p-kolam {
-  --x: 34.6%;
-  --y: 82.7%;
-  --w: 11.2%;
+  --x: 32.7%;
+  --y: 77.5%;
+  --w: 17.8%;
   --rot: 0deg;
   --px: 0.35;
   --py: 0.3;
@@ -586,7 +639,7 @@ body {
 }
 
 .p-stamp {
-  --x: 20%;
+  --x: 19.7%;
   --y: 33.6%;
   --w: 7.4%;
   --rot: -4deg;
@@ -596,21 +649,10 @@ body {
   --pl: 0.085;
 }
 
-.p-bell {
-  --x: 29.4%;
-  --y: 35.9%;
-  --w: 6.2%;
-  --rot: 2deg;
-  --px: 0.75;
-  --py: 0.42;
-  --pr: 0.6;
-  --pl: 0.07;
-}
-
 .p-sun {
-  --x: 44.2%;
-  --y: 32.7%;
-  --w: 10.8%;
+  --x: 44%;
+  --y: 32.4%;
+  --w: 10.7%;
   --rot: -1deg;
   --px: 0.5;
   --py: 0.35;
@@ -619,9 +661,9 @@ body {
 }
 
 .p-postcard {
-  --x: 71.8%;
-  --y: 44%;
-  --w: 14.2%;
+  --x: 72%;
+  --y: 43.7%;
+  --w: 13.9%;
   --rot: 3deg;
   --px: 0.55;
   --py: 0.3;
@@ -630,9 +672,9 @@ body {
 }
 
 .p-stamp-blr {
-  --x: 79.9%;
-  --y: 36.4%;
-  --w: 6.5%;
+  --x: 80.2%;
+  --y: 36.3%;
+  --w: 6.9%;
   --rot: -5deg;
   --px: 0.85;
   --py: 0.5;
@@ -641,9 +683,9 @@ body {
 }
 
 .p-coconut {
-  --x: 17.5%;
-  --y: 52.2%;
-  --w: 12.2%;
+  --x: 17.3%;
+  --y: 53.5%;
+  --w: 12.3%;
   --rot: -2deg;
   --px: 0.6;
   --py: 0.45;
@@ -652,9 +694,9 @@ body {
 }
 
 .p-lotus {
-  --x: 27.1%;
-  --y: 54.7%;
-  --w: 9.6%;
+  --x: 26.8%;
+  --y: 56.2%;
+  --w: 12.8%;
   --rot: 1deg;
   --px: 0.7;
   --py: -0.4;
@@ -663,9 +705,9 @@ body {
 }
 
 .p-couple {
-  --x: 21.3%;
-  --y: 73.4%;
-  --w: 13.2%;
+  --x: 22.2%;
+  --y: 73.2%;
+  --w: 16.3%;
   --rot: -1deg;
   --px: 0.65;
   --py: -0.5;
@@ -674,9 +716,9 @@ body {
 }
 
 .p-musicians {
-  --x: 84.3%;
-  --y: 52.7%;
-  --w: 12%;
+  --x: 83.2%;
+  --y: 53.5%;
+  --w: 14.4%;
   --rot: 2deg;
   --px: 0.8;
   --py: 0.4;
@@ -685,9 +727,9 @@ body {
 }
 
 .p-rickshaw {
-  --x: 81.4%;
-  --y: 71.3%;
-  --w: 17.2%;
+  --x: 80.2%;
+  --y: 71.2%;
+  --w: 20.1%;
   --rot: -1deg;
   --px: 0.7;
   --py: -0.45;
@@ -695,11 +737,28 @@ body {
   --pl: 0.072;
 }
 
+/* Read off the reference by hand rather than matched. The thali is occluded
+   on three sides, by the Polaroid above and the newspaper to its right, so
+   there is not enough of it visible for the matcher to lock on: every
+   candidate scored about the same and they were scattered across the bottom
+   of the frame. Its visible left edge sits at 48.3%, its lowest point at
+   90.5%, and the artwork is very nearly square. */
+.p-dosa {
+  --x: 54.4%;
+  --y: 81.5%;
+  --w: 12.2%;
+  --rot: 2deg;
+  --px: 0.5;
+  --py: -0.75;
+  --pr: 0.35;
+  --pl: 0.085;
+}
+
 /* the anchor */
 .p-polaroid {
-  --x: 50%;
-  --y: 54.5%;
-  --w: 36.5%;
+  --x: 49.5%;
+  --y: 55.1%;
+  --w: 37.7%;
   --rot: -2deg;
   --px: 0.3;
   --py: 0.22;
@@ -708,9 +767,20 @@ body {
 }
 
 /* in front of the Polaroid */
+.p-bell {
+  --x: 29.2%;
+  --y: 35.9%;
+  --w: 6.3%;
+  --rot: 2deg;
+  --px: 0.75;
+  --py: 0.42;
+  --pr: 0.6;
+  --pl: 0.07;
+}
+
 .p-chai {
-  --x: 30.3%;
-  --y: 64.7%;
+  --x: 30.2%;
+  --y: 65.1%;
   --w: 4.9%;
   --rot: 3deg;
   --px: 0.95;
@@ -719,10 +789,22 @@ body {
   --pl: 0.095;
 }
 
+/* The upper of the two marigolds under the Ganesha postcard. */
+.p-marigold-two {
+  --x: 71%;
+  --y: 62.9%;
+  --w: 7%;
+  --rot: 5deg;
+  --px: 0.88;
+  --py: -0.5;
+  --pr: -0.55;
+  --pl: 0.092;
+}
+
 .p-marigold-a {
-  --x: 69.9%;
-  --y: 67.4%;
-  --w: 9.6%;
+  --x: 69%;
+  --y: 69%;
+  --w: 7.6%;
   --rot: -3deg;
   --px: 0.9;
   --py: -0.55;
@@ -731,9 +813,9 @@ body {
 }
 
 .p-marigold-b {
-  --x: 31.7%;
-  --y: 78.4%;
-  --w: 7.3%;
+  --x: 31.6%;
+  --y: 78.1%;
+  --w: 7.2%;
   --rot: 4deg;
   --px: 0.85;
   --py: -0.6;
@@ -741,21 +823,10 @@ body {
   --pl: 0.088;
 }
 
-.p-dosa {
-  --x: 53.5%;
-  --y: 81.6%;
-  --w: 12.6%;
-  --rot: 2deg;
-  --px: 0.5;
-  --py: -0.75;
-  --pr: 0.35;
-  --pl: 0.085;
-}
-
 .p-bangles {
-  --x: 69.2%;
-  --y: 81.8%;
-  --w: 13.6%;
+  --x: 68%;
+  --y: 81.6%;
+  --w: 18.4%;
   --rot: -2deg;
   --px: 0.75;
   --py: -0.65;
@@ -774,7 +845,18 @@ body {
      taller box so they stay large enough to read on a phone, and the
      whole collage is pushed down the stage so the headline has room to
      sit above it rather than underneath it. */
+  /* The phone needs its own values for the same reasons. The headline sits
+     at 4% of the stage rather than 18%, so it clears the nav only because
+     of --stage-top; and the phone composition's lowest piece is at 84%
+     rather than 92%, so the content scale differs too. */
+  .hero {
+    --stage-top: 92px;
+    --content-scale: 1.19; /* 1 / 0.84 */
+  }
+
   .hero-stage {
+    /* Kept in step with the aspect-ratio below. See the note on .hero-stage. */
+    --stage-ar: 0.5714; /* 400 / 700 */
     aspect-ratio: 400 / 700;
   }
 
@@ -856,6 +938,12 @@ body {
     --y: 55.9%;
     --w: 18%;
   }
+  /* Tucked just above and outside -a, the same pairing as the wide layout. */
+  .p-marigold-two {
+    --x: 84%;
+    --y: 46%;
+    --w: 16%;
+  }
   .p-marigold-b {
     --x: 34%;
     --y: 64.7%;
@@ -927,7 +1015,12 @@ body {
   --front-step: 95ms;
   --front-scale: 1.42; /* how large a front piece starts */
 
-  --headline-delay: 1350ms;
+  /* The headline waits for the collage. The last front piece starts at
+     --front-start + 5 * --front-step and takes --travel-dur, so the
+     composition is finished at 1250 + 475 + 1400 = 3125ms. Landing the
+     headline a little inside that reads as "the collage settles and the
+     words arrive", rather than as a sixth thing still moving. */
+  --headline-delay: 3000ms;
 
   /* Two curves, one per direction of travel. Both end just past their
      target and drop back, which is the bounce. The overshoot is small
@@ -1072,68 +1165,70 @@ body {
    Vertical offsets are also in cqw, scaled by 982/1512, because the
    stage is that much shorter than it is wide. */
 .p-kolam {
-  --from-x: 15.4cqw;
-  --from-y: -18.3cqw;
+  --from-x: 16.8cqw;
+  --from-y: -14.5cqw;
   --fan-delay: calc(var(--back-start) + 0 * var(--back-step));
   --from-rot: -6deg;
 }
 .p-stamp {
-  --from-x: 30cqw;
-  --from-y: 13.6cqw;
+  --from-x: 29.8cqw;
+  --from-y: 14cqw;
   --fan-delay: calc(var(--back-start) + 8 * var(--back-step));
   --from-rot: 10deg;
 }
-.p-bell {
-  --from-x: 20.6cqw;
-  --from-y: 12.1cqw;
+/* Almost entirely hidden by the Polaroid, so it emerges early: there is
+   nothing to see until the Polaroid has cleared it. */
+.p-dosa {
+  --from-x: -4.9cqw;
+  --from-y: -17.1cqw;
   --fan-delay: calc(var(--back-start) + 2 * var(--back-step));
-  --from-rot: -12deg;
+  --from-rot: -5deg;
 }
 .p-sun {
-  --from-x: 5.8cqw;
-  --from-y: 14.2cqw;
+  --from-x: 5.5cqw;
+  --from-y: 14.7cqw;
   --fan-delay: calc(var(--back-start) + 4 * var(--back-step));
   --from-rot: 7deg;
 }
 .p-postcard {
-  --from-x: -21.8cqw;
-  --from-y: 6.8cqw;
+  --from-x: -22.5cqw;
+  --from-y: 7.4cqw;
   --fan-delay: calc(var(--back-start) + 1 * var(--back-step));
   --from-rot: -9deg;
 }
 .p-stamp-blr {
-  --from-x: -29.9cqw;
-  --from-y: 11.8cqw;
+  --from-x: -30.7cqw;
+  --from-y: 12.2cqw;
   --fan-delay: calc(var(--back-start) + 5 * var(--back-step));
   --from-rot: 11deg;
 }
 .p-coconut {
-  --from-x: 32.5cqw;
-  --from-y: 1.5cqw;
+  --from-x: 32.2cqw;
+  --from-y: 1cqw;
   --fan-delay: calc(var(--back-start) + 9 * var(--back-step));
   --from-rot: -8deg;
 }
 .p-lotus {
-  --from-x: 22.9cqw;
-  --from-y: -0.1cqw;
+  --from-x: 22.7cqw;
+  --from-y: -0.7cqw;
   --fan-delay: calc(var(--back-start) + 6 * var(--back-step));
   --from-rot: 9deg;
 }
 .p-couple {
-  --from-x: 28.7cqw;
-  --from-y: -12.3cqw;
+  --from-x: 27.3cqw;
+  --from-y: -11.8cqw;
   --fan-delay: calc(var(--back-start) + 10 * var(--back-step));
   --from-rot: -7deg;
 }
 .p-musicians {
-  --from-x: -34.3cqw;
-  --from-y: 1.2cqw;
+  --from-x: -33.7cqw;
+  --from-y: 1cqw;
   --fan-delay: calc(var(--back-start) + 3 * var(--back-step));
   --from-rot: 8deg;
 }
 .p-rickshaw {
-  --from-x: -31.4cqw;
-  --from-y: -10.9cqw;
+  --from-x: -30.7cqw;
+  --from-y: -10.5cqw;
   --fan-delay: calc(var(--back-start) + 7 * var(--back-step));
   --from-rot: -6deg;
 }
@@ -1162,10 +1257,11 @@ body {
    once for all five in the grouped rule below, NOT per piece. Do not
    also set them in the individual blocks: the two rules score the same,
    so it would come down to source order. */
+.p-bell,
 .p-chai,
+.p-marigold-two,
 .p-marigold-a,
 .p-marigold-b,
-.p-dosa,
 .p-bangles {
   --from-scale: var(--front-scale);
   --piece-ease: var(--ease-settle);
@@ -1176,36 +1272,42 @@ body {
 }
 
 .p-chai {
-  --from-x: -5.5cqw;
+  --from-x: -5.7cqw;
   --from-y: 1.9cqw;
   --fan-delay: calc(var(--front-start) + 0 * var(--front-step));
   --from-rot: 6deg;
 }
-.p-marigold-a {
-  --from-x: 5.6cqw;
-  --from-y: 2.3cqw;
+.p-marigold-two {
+  --from-x: 6.3cqw;
+  --from-y: 1.5cqw;
   --fan-delay: calc(var(--front-start) + 1 * var(--front-step));
-  --from-rot: -5deg;
+  --from-rot: -6deg;
 }
 .p-marigold-b {
-  --from-x: -5.1cqw;
+  --from-x: -5.3cqw;
   --from-y: 4.4cqw;
   --fan-delay: calc(var(--front-start) + 2 * var(--front-step));
   --from-rot: 5deg;
 }
+.p-marigold-a {
+  --from-x: 5.7cqw;
+  --from-y: 2.7cqw;
+  --fan-delay: calc(var(--front-start) + 3 * var(--front-step));
+  --from-rot: -5deg;
+}
+.p-bell {
+  --from-x: -6cqw;
+  --from-y: -3.7cqw;
+  --fan-delay: calc(var(--front-start) + 4 * var(--front-step));
+  --from-rot: -12deg;
+}
+/* Last, because it is the largest of the six, so it makes the best final
+   beat. */
 .p-bangles {
   --from-x: 5.4cqw;
-  --from-y: 5cqw;
-  --fan-delay: calc(var(--front-start) + 3 * var(--front-step));
+  --from-y: 5.1cqw;
+  --fan-delay: calc(var(--front-start) + 5 * var(--front-step));
   --from-rot: 4deg;
-}
-/* Last, because it is the largest and it sits dead centre, so it makes
-   the best final beat. */
-.p-dosa {
-  --from-x: 1cqw;
-  --from-y: 4.9cqw;
-  --fan-delay: calc(var(--front-start) + 4 * var(--front-step));
-  --from-rot: -4deg;
 }
 
 /* ---------- travel on a phone ----------
@@ -1230,9 +1332,9 @@ body {
     --from-x: 37cqw;
     --from-y: 35.7cqw;
   }
-  .p-bell {
-    --from-x: 22cqw;
-    --from-y: 39.2cqw;
+  .p-dosa {
+    --from-x: -2cqw;
+    --from-y: -49cqw;
   }
   .p-sun {
     --from-x: 0cqw;
@@ -1272,6 +1374,10 @@ body {
     --from-x: -6cqw;
     --from-y: -6.3cqw;
   }
+  .p-marigold-two {
+    --from-x: 10cqw;
+    --from-y: -1.8cqw;
+  }
   .p-marigold-a {
     --from-x: 7.3cqw;
     --from-y: 3.1cqw;
@@ -1280,9 +1386,9 @@ body {
     --from-x: -4.5cqw;
     --from-y: 7.5cqw;
   }
-  .p-dosa {
-    --from-x: 0.6cqw;
-    --from-y: 13.7cqw;
+  .p-bell {
+    --from-x: -6.5cqw;
+    --from-y: -11.5cqw;
   }
   .p-bangles {
     --from-x: 6.2cqw;
