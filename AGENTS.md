@@ -43,6 +43,7 @@ authoritative while still making the feature easy to back out.
 | `rsvp/index.html` | The RSVP page. One plain form that becomes one question at a time. |
 | `rsvp/steps.js` | The stepping only. Submission still belongs to `rsvp.js`. |
 | `styles.css` | Everything. Recoleta `@font-face`, tokens, the liquid glass, the collage stage, the assembly keyframes, the page below the collage, the detail modals, the RSVP page. |
+| `motion.css` | The intro rebuild. Layers over `styles.css` and only runs while `<html>` carries `handmade`. Gives each collage piece weight, a spring, an arc and a follow-through. Overrides most of the assembly timing below. |
 | `main.js` | Intro timing, mouse parallax, nav state, section reveals, the detail modals. |
 | `light.js` | The light and shadow on the wall. Self-contained WebGL, shaders included. |
 | `rsvp.js` | Form submission. Holds the Google Apps Script URL. Shared by the RSVP page. |
@@ -50,7 +51,7 @@ authoritative while still making the feature easy to back out.
 | `Assets/` | The wall photograph, avif/jpg at 1200/1600/3200. |
 | `Assets/collage/` | The collage cut-outs, WebP with PNG fallback except the three cards which are WebP only, plus `prepare.py` which made them. Originals in `Assets/collage/_source/`, gitignored. |
 | `Font/` | Recoleta. Only the three weights actually loaded are tracked. |
-| `tools/` | Measurement scripts. Nothing here ships. See `tools/README.md`. |
+| `tools/` | Measurement scripts. Nothing here ships. See `tools/README.md`. Includes `springs.py`, which generates the curves in `motion.css`. |
 
 The page is four stacked fixed layers:
 
@@ -288,6 +289,38 @@ knowing before editing it:
    so `--headline-delay` is 3000ms, `navDelay` in `main.js` is 3300ms and the
    parallax fallback is 3300ms. Change `--front-start`, `--front-step` or
    `--travel-dur` and all three have to move with it.
+
+   🔴 **EVERYTHING IN POINT 6 IS NOW OVERRIDDEN BY `motion.css`.** The
+   keyframes above are still the ones that run, but almost every value fed
+   into them is replaced while `<html>` carries `handmade`, which it does.
+   Tuning `--travel-dur`, `--ease-emerge`, `--ease-settle`, `--back-step`,
+   `--fade-ratio` or any `--fan-delay` in `styles.css` will appear to do
+   nothing. Edit `motion.css`, or drop the class to get this behaviour back.
+
+   Specifically, `motion.css` replaces the single 1400ms duration with six
+   per-weight durations, both hand-tuned beziers with simulated springs,
+   the shared rotation curve with a separate under-damped one so pieces
+   ring as they land, and adds a fourth animation, `arc-bow`, that bends
+   every straight-line path into a curve. It also re-orders the stagger and
+   shortens every opacity ramp. The final composition is unchanged, and
+   that is verified rather than assumed.
+
+   ⚠️ The last piece now settles at about **3265ms, not 3125ms**, because
+   the airy pieces are slower and land last. `--headline-delay` was left at
+   3000ms on purpose, so the headline overlaps the tail of one marigold's
+   spring by roughly 265ms. That is sub-pixel movement on the lightest
+   object on the wall, and overlapping action is better than a hard seam.
+   The three numbers above are therefore no longer exactly in step, and
+   that is a decision, not drift.
+
+   ⚠️ `motion.css` uses the individual `translate` and `rotate` properties
+   rather than `transform`, because `assemble` already owns `transform` on
+   the same element. The browser applies translate, then rotate, then
+   scale, then transform. Getting that order wrong is not theoretical: the
+   reduced-motion rule applied the resting tilt twice, once on each, and
+   landed 17 of 18 pieces at double their angle. The Polaroid needs the
+   opposite reset from every other piece, because `pol-in` rotates inside
+   its own transform while the rest use the separate property.
 
 7. **The collage images are pre-trimmed.** Each PNG was cropped to its alpha
    bounding box before resizing, so the image box equals the artwork and CSS
