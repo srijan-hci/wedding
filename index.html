@@ -1,5 +1,7 @@
 <!doctype html>
-<html lang="en">
+<!-- `handmade` switches on motion.css, the rebuilt intro. Delete that one
+     class and the collage assembles exactly as it did before. -->
+<html lang="en" class="handmade">
   <head>
     <meta charset="UTF-8" />
     <meta
@@ -22,6 +24,10 @@
       type="image/webp"
     />
     <link rel="stylesheet" href="styles.css" />
+    <!-- Layered on top of styles.css and only active while <html> carries
+         the `handmade` class. Rebuilds how the collage pieces move: the
+         arrangement and the final composition are untouched. -->
+    <link rel="stylesheet" href="motion.css" />
 
     <!-- Marks that scripting is available, so CSS can safely hide things
          that only JavaScript knows how to reveal. Inline and in the head

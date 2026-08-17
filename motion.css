@@ -1,0 +1,1189 @@
+/* ============================================================
+   PLACED BY HAND
+
+   A rebuild of how the collage assembles. The arrangement, the
+   travel vectors and the final composition are untouched: this
+   changes only how the pieces MOVE on their way there.
+
+   Everything is scoped to `html.handmade`. Remove that one class
+   from <html> in index.html and the intro goes back to exactly
+   what it was. Nothing here touches the original.
+
+   WHY
+
+   The intro used two of the twelve principles of animation: slow
+   in / slow out, and a small overshoot. Every one of the eighteen
+   pieces shared a single easing, a single 1400ms duration and a
+   single starting scale, so a brass bell and a paper stamp arrived
+   in precisely the same way. That is the main reason it read as
+   generic rather than handmade.
+
+   BUILT IN STEPS
+
+   Each step below was added on its own and judged before the next
+   one went in, so any of them can be backed out without unpicking
+   the others.
+
+     1. Weight        <- this file, so far
+     2. Real springs
+     3. Arcs
+     4. Follow-through
+     5. Placed, not revealed
+     6. Rhythm
+   ============================================================ */
+
+/* ============================================================
+   STEP 1: WEIGHT
+
+   The only thing this step changes is HOW LONG each piece takes.
+   Nothing else: same paths, same easing, same delays, same
+   destinations. One variable, so it is obvious whether it helps.
+
+   Heavy things fall fast and stop. Light things take their time.
+   That is the whole idea, and it is the deepest missing signal:
+   Material Design states it as a rule, that elements should behave
+   as though they have mass.
+
+   The classes are assigned from what each piece IS, not from how
+   big it is on screen:
+
+     0.80  heavy, rigid    brass bell, dosa thali
+     0.88  medium          rickshaw, coconut bike, chai, bangles
+     1.00  card stock      Polaroid, postcard, both stamps
+     1.12  light paper     musicians, couple, sun
+     1.22  airy            three marigolds, lotus
+     1.35  weightless      kolam
+
+   ⚠️ Durations are multiplied but DELAYS are not, so the order in
+   which pieces START is unchanged while the order in which they
+   LAND is not. That is deliberate. It is what weight means. One
+   consequence worth knowing: the last thing to settle is no longer
+   the bangles at 3125ms but a marigold at about 3243ms, because
+   the heavy pieces now land early and the airy ones drift in after
+   them. The headline still arrives at 3000ms, so it now overlaps
+   the tail of one marigold's settle by about 240ms. That tail is
+   sub-pixel movement, and the overlap reads as one continuous
+   gesture rather than two events. If it ever needs tightening, it
+   belongs in step 6 with the rest of the rhythm work.
+
+   ⚠️ The Polaroid is deliberately absent below. It runs on
+   --polaroid-dur, not --travel-dur, and it is card stock, so its
+   multiplier would be 1.0 and the rule would do nothing.
+   ============================================================ */
+
+html.handmade {
+  /* The baseline every multiplier is measured against. This is the
+     same 1400ms the original used for all eighteen pieces, kept as
+     its own property because --travel-dur cannot be defined in
+     terms of itself. */
+  --dur-base: 1400ms;
+}
+
+/* Applies to every piece. A piece with no --mass keeps the original
+   1400ms, so an unclassified piece degrades to old behaviour rather
+   than breaking.
+
+   This scores the same as the per-piece rules below, which normally
+   means source order decides. It does not matter here because the
+   two set different properties: this one reads --mass, those set
+   it. */
+html.handmade .piece {
+  --travel-dur: calc(var(--dur-base) * var(--mass, 1));
+}
+
+/* ---------- heavy and rigid ----------
+   Brass and fired clay. These do not float, they drop and stop. */
+html.handmade .p-bell,
+html.handmade .p-dosa {
+  --mass: 0.8;
+}
+
+/* ---------- medium ----------
+   Metal, glass, things with a bit of heft but not much. The chai
+   glass has liquid in it, which is its own kind of weight. */
+html.handmade .p-rickshaw,
+html.handmade .p-coconut,
+html.handmade .p-chai,
+html.handmade .p-bangles {
+  --mass: 0.88;
+}
+
+/* ---------- card stock ----------
+   The baseline. Postage stamps and postcards are stiff, printed,
+   substantial paper, and the Polaroid is the same. Left at 1.0 on
+   purpose: this is the reference everything else is judged against,
+   and it is the timing the composition was originally tuned to. */
+html.handmade .p-postcard,
+html.handmade .p-stamp,
+html.handmade .p-stamp-blr {
+  --mass: 1;
+}
+
+/* ---------- light paper ----------
+   Thin cut-outs of printed illustration. Barely any mass, but
+   still flat sheets rather than anything that catches the air. */
+html.handmade .p-musicians,
+html.handmade .p-couple,
+html.handmade .p-sun {
+  --mass: 1.12;
+}
+
+/* ---------- airy ----------
+   Flowers. Broad, soft, and enough surface area relative to their
+   weight that the air genuinely slows them down. */
+html.handmade .p-marigold-a,
+html.handmade .p-marigold-b,
+html.handmade .p-marigold-two,
+html.handmade .p-lotus {
+  --mass: 1.22;
+}
+
+/* ---------- weightless ----------
+   The kolam is rice flour on the ground. It is not an object at
+   all, it is a mark, so it has no business arriving at the same
+   speed as a brass bell. The slowest thing in the composition. */
+html.handmade .p-kolam {
+  --mass: 1.35;
+}
+
+/* ============================================================
+   STEP 2: REAL SPRINGS
+
+   Step 1 gave each class its own duration. This gives each class
+   its own CHARACTER: whether it bounces when it lands, and how
+   long it keeps drifting before it truly stops.
+
+   The original used two hand-tuned cubic-beziers for all eighteen
+   pieces. A bezier can overshoot, but it cannot be given a real
+   tail, and the tail is most of what the eye reads as weight. So
+   the emerging pieces now use springs simulated properly from
+   stiffness and damping, emitted as CSS `linear()`.
+
+   ⚠️ Generated by tools/springs.py. Do not hand-edit the numbers.
+   Nudging one bends the physics rather than the look, and the
+   curve stops being a spring.
+
+   THE PROGRESSION
+
+     heavy       0.0%  overshoot, settles in 0.81s
+     medium      0.1%  overshoot, settles in 0.79s
+     card        2.2%  overshoot, settles in 0.95s
+     light       3.3%  overshoot, settles in 1.02s
+     airy        0.8%  overshoot, settles in 1.16s
+     weightless  0.0%  overshoot, settles in 1.45s
+
+   ⚠️ The overshoot column is deliberately NOT a straight line from
+   heavy to weightless, and that is not an oversight. Bounce and
+   lightness are different things. A stiff little postage stamp is
+   light AND springy, so it bounces most. A marigold is lighter
+   still but drag-dominated, so it does not bounce at all: it
+   simply takes a long time to stop. Reading down the settle column
+   instead, which does rise all the way, is where the weight is.
+
+   ⚠️ Overshoot is kept small on purpose. It lands on scale,
+   position and tilt at the same moment, so a figure that looks
+   gentle on any one of them is far too much when all three do it
+   together. 3.3% is the most any piece gets.
+
+   ⚠️ THE PIECES IN FRONT OF THE POLAROID DO NOT GET SPRINGS.
+
+   They are a different gesture: they start oversized, as though
+   close to the lens, and shrink back down onto the composition. A
+   spring front-loads its movement, which for a shrinking piece
+   means it does nearly all the shrinking in the first fifth and
+   then sits still. That reads as a snap, not a descent. It is a
+   documented trap in this codebase and it was found the hard way
+   once already.
+
+   So those six keep a near-symmetric curve, and only the amount
+   they dip below full size as they touch down varies by class:
+
+     settle-heavy    0.1%  dip, midpoint 0.52
+     settle-medium   1.4%  dip, midpoint 0.57
+     settle-airy     3.1%  dip, midpoint 0.66
+
+   The midpoint column is the check that they stayed symmetric. A
+   true ease-out sits near 0.85; anything approaching that is the
+   snap coming back.
+   ============================================================ */
+
+html.handmade {
+  /* heavy: stiffness 210, damping 29.0 (critically damped, critical is 29.0)
+     settles in 0.810s, peaks at 1.0000 = +0.0% overshoot */
+  --spring-heavy: linear(
+    0 0%,
+    0.0873 4.167%,
+    0.2584 8.333%,
+    0.4319 12.5%,
+    0.5835 16.67%,
+    0.7014 20.83%,
+    0.7912 25%,
+    0.8554 29.17%,
+    0.9015 33.33%,
+    0.9332 37.5%,
+    0.9553 41.67%,
+    0.9701 45.83%,
+    0.9802 50%,
+    0.9869 54.17%,
+    0.9914 58.33%,
+    0.9943 62.5%,
+    0.9963 66.67%,
+    0.9976 70.83%,
+    0.9984 75%,
+    0.999 79.17%,
+    0.9993 83.33%,
+    0.9996 87.5%,
+    0.9997 91.67%,
+    0.9998 95.83%,
+    1 100%
+  );
+
+  /* medium: stiffness 190, damping 25.0 (under-damped, critical is 27.6)
+     settles in 0.794s, peaks at 1.0010 = +0.1% overshoot */
+  --spring-medium: linear(
+    0 0%,
+    0.0801 4.167%,
+    0.243 8.333%,
+    0.4218 12.5%,
+    0.579 16.67%,
+    0.7061 20.83%,
+    0.8023 25%,
+    0.8718 29.17%,
+    0.9205 33.33%,
+    0.9524 37.5%,
+    0.9729 41.67%,
+    0.9856 45.83%,
+    0.9932 50%,
+    0.9975 54.17%,
+    0.9996 58.33%,
+    1.0006 62.5%,
+    1.001 66.67%,
+    1.001 70.83%,
+    1.0009 75%,
+    1.0007 79.17%,
+    1.0005 83.33%,
+    1.0004 87.5%,
+    1.0003 91.67%,
+    1.0002 95.83%,
+    1 100%
+  );
+
+  /* card: stiffness 170, damping 20.0 (under-damped, critical is 26.1)
+     settles in 0.947s, peaks at 1.0223 = +2.2% overshoot */
+  --spring-card: linear(
+    0 0%,
+    0.103 4.167%,
+    0.311 8.333%,
+    0.529 12.5%,
+    0.7123 16.67%,
+    0.847 20.83%,
+    0.9345 25%,
+    0.9865 29.17%,
+    1.0124 33.33%,
+    1.0219 37.5%,
+    1.0223 41.67%,
+    1.0184 45.83%,
+    1.0134 50%,
+    1.0087 54.17%,
+    1.005 58.33%,
+    1.0024 62.5%,
+    1.0008 66.67%,
+    1 70.83%,
+    0.9996 75%,
+    0.9995 79.17%,
+    0.9995 83.33%,
+    0.9996 87.5%,
+    0.9997 91.67%,
+    0.9998 95.83%,
+    1 100%
+  );
+
+  /* light: stiffness 150, damping 18.0 (under-damped, critical is 24.5)
+     settles in 1.018s, peaks at 1.0327 = +3.3% overshoot */
+  --spring-light: linear(
+    0 0%,
+    0.1058 4.167%,
+    0.3209 8.333%,
+    0.5443 12.5%,
+    0.7338 16.67%,
+    0.8711 20.83%,
+    0.9587 25%,
+    1.007 29.17%,
+    1.0281 33.33%,
+    1.0327 37.5%,
+    1.0288 41.67%,
+    1.0216 45.83%,
+    1.0143 50%,
+    1.0083 54.17%,
+    1.0039 58.33%,
+    1.0012 62.5%,
+    0.9997 66.67%,
+    0.9991 70.83%,
+    0.9989 75%,
+    0.9991 79.17%,
+    0.9993 83.33%,
+    0.9995 87.5%,
+    0.9997 91.67%,
+    0.9999 95.83%,
+    1 100%
+  );
+
+  /* airy: stiffness 80, damping 15.0 (under-damped, critical is 17.9)
+     settles in 1.164s, peaks at 1.0076 = +0.8% overshoot */
+  --spring-airy: linear(
+    0 0%,
+    0.0747 4.167%,
+    0.2327 8.333%,
+    0.4102 12.5%,
+    0.5735 16.67%,
+    0.7084 20.83%,
+    0.8119 25%,
+    0.8866 29.17%,
+    0.9376 33.33%,
+    0.9704 37.5%,
+    0.9901 41.67%,
+    1.0009 45.83%,
+    1.006 50%,
+    1.0076 54.17%,
+    1.0074 58.33%,
+    1.0063 62.5%,
+    1.005 66.67%,
+    1.0037 70.83%,
+    1.0025 75%,
+    1.0017 79.17%,
+    1.001 83.33%,
+    1.0006 87.5%,
+    1.0003 91.67%,
+    1.0001 95.83%,
+    1 100%
+  );
+
+  /* weightless: stiffness 45, damping 13.0 (critically damped, critical is 13.4)
+     settles in 1.454s, peaks at 1.0000 = +0.0% overshoot */
+  --spring-weightless: linear(
+    0 0%,
+    0.0642 4.167%,
+    0.1989 8.333%,
+    0.3516 12.5%,
+    0.4935 16.67%,
+    0.6151 20.83%,
+    0.7137 25%,
+    0.7908 29.17%,
+    0.8498 33.33%,
+    0.8933 37.5%,
+    0.9251 41.67%,
+    0.948 45.83%,
+    0.9642 50%,
+    0.9757 54.17%,
+    0.9836 58.33%,
+    0.9891 62.5%,
+    0.9928 66.67%,
+    0.9953 70.83%,
+    0.997 75%,
+    0.998 79.17%,
+    0.9988 83.33%,
+    0.9992 87.5%,
+    0.9995 91.67%,
+    0.9997 95.83%,
+    1 100%
+  );
+
+  /* The landing curves for the six pieces that settle down onto the
+     composition rather than emerging from behind it. Beziers, not
+     springs, for the reason set out above. */
+  --settle-heavy: cubic-bezier(0.45, 0.03, 0.55, 1.03);
+  --settle-medium: cubic-bezier(0.45, 0.03, 0.55, 1.15);
+  --settle-airy: cubic-bezier(0.42, 0.02, 0.5, 1.24);
+}
+
+/* ---------- emerging from behind the Polaroid ----------
+   --piece-ease is read by both the `assemble` and `wobble`
+   animations, so setting it here changes travel and tilt together,
+   which is what keeps a piece feeling like one object. */
+
+html.handmade .p-dosa {
+  --piece-ease: var(--spring-heavy);
+}
+
+html.handmade .p-rickshaw,
+html.handmade .p-coconut {
+  --piece-ease: var(--spring-medium);
+}
+
+html.handmade .p-postcard,
+html.handmade .p-stamp,
+html.handmade .p-stamp-blr {
+  --piece-ease: var(--spring-card);
+}
+
+html.handmade .p-musicians,
+html.handmade .p-couple,
+html.handmade .p-sun {
+  --piece-ease: var(--spring-light);
+}
+
+html.handmade .p-lotus {
+  --piece-ease: var(--spring-airy);
+}
+
+html.handmade .p-kolam {
+  --piece-ease: var(--spring-weightless);
+}
+
+/* The Polaroid is the exception: it runs `pol-in` rather than
+   `assemble`, and that keyframe reads --ease-emerge directly rather
+   than --piece-ease. It is card stock, like the stamps it rises
+   in front of. */
+html.handmade .p-polaroid {
+  --ease-emerge: var(--spring-card);
+}
+
+/* ---------- settling down onto the composition ----------
+   These override the grouped rule in styles.css that gives all six
+   the same --ease-settle. */
+
+html.handmade .p-bell {
+  --piece-ease: var(--settle-heavy);
+}
+
+html.handmade .p-chai,
+html.handmade .p-bangles {
+  --piece-ease: var(--settle-medium);
+}
+
+html.handmade .p-marigold-a,
+html.handmade .p-marigold-b,
+html.handmade .p-marigold-two {
+  --piece-ease: var(--settle-airy);
+}
+
+/* ============================================================
+   STEP 3: ARCS
+
+   The largest single change, and the one that fixes the deepest
+   source of the generic feeling: every piece used to travel in a
+   dead straight line.
+
+   Nothing in the physical world does that. A hand placing paper on
+   a wall pivots at the wrist and the shoulder, so the paper always
+   travels a curve. Nielsen Norman put it plainly: an arc path
+   looks more natural than a diagonal one.
+
+   HOW IT IS DONE, AND WHY THIS WAY
+
+   The obvious approach is to split the travel in two, horizontal
+   on one element and vertical on another with a different easing,
+   so the two compound into a curve. That was the plan. It does not
+   work here, and the reason is worth writing down: --from-x and
+   --from-y are declared on the piece, and the only spare element
+   is the .layer wrapper ABOVE it. Custom properties inherit
+   downward only, so the wrapper cannot see the values, and neither
+   can it see --fan-delay, so its arc could not be timed to match
+   the piece it belongs to.
+
+   So the arc is added instead of extracted. The straight-line
+   travel in `assemble` is left completely alone, and a fourth
+   animation lifts the piece off that line and sets it back down:
+
+     0%    on the line
+     45%   --bow above it
+     100%  on the line again
+
+   A straight path plus a displacement that peaks in the middle IS
+   a curve, and this version has three advantages over splitting.
+   It reads --bow, --fan-delay and --travel-dur from the piece, so
+   the timing cannot drift. It returns to zero, so the final
+   composition is arithmetically guaranteed to be untouched. And it
+   can be deleted on its own without unpicking steps 1 and 2.
+
+   The peak sits at 45% rather than 50% so the fall is slightly
+   longer than the rise, which is what gravity does.
+
+   ⚠️ This uses the individual `translate` property, which is
+   unused everywhere else in the site. It has to be that and not
+   `transform`, because `assemble` already owns `transform` on this
+   element and the two would overwrite each other. `rotate` is
+   taken by `wobble` for the same reason. Three animations, three
+   separate properties, no collisions.
+
+   ⚠️ The browser applies translate, then rotate, then scale, then
+   transform. The bow is therefore applied OUTSIDE the piece's own
+   tilt, in the stage's own coordinates, which is what makes it a
+   true vertical lift rather than a lift along whatever angle the
+   piece happens to be sitting at.
+
+   ⚠️ The mouse parallax in main.js writes `transform` on .layer and
+   on the <picture>, never on .piece, and it does not start until
+   the intro has finished. Nothing here can collide with it.
+
+   HOW HIGH EACH CLASS ARCS
+
+   Straight out of the weight classes. Something heavy is carried
+   low and set down; something light is lifted and floated into
+   place. Measured in cqw, so about 15px each at full stage width.
+
+     heavy       0.4cqw   barely leaves the line
+     medium      0.9cqw
+     card        1.5cqw
+     light       2.3cqw
+     airy        3.4cqw   the widest swing
+     weightless  2.6cqw   drifts, but it is a flat mark not an object
+   ============================================================ */
+
+html.handmade {
+  /* Symmetric, so the piece is momentarily weightless at the top of
+     the arc, the way a thrown object is. An ease-out here would put
+     all the lift in the first instant and read as a flick. */
+  --ease-bow: cubic-bezier(0.37, 0, 0.63, 1);
+
+  /* The fallback matters: a piece with no class still gets a small
+     arc rather than falling back to a straight line. */
+  --bow: 1.5cqw;
+}
+
+@keyframes arc-bow {
+  0% {
+    translate: 0 0;
+  }
+  45% {
+    translate: 0 calc(var(--bow, 1.5cqw) * -1);
+  }
+  100% {
+    translate: 0 0;
+  }
+}
+
+/* The fourth animation has to be added by restating all four. CSS
+   has no way to append to an existing `animation` shorthand.
+
+   ⚠️ `:not()` counts towards specificity, so the rule being
+   overridden already scores (0,3,1). Prefixing with html.handmade
+   takes this to (0,4,1), which wins. Dropping the .intro-play from
+   this selector would NOT: it would tie, and source order would
+   decide, which is exactly the trap that has bitten this file
+   twice before. */
+/* ⚠️ This one rule is shared by step 3 and step 4. Step 3 added the
+   fourth `arc-bow` line; step 4 changed `wobble` to read --rot-ease
+   instead of --piece-ease. CSS cannot append to an `animation`
+   shorthand, so there is one authoritative declaration rather than
+   two rules where the later silently wins. Removing either step
+   means editing this block, not deleting a rule. */
+html.handmade .intro-play .piece:not(.p-polaroid) {
+  animation:
+    assemble var(--travel-dur) var(--piece-ease, var(--ease-emerge))
+      var(--fan-delay, 0ms) both,
+    wobble var(--travel-dur) var(--rot-ease, var(--piece-ease, var(--ease-emerge)))
+      var(--fan-delay, 0ms) both,
+    reveal calc(var(--travel-dur) * var(--fade-ratio, 0.45)) ease-out
+      var(--fan-delay, 0ms) both,
+    arc-bow var(--travel-dur) var(--ease-bow) var(--fan-delay, 0ms) both;
+}
+
+/* The Polaroid arcs too, on its own shorter clock. It already rises
+   from below, so this only bends that rise rather than adding a
+   movement it did not have. */
+html.handmade .intro-play .p-polaroid {
+  animation:
+    pol-in var(--polaroid-dur) var(--ease-emerge) var(--polaroid-delay) both,
+    arc-bow var(--polaroid-dur) var(--ease-bow) var(--polaroid-delay) both;
+}
+
+/* ---------- how far each class leaves the line ---------- */
+
+html.handmade .p-bell,
+html.handmade .p-dosa {
+  --bow: 0.4cqw;
+}
+
+html.handmade .p-rickshaw,
+html.handmade .p-coconut,
+html.handmade .p-chai,
+html.handmade .p-bangles {
+  --bow: 0.9cqw;
+}
+
+html.handmade .p-postcard,
+html.handmade .p-stamp,
+html.handmade .p-stamp-blr {
+  --bow: 1.5cqw;
+}
+
+/* ⚠️ The Polaroid barely travels. It arrives almost entirely by
+   growing, rising only about 42px, so the card-stock 1.5cqw bow was
+   more than half its whole journey and it visibly swung. It is also
+   the first thing on screen and the anchor everything else comes out
+   from, so it is the last piece that should look thrown. */
+html.handmade .p-polaroid {
+  --bow: 0.25cqw;
+}
+
+html.handmade .p-musicians,
+html.handmade .p-couple,
+html.handmade .p-sun {
+  --bow: 2.3cqw;
+}
+
+html.handmade .p-marigold-a,
+html.handmade .p-marigold-b,
+html.handmade .p-marigold-two,
+html.handmade .p-lotus {
+  --bow: 3.4cqw;
+}
+
+html.handmade .p-kolam {
+  --bow: 2.6cqw;
+}
+
+/* ---------- the six pieces in front travel much shorter ----------
+   ⚠️ Measured, not assumed. The pieces emerging from behind the
+   Polaroid cross 230 to 500px of the stage. The six settling onto
+   it cross 84 to 124px, because they start almost on top of where
+   they end and arrive mostly by shrinking.
+
+   A bow set in cqw is a fixed distance, so the class values above
+   are 4 to 15 percent of a back piece's journey but were landing at
+   nearly half of a front piece's. A marigold was looping through an
+   arc as tall as its entire travel.
+
+   These bring all six back to roughly 12 percent of their own
+   travel, which is what the back pieces already sit at. Same
+   proportion, same weight ordering, much smaller numbers. */
+html.handmade .p-marigold-a,
+html.handmade .p-marigold-b,
+html.handmade .p-marigold-two {
+  --bow: 0.75cqw;
+}
+
+html.handmade .p-chai,
+html.handmade .p-bangles {
+  --bow: 0.5cqw;
+}
+
+html.handmade .p-bell {
+  --bow: 0.25cqw;
+}
+
+/* ============================================================
+   STEP 4: FOLLOW-THROUGH
+
+   Until now a piece finished moving and finished turning at the
+   same instant, on the same curve, which is the definition of a
+   digital snap. Real paper does not do that. It arrives, carries
+   past its resting angle, comes back, and settles.
+
+   Rotation therefore gets its own spring family, the same six
+   classes but noticeably less damped, so each one OSCILLATES
+   rather than merely arriving. The measure that matters is the
+   crossing count: how many times the piece passes through its
+   final angle before it stops there.
+
+     rot-heavy       +0.1%  overshoot, 1 crossing   brass, dead still
+     rot-medium      +3.5%              2 crossings
+     rot-card       +13.4%              4 crossings
+     rot-light      +17.0%              4 crossings
+     rot-airy       +11.8%              3 crossings
+     rot-weightless  +2.9%              2 crossings
+
+   Four crossings is roughly two full rocks. On a piece whose
+   entry tilt is around 8 degrees, a 13.4% overshoot is about one
+   degree past true, which is a settle you can see without it
+   looking like a wobble.
+
+   ⚠️ THIS IS THE HONEST VERSION OF THE STOP MOTION JITTER.
+
+   The jitter was rejected because it was random per frame, so each
+   frame was independent of the last. That breaks continuity of
+   velocity, which is a physical law the eye knows, and the result
+   read as noise. A damped oscillation cannot break it: it is one
+   continuous curve, it is identical on every page load, and it
+   comes from the mass of the object rather than from a random
+   number. Same intent, opposite construction.
+
+   ⚠️ Rotation can carry far more overshoot than position can. The
+   long-standing note in this codebase is to keep overshoot near
+   3%, because it lands on scale, position and tilt simultaneously
+   and triples up. Giving rotation its own curve is exactly what
+   lifts that limit: position keeps its restrained 2 to 3%, and
+   only the tilt rings.
+
+   ⚠️ The Polaroid is not here. Its `pol-in` keyframe rotates inside
+   its own `transform` rather than through `wobble`, so it has no
+   separate rotation to give a curve to.
+   ============================================================ */
+
+html.handmade {
+  /* rot-heavy: stiffness 210, damping 26.0 (under-damped, critical is 29.0)
+     settles in 0.764s, peaks at 1.0015 = +0.1%, 1 crossing(s) */
+  --spring-rot-heavy: linear(
+    0 0%,
+    0.0831 4.167%,
+    0.2483 8.333%,
+    0.429 12.5%,
+    0.5894 16.67%,
+    0.7162 20.83%,
+    0.8129 25%,
+    0.8817 29.17%,
+    0.928 33.33%,
+    0.9587 37.5%,
+    0.978 41.67%,
+    0.9894 45.83%,
+    0.9959 50%,
+    0.9993 54.17%,
+    1.0009 58.33%,
+    1.0015 62.5%,
+    1.0015 66.67%,
+    1.0013 70.83%,
+    1.001 75%,
+    1.0008 79.17%,
+    1.0005 83.33%,
+    1.0004 87.5%,
+    1.0002 91.67%,
+    1.0001 95.83%,
+    1 100%
+  );
+  /* rot-medium: stiffness 190, damping 20.0 (under-damped, critical is 27.6)
+     settles in 0.911s, peaks at 1.0355 = +3.5%, 2 crossing(s) */
+  --spring-rot-medium: linear(
+    0 0%,
+    0.1074 4.167%,
+    0.3257 8.333%,
+    0.5545 12.5%,
+    0.745 16.67%,
+    0.8819 20.83%,
+    0.967 25%,
+    1.0136 29.17%,
+    1.0327 33.33%,
+    1.0355 37.5%,
+    1.0301 41.67%,
+    1.0219 45.83%,
+    1.0139 50%,
+    1.0076 54.17%,
+    1.0032 58.33%,
+    1.0006 62.5%,
+    0.9992 66.67%,
+    0.9988 70.83%,
+    0.9988 75%,
+    0.999 79.17%,
+    0.9993 83.33%,
+    0.9996 87.5%,
+    0.9998 91.67%,
+    0.9999 95.83%,
+    1 100%
+  );
+  /* rot-card: stiffness 170, damping 14.0 (under-damped, critical is 26.1)
+     settles in 1.118s, peaks at 1.1344 = +13.4%, 4 crossing(s) */
+  --spring-rot-card: linear(
+    0 0%,
+    0.1471 4.167%,
+    0.4477 8.333%,
+    0.7491 12.5%,
+    0.9738 16.67%,
+    1.096 20.83%,
+    1.1344 25%,
+    1.1191 29.17%,
+    1.0798 33.33%,
+    1.0384 37.5%,
+    1.0065 41.67%,
+    0.9884 45.83%,
+    0.982 50%,
+    0.9834 54.17%,
+    0.9885 58.33%,
+    0.9942 62.5%,
+    0.9987 66.67%,
+    1.0014 70.83%,
+    1.0024 75%,
+    1.0023 79.17%,
+    1.0016 83.33%,
+    1.0009 87.5%,
+    1.0002 91.67%,
+    0.9998 95.83%,
+    1 100%
+  );
+  /* rot-light: stiffness 150, damping 12.0 (under-damped, critical is 24.5)
+     settles in 1.416s, peaks at 1.1705 = +17.0%, 4 crossing(s) */
+  --spring-rot-light: linear(
+    0 0%,
+    0.2024 4.167%,
+    0.5882 8.333%,
+    0.9257 12.5%,
+    1.1183 16.67%,
+    1.1705 20.83%,
+    1.1349 25%,
+    1.069 29.17%,
+    1.0118 33.33%,
+    0.9795 37.5%,
+    0.9709 41.67%,
+    0.9772 45.83%,
+    0.9884 50%,
+    0.9982 54.17%,
+    1.0036 58.33%,
+    1.005 62.5%,
+    1.0038 66.67%,
+    1.0019 70.83%,
+    1.0003 75%,
+    0.9994 79.17%,
+    0.9992 83.33%,
+    0.9993 87.5%,
+    0.9997 91.67%,
+    1 95.83%,
+    1 100%
+  );
+  /* rot-airy: stiffness 80, damping 10.0 (under-damped, critical is 17.9)
+     settles in 1.625s, peaks at 1.1184 = +11.8%, 3 crossing(s) */
+  --spring-rot-airy: linear(
+    0 0%,
+    0.1443 4.167%,
+    0.4404 8.333%,
+    0.7341 12.5%,
+    0.9531 16.67%,
+    1.0756 20.83%,
+    1.1184 25%,
+    1.1094 29.17%,
+    1.0764 33.33%,
+    1.04 37.5%,
+    1.011 41.67%,
+    0.9936 45.83%,
+    0.9864 50%,
+    0.9862 54.17%,
+    0.9897 58.33%,
+    0.9942 62.5%,
+    0.9979 66.67%,
+    1.0004 70.83%,
+    1.0015 75%,
+    1.0017 79.17%,
+    1.0014 83.33%,
+    1.0008 87.5%,
+    1.0003 91.67%,
+    1 95.83%,
+    1 100%
+  );
+  /* rot-weightless: stiffness 45, damping 10.0 (under-damped, critical is 13.4)
+     settles in 1.372s, peaks at 1.0293 = +2.9%, 2 crossing(s) */
+  --spring-rot-weightless: linear(
+    0 0%,
+    0.0609 4.167%,
+    0.2002 8.333%,
+    0.3666 12.5%,
+    0.5304 16.67%,
+    0.6759 20.83%,
+    0.793 25%,
+    0.8826 29.17%,
+    0.9457 33.33%,
+    0.9873 37.5%,
+    1.0123 41.67%,
+    1.025 45.83%,
+    1.0293 50%,
+    1.0286 54.17%,
+    1.025 58.33%,
+    1.0201 62.5%,
+    1.0152 66.67%,
+    1.0107 70.83%,
+    1.007 75%,
+    1.0042 79.17%,
+    1.0021 83.33%,
+    1.0007 87.5%,
+    0.9998 91.67%,
+    0.9993 95.83%,
+    1 100%
+  );
+}
+
+/* ---------- which ring belongs to which piece ---------- */
+
+html.handmade .p-bell,
+html.handmade .p-dosa {
+  --rot-ease: var(--spring-rot-heavy);
+}
+
+html.handmade .p-rickshaw,
+html.handmade .p-coconut,
+html.handmade .p-chai,
+html.handmade .p-bangles {
+  --rot-ease: var(--spring-rot-medium);
+}
+
+html.handmade .p-postcard,
+html.handmade .p-stamp,
+html.handmade .p-stamp-blr {
+  --rot-ease: var(--spring-rot-card);
+}
+
+html.handmade .p-musicians,
+html.handmade .p-couple,
+html.handmade .p-sun {
+  --rot-ease: var(--spring-rot-light);
+}
+
+html.handmade .p-marigold-a,
+html.handmade .p-marigold-b,
+html.handmade .p-marigold-two,
+html.handmade .p-lotus {
+  --rot-ease: var(--spring-rot-airy);
+}
+
+html.handmade .p-kolam {
+  --rot-ease: var(--spring-rot-weightless);
+}
+
+/* ============================================================
+   STEP 5: PLACED, NOT REVEALED
+
+   Every physical-material animation the research turned up, from
+   Terry Gilliam's cut-outs through Lotte Reiniger to the Wes
+   Anderson title cards, shares one property: opacity is
+   near-binary. The piece exists or it does not. All the expression
+   lives in the movement, never in a dissolve.
+
+   Ours dissolved. A piece behind the Polaroid was translucent for
+   45% of its travel, and one in front for 80% of it, which at 1400ms
+   is well over a second of ghost. That is the grammar of a slideshow
+   transition, and it quietly undoes the work of the four steps
+   above: a piece cannot read as a solid object with mass while you
+   can see through it.
+
+   ⚠️ The fade cannot go to zero, and the reason is subtle. Every
+   animation here uses `animation-fill-mode: both`, which fills
+   BACKWARDS through the delay: without the fade, each piece would
+   be painted at its start position, bunched at the Polaroid's
+   centre, from the very first frame, sitting there visibly waiting
+   for its turn. The fade is what hides that. So this step shortens
+   it hard rather than removing it.
+
+   ⚠️ The two groups keep different values, for a real reason. The
+   pieces behind the Polaroid are covered by it while they wait, so
+   they can afford to become solid almost at once. The six in front
+   have nothing to hide behind and start at 1.42x, so a hard cut
+   would drop a large translucent object onto the composition out of
+   nowhere. They fade about twice as long, which is still less than
+   half what they had.
+
+     behind the Polaroid   0.45  ->  0.16   about 250ms
+     in front of it        0.80  ->  0.28   about 400ms
+   ============================================================ */
+
+html.handmade .piece {
+  --fade-ratio: 0.16;
+}
+
+html.handmade .p-bell,
+html.handmade .p-chai,
+html.handmade .p-marigold-two,
+html.handmade .p-marigold-a,
+html.handmade .p-marigold-b,
+html.handmade .p-bangles {
+  --fade-ratio: 0.28;
+}
+
+/* ============================================================
+   STEP 6: RHYTHM
+
+   Val Head's rule for expressive animation is that it needs a beat
+   the eye can follow. Ours had none. The order pieces arrived in
+   was kolam, postcard, dosa, musicians, sun, Bangalore stamp,
+   lotus, rickshaw, temple stamp, coconut, couple: not spatial, not
+   narrative, not anything. Eleven objects appearing in an order
+   with no logic reads as scatter however good each one looks on
+   its own.
+
+   TWO CHANGES.
+
+   1. THE PIECES BEHIND NOW RIPPLE OUTWARD.
+
+   They all start stacked underneath the Polaroid, so the ones with
+   the least distance to cover are the ones that clear it first.
+   Ordering them by how far they actually travel turns eleven
+   unrelated events into one spreading gesture, and it costs
+   nothing, because it is only a re-shuffle of delays that already
+   existed.
+
+     sun 231px, dosa 264, kolam 317, lotus 360, postcard 388,
+     couple 432, coconut 470, Bangalore stamp 484, rickshaw 497,
+     musicians 498, temple stamp 504
+
+   Distances measured off the rendered page at 1512px wide, not
+   computed from the offsets, so they include the effect of scale.
+
+   2. THE PIECES IN FRONT NOW LAND HEAVIEST FIRST.
+
+   Bell, bangles, chai, then the three marigolds. Brass and glass
+   drop onto the composition and stop; the flowers drift down after
+   them and close the sequence. That is both the physically true
+   order and the better ending: the last thing that moves is the
+   lightest thing on the wall.
+
+   AND THE BEAT IS SLOWER.
+
+   The gap between pieces goes from 55ms to 78ms. The research puts
+   the speed at which a person actually places paper at 200 to
+   600ms per piece; 55ms is not placing, it is a flurry. 78ms is
+   still far quicker than a real hand, but it is enough to separate
+   the pieces into distinct events instead of one continuous rush,
+   and it keeps the whole sequence inside its existing length.
+
+   ⚠️ WHAT THIS STEP DID NOT ACHIEVE.
+
+   It was also meant to reduce how many pieces are moving at the
+   same time. It does not. Measured, counting only pieces that move
+   more than a pixel between frames, the peak went from 14 to 16 and
+   the total amount of movement went up slightly.
+
+   That is not a bug and it is not fixable from here. The stagger
+   only spans about 1.3 seconds while the individual pieces run for
+   1.1 to 1.9 seconds each, so almost everything overlaps almost
+   everything else no matter how the delays are arranged. On top of
+   that, steps 3 and 4 deliberately ADD movement: the arc lifts a
+   piece off its line, and the follow-through keeps it turning after
+   it has landed. Those are the two changes doing the most work, so
+   trading them away to flatten a number would be the wrong deal.
+
+   Genuinely separating the pieces needs the sequence to run about
+   3.8 seconds instead of 3.1, which is a decision about how long
+   the intro should be rather than a detail of how it moves. Left
+   alone on purpose.
+
+   ⚠️ ONE CONSEQUENCE, MEASURED AND ACCEPTED.
+
+   The last piece to finish is now a marigold at about 3265ms,
+   where it used to be the bangles at 3125ms. The headline still
+   arrives at 3000ms, so the two overlap by about 265ms.
+
+   That overlap is deliberate and it is not the thing the original
+   note was protecting against. What matters is that the collage
+   reads as settled before the words arrive, and a marigold's last
+   265ms is the tail of a damped spring: sub-pixel movement on the
+   lightest object on the wall. Overlapping the two slightly is
+   better than a hard seam between them, and it is what the
+   principle of overlapping action asks for.
+
+   ⚠️ The front marigolds are also brought back from a 1.22 mass to
+   1.10. They travel only about 95px, a fifth of what a back piece
+   covers, so the full airy multiplier was stretching a very short
+   journey over a very long time, and it was the single thing
+   pushing the sequence past its end.
+   ============================================================ */
+
+html.handmade {
+  /* Was 55ms. Slower, so the pieces read as separate placements. */
+  --back-step: 78ms;
+}
+
+html.handmade .p-marigold-a,
+html.handmade .p-marigold-b,
+html.handmade .p-marigold-two {
+  --mass: 1.1;
+}
+
+/* ---------- behind: nearest to the Polaroid first ---------- */
+html.handmade .p-sun {
+  --fan-delay: calc(var(--back-start) + 0 * var(--back-step));
+}
+html.handmade .p-dosa {
+  --fan-delay: calc(var(--back-start) + 1 * var(--back-step));
+}
+html.handmade .p-kolam {
+  --fan-delay: calc(var(--back-start) + 2 * var(--back-step));
+}
+html.handmade .p-lotus {
+  --fan-delay: calc(var(--back-start) + 3 * var(--back-step));
+}
+html.handmade .p-postcard {
+  --fan-delay: calc(var(--back-start) + 4 * var(--back-step));
+}
+html.handmade .p-couple {
+  --fan-delay: calc(var(--back-start) + 5 * var(--back-step));
+}
+html.handmade .p-coconut {
+  --fan-delay: calc(var(--back-start) + 6 * var(--back-step));
+}
+html.handmade .p-stamp-blr {
+  --fan-delay: calc(var(--back-start) + 7 * var(--back-step));
+}
+html.handmade .p-rickshaw {
+  --fan-delay: calc(var(--back-start) + 8 * var(--back-step));
+}
+html.handmade .p-musicians {
+  --fan-delay: calc(var(--back-start) + 9 * var(--back-step));
+}
+html.handmade .p-stamp {
+  --fan-delay: calc(var(--back-start) + 10 * var(--back-step));
+}
+
+/* ---------- in front: heaviest first, flowers last ---------- */
+html.handmade .p-bell {
+  --fan-delay: calc(var(--front-start) + 0 * var(--front-step));
+}
+html.handmade .p-bangles {
+  --fan-delay: calc(var(--front-start) + 1 * var(--front-step));
+}
+html.handmade .p-chai {
+  --fan-delay: calc(var(--front-start) + 2 * var(--front-step));
+}
+html.handmade .p-marigold-two {
+  --fan-delay: calc(var(--front-start) + 3 * var(--front-step));
+}
+html.handmade .p-marigold-b {
+  --fan-delay: calc(var(--front-start) + 4 * var(--front-step));
+}
+html.handmade .p-marigold-a {
+  --fan-delay: calc(var(--front-start) + 5 * var(--front-step));
+}
+
+/* ============================================================
+   REDUCED MOTION
+
+   Not one of the six steps. A separate fix, worth making whatever
+   happens to the rest of this file.
+
+   styles.css collapses every intro animation to 1ms for anyone who
+   has asked their system to reduce motion, so all eighteen pieces
+   and the headline appear in a single frame. The intent is right
+   and the execution is the one thing the guidance warns against:
+   web.dev, Val Head and Eric Bailey all say the same thing, that an
+   instant appearance is MORE jarring than a short cross-fade, not
+   less. What WCAG is protecting against is movement, not opacity.
+
+   So: no travel, no arc, no scale, no rotation, and a 380ms fade.
+
+   ⚠️ Large-scale zoom is a documented vestibular trigger, and the
+   pieces in front of the Polaroid start at 1.42x, which is squarely
+   in that category. Killing `assemble` here is what removes it.
+
+   ⚠️ `animation: none` on its own is not enough. The pieces would
+   then be painted at whatever their base rule says, and `.js .piece`
+   sets opacity to 0, so they would never appear at all. Hence the
+   explicit `reveal`, and the explicit resets that put each piece
+   exactly where it belongs with no movement to get there.
+
+   ⚠️ THE POLAROID NEEDS THE OPPOSITE RESET, AND GETTING THIS WRONG
+   MOVES SEVENTEEN PIECES.
+
+   The other pieces carry their resting tilt on the individual
+   `rotate` property, because `assemble` owns `transform` and the
+   two would overwrite each other. The Polaroid does not: it runs
+   `pol-in`, whose final keyframe rotates INSIDE its own transform.
+
+   So the correct resting state is different for the two groups.
+   Writing one rule for both, with the tilt in both places, applies
+   it twice and lands every piece at double its angle. Measured, and
+   caught: seventeen of eighteen pieces were out of position before
+   this was split in two. */
+   /* =========================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Tilt on the individual property, transform carries only the
+     centring. Matches where `assemble` and `wobble` leave them. */
+  html.handmade .intro-play .piece {
+    animation: reveal 380ms ease-out both !important;
+    translate: none;
+    rotate: var(--rot);
+    scale: none;
+    transform: translate(-50%, -50%);
+  }
+
+  /* Tilt inside the transform, individual rotate cleared. Matches
+     where `pol-in` leaves it. */
+  html.handmade .intro-play .p-polaroid {
+    rotate: none;
+    transform: translate(-50%, -50%) rotate(var(--rot));
+  }
+}
