@@ -289,7 +289,7 @@
   /* ============================================================
      4. THE DETAIL MODALS
 
-     Three Polaroids, one per card.
+     Three modal cards, one per card in the details section.
 
      The focus trap is the reason this is more than twenty lines. The
      reference this was modelled on sets aria-modal="true" but leaves
@@ -298,10 +298,10 @@
      scrim and still scrollable-looking but inert. That is worse than
      no dialog at all, because there is no way to tell where you are.
      Here Tab and Shift+Tab wrap inside the card, Escape closes it, and
-     focus returns to the exact Polaroid that opened it.
+     focus returns to the exact card that opened it.
 
      The variable names still say "drawer". These were bottom sheets
-     until the card became a Polaroid, and the class is load-bearing
+     first, then Polaroids, and the class is load-bearing
      across three files, so renaming it is a job of its own.
      ============================================================ */
   var drawerRoot = document.querySelector(".drawer-root");
@@ -369,8 +369,15 @@
 
       if (trigger) trigger.setAttribute("aria-expanded", "true");
 
-      var first = focusablesIn(drawer)[0];
-      if (first) first.focus();
+      /* The card itself takes focus, not the close button. Focusing a
+         button paints a focus ring the instant the card opens, which
+         reads as a highlighted control rather than a dialog arriving.
+         The card carries tabindex="-1" so it can hold focus without
+         becoming a tab stop, and a screen reader announces the dialog
+         and its title rather than just "Close, button". The trap below
+         already handles focus sitting on the card rather than on one of
+         its ends: the first Tab walks into the content normally. */
+      drawer.focus();
 
       document.addEventListener("keydown", onKeydown, true);
     }
@@ -446,6 +453,34 @@
         first.focus();
       }
     }
+
+    /* The scrollbar is invisible until you actually scroll, then fades
+       back out once you stop. Only the thumb ever appears: the track
+       stays transparent at all times, so there is no groove sitting on
+       the paper.
+
+       Only the colours change, never the width, so the gutter is
+       reserved the whole time and text never reflows as the bar comes
+       and goes.
+
+       Scroll events do not bubble, so this listens in the capture phase
+       on the root. One listener covers all three cards. */
+    var scrollHide = null;
+
+    drawerRoot.addEventListener(
+      "scroll",
+      function (event) {
+        var body = event.target;
+        if (!body.classList || !body.classList.contains("drawer-body")) return;
+
+        body.classList.add("is-scrolling");
+        window.clearTimeout(scrollHide);
+        scrollHide = window.setTimeout(function () {
+          body.classList.remove("is-scrolling");
+        }, 900);
+      },
+      true
+    );
 
     document.addEventListener("click", function (event) {
       var opener = event.target.closest("[data-drawer]");

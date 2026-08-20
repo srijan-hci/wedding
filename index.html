@@ -301,7 +301,7 @@
         </p>
 
         <p class="cta-wrap">
-          <a class="btn-glass glass" href="rsvp/">RSVP here</a>
+          <a class="btn-glass glass is-clear" href="rsvp/">RSVP here</a>
         </p>
         <p class="micro">Please RSVP by 28 August 2026</p>
       </section>
@@ -309,7 +309,7 @@
       <hr class="rule" />
 
       <!-- ===== DETAILS =====
-           Three cards. Each opens a Polaroid modal holding everything we
+           Three cards. Each opens a modal holding everything we
            used to spread across separate pages of questions. -->
       <section class="details" id="details" aria-labelledby="details-title">
         <h2 class="details-title" id="details-title">
@@ -396,8 +396,9 @@
     </footer>
 
     <!-- ===== DETAIL MODALS =====
-         One Polaroid per card: a centred card with the text sitting in
-         the photo window, which is the only part that scrolls. They live
+         One modal per card: a centred card with the title and the close
+         in a header row, and the text sitting in the reading window
+         below, which is the only part that scrolls. They live
          outside <main> so the scrim can cover the whole page including
          the nav, and so nothing inside inherits the page's stacking
          context.
@@ -419,17 +420,20 @@
         role="dialog"
         aria-modal="true"
         aria-labelledby="drawer-travel-title"
+        tabindex="-1"
         hidden
       >
-        <button class="drawer-close" type="button" data-close aria-label="Close">
-          <svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20">
-            <path d="M5 5l14 14M19 5L5 19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-          </svg>
-        </button>
-
-        <div class="drawer-body">
+        <div class="drawer-head">
           <h2 class="drawer-title" id="drawer-travel-title">Travel &amp; stay</h2>
 
+          <button class="drawer-close" type="button" data-close aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16">
+              <path d="M5 5l14 14M19 5L5 19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="drawer-body">
           <p class="drawer-lede">
             Guests are coming from across the United States and from all over
             India. If something you need is missing here, please just ask us.
@@ -537,17 +541,20 @@
         role="dialog"
         aria-modal="true"
         aria-labelledby="drawer-events-title"
+        tabindex="-1"
         hidden
       >
-        <button class="drawer-close" type="button" data-close aria-label="Close">
-          <svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20">
-            <path d="M5 5l14 14M19 5L5 19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-          </svg>
-        </button>
-
-        <div class="drawer-body">
+        <div class="drawer-head">
           <h2 class="drawer-title" id="drawer-events-title">Events &amp; theme</h2>
 
+          <button class="drawer-close" type="button" data-close aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16">
+              <path d="M5 5l14 14M19 5L5 19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="drawer-body">
           <p class="drawer-lede">
             Two days, and you are welcome at all of it. Timings are still being
             settled and everyone who has replied will get an email once they
@@ -634,17 +641,20 @@
         role="dialog"
         aria-modal="true"
         aria-labelledby="drawer-bangalore-title"
+        tabindex="-1"
         hidden
       >
-        <button class="drawer-close" type="button" data-close aria-label="Close">
-          <svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20">
-            <path d="M5 5l14 14M19 5L5 19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-          </svg>
-        </button>
-
-        <div class="drawer-body">
+        <div class="drawer-head">
           <h2 class="drawer-title" id="drawer-bangalore-title">Bangalore &amp; around</h2>
 
+          <button class="drawer-close" type="button" data-close aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16">
+              <path d="M5 5l14 14M19 5L5 19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="drawer-body">
           <p class="drawer-lede">
             You have come a long way. It would be a shame to see only the
             inside of a wedding venue. February is the best month of the year

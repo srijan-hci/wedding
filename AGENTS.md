@@ -39,7 +39,7 @@ authoritative while still making the feature easy to back out.
 
 | File | Purpose |
 |---|---|
-| `index.html` | The invitation. Collage, date, venue, three detail cards, and the three Polaroid modals those cards open. |
+| `index.html` | The invitation. Collage, date, venue, three detail cards, and the three modals those cards open. |
 | `rsvp/index.html` | The RSVP page. One plain form that becomes one question at a time. |
 | `rsvp/steps.js` | The stepping only. Submission still belongs to `rsvp.js`. |
 | `styles.css` | Everything. Recoleta `@font-face`, tokens, the liquid glass, the collage stage, the assembly keyframes, the page below the collage, the detail modals, the RSVP page. |
@@ -60,7 +60,7 @@ The page is four stacked fixed layers:
 .content-layer      z 10   collage, headline, everything you read
 .light-layer        z 20   the drifting light, mix-blend-mode: multiply
 .site-nav           z 30   the pill nav
-.drawer-root        z 60   the detail Polaroids, over everything
+.drawer-root        z 60   the detail modals, over everything
 ```
 
 Anything new needs a deliberate z-index relative to these.
@@ -401,32 +401,99 @@ the delta within one session is.
 
 ### The detail modals
 
-A Polaroid, not a bottom sheet. Each card opens a centred card wearing the same
-warm white frame as the artwork printed on the cards themselves: a thin margin
-on three sides, a slightly deeper band along the bottom, and every word sitting
-in the photo window, which is the only part that scrolls. It fades and scales
-in over 500ms on `cubic-bezier(0.32, 0.72, 0, 1)`, scrim black 40% with an 8px
-blur. It stays the same shape at every width; on a phone it simply gets
-narrower.
+A centred **landscape** card, from Figma node `102:509` in the `Wed` file. An
+even 24px frame on all four sides with a 24px gap; the title and the close
+button in a header row along the top; and below them a reading window on
+slightly darker paper, which is the only part that scrolls. Two flat neutral
+papers: `#f4f2ee` for the frame, `#eae6df` for the window, with
+`inset 0 0 2px rgba(0, 0, 0, 0.25)` as the window's edge. It fades and scales in
+over 500ms on `cubic-bezier(0.32, 0.72, 0, 1)`, scrim black 40% with an 8px blur.
 
-The frame is `padding` on `.drawer` driven by two custom properties,
-`--pol-edge` (the three-sided margin) and `--pol-foot` (the band below the
-window), not a `border`. A border would add to the element's width and the
-window's own edge would drift out of square with it. A real Polaroid's foot is
-about four times its edge; here it is about double, because four times is a lot
-of empty white to ask for on a card carrying this much reading.
+`width: min(100%, 1000px)` and `max-height: min(100%, 724px)` reproduce the
+Figma frame exactly, 1000x724, on any window at least 1096 by 820. Below that it
+shrinks: 1000x624 on a 1280x720 laptop, 350x724 on a 390 phone, where it is
+necessarily portrait. The frame drops to 16px under 760px wide.
+
+The frame is `padding` on `.drawer` driven by one custom property,
+`--drawer-pad`, not a `border`. A border would add to the element's width and the
+window's own edge would drift out of square with it. The `::after` fade and the
+phone override both read `--drawer-pad`, so the frame only changes in one place.
+
+**This replaced a Polaroid**, which was portrait at 620x860, with a warm white
+gradient frame, a deeper band along the foot, the title scrolling with the text,
+and a 44px circular close button riding the top-right corner. It was driven by
+`--pol-edge` and `--pol-foot`. It is in the history if it is ever wanted back.
+
+⚠️ **When that swap was made, the old `.drawer-title` rule was left further down
+the file and silently won on source order**, so the title stayed centred at
+33px however many times the new rule was edited. This is the same duplicate-rule
+trap documented for `.p-dosa` in the collage. There must only ever be one
+`.drawer-title`.
 
 **⚠️ `.drawer-body` needs `min-height: 0`.** A flex child defaults to
 `min-height: auto`, meaning "never shrink below your content". Without it the
 window grows to fit every word, the card outgrows the screen, and nothing
 scrolls at all.
 
-**The close button sits on the top-right corner, half on and half off the
-frame.** Anywhere inside the window and it would sit over text scrolling
-underneath it, which reads as a bug rather than a button. It also has to
-restate `border-radius: 999px` in its `:focus-visible` rule, because the global
+**The reading measure is one shared `640px`, not a `ch` count.** A `ch` is the
+width of a "0" in the element's *own* font, so a 20px semibold heading and a
+16.5px paragraph resolve the same `ch` count to different widths, and the auto
+margins then centre those different widths at different places. On the old
+620px card that was a few pixels and invisible. On a 1000px one the headings
+started 124px to the left of the paragraphs under them.
+
+⚠️ **`.trip-list` has the same trap from the other direction.** It and
+`.drawer-body > *` have equal specificity, so its `margin: 0` shorthand won on
+source order and cancelled the auto margins, leaving that one list out of line
+with everything above it. It is `margin-block: 0` now. Anything else added
+inside the window that sets `margin` shorthand will do it again.
+
+**Everything in the reading window is plain system UI.** Recoleta stays on the
+card title in the header row, as the design has it, but inside the window it was
+setting the lede and the subheadings too, and a screenful of display serif is
+harder to read than it is handsome. The subheadings carry their weight rather
+than their family now, so they need 600 rather than 500 to still read as
+headings.
+
+**The scrollbar is invisible until you scroll, then disappears again after
+900ms.** `scrollbar-color: transparent transparent` by default, and `main.js`
+adds `.is-scrolling` on scroll to colour just the thumb. The track is never
+painted in either state. Only colours change, never widths, so where a browser
+does reserve a gutter it stays reserved and no text reflows.
+
+⚠️ **Do not put a `transition` on `scrollbar-color`.** Chrome accepts one and
+then does not reliably advance it, so the bar sits stuck at its starting
+transparency and never appears at all. This was measured: with the transition,
+`.is-scrolling` was applied and the computed colour stayed `rgba(0, 0, 0, 0)`
+indefinitely; without it, it flips to `rgba(51, 36, 26, 0.3)` immediately and
+back 900ms later. Firefox does not animate the property in any case.
+
+Note that macOS overlay scrollbars report a gutter of 0 and are not captured in
+headless screenshots, so this behaviour has to be verified by reading computed
+`scrollbar-color`, not by looking at a picture.
+
+**The close button is a bare 16px glyph, as the design has it, in a 32px box.**
+A 16px target is below the 24px WCAG minimum, so the button is padded out to
+32px and then pulled back by `margin: -8px -8px -8px 0` so the glyph still lands
+exactly 24px in from the card's edge. It also has to restate
+`border-radius: 999px` in its `:focus-visible` rule, because the global
 `button:focus-visible` sets `border-radius: 2px` so a rectangular ring hugs the
 element, which boxes in a circle.
+
+**Opening a card focuses the card, not the close button.** Each `.drawer`
+carries `tabindex="-1"` and `.drawer:focus` clears its outline. Focusing the
+close button instead painted a ring around it the instant the card opened, which
+reads as a highlighted control rather than a dialog arriving. Focusing the
+dialog is also the better behaviour for a screen reader, which then announces
+the dialog and its title rather than just "Close, button". The focus trap
+already copes: focus sitting on the card itself is neither the first nor the
+last item, so the first Tab walks into the content normally.
+
+**The title lives in `.drawer-head`, outside the scrolling body.** That means
+`aria-labelledby` points at an element that is always on screen, and it also
+means `.drawer-body > *` (the shared measure and auto margins) does not apply to
+it: the title is left-aligned in the header row while the prose below is capped
+and centred.
 
 `.drawer-root` is a one-cell grid with `place-items: center`, not just a fixed
 box. The single explicit row and column is what gives `.drawer`'s
@@ -436,15 +503,16 @@ the percentage has nothing to resolve to.
 **One deliberate improvement on the reference this was modelled on:** it sets
 `aria-modal="true"` but does not trap focus, so a keyboard user tabs straight
 out into the inert page behind. Ours traps focus in both directions and hands
-it back to the exact card that opened it. Verified: 45 tabs each way, zero
-escapes.
+it back to the exact card that opened it. Verified: 40 tabs each way at 390,
+1280 and 1440, zero escapes, and zero axe violations at all three with a modal
+open.
 
 `hidden` on a modal means "closed". Two frames are needed between painting the
 card at its starting opacity and adding `.is-open`, or the transition is
 skipped and it jumps.
 
-**The class is still `drawer`.** These were bottom sheets before the card
-became a Polaroid, and the name is load-bearing in `index.html`, `styles.css`
+**The class is still `drawer`.** These were bottom sheets first, then
+Polaroids, and the name is load-bearing in `index.html`, `styles.css`
 and `main.js`, so renaming it is a job of its own rather than a detail of a
 visual change.
 

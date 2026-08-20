@@ -9,7 +9,7 @@
      .content-layer      z 10   collage, headline, page
      .light-layer        z 20   the drifting light, multiply blend
      .site-nav           z 30   the pill nav
-     .drawer-root        z 60   the detail Polaroids, over everything
+     .drawer-root        z 60   the detail modals, over everything
 
    The nav has to sit outside .content-layer to reach z 30, because a
    child can never paint above a sibling of its parent.
@@ -1740,11 +1740,10 @@ textarea:focus-visible {
 /* ============================================================
    DETAIL MODALS
 
-   A Polaroid, not a bottom sheet. Each card opens a centred card
-   wearing the same warm white frame as the artwork printed on the
-   cards themselves: a thin margin on three sides, a slightly deeper
-   band along the bottom, and every word sitting in the photo window,
-   which is the only part that scrolls.
+   A centred card, from Figma node 102:509. An even frame on all four
+   sides, the title and the close button in a header row along the top,
+   and below them a reading window on slightly darker paper, which is
+   the only part that scrolls.
 
    The frame is padding on .drawer rather than a border, so the window
    can carry its own paper colour and inset edge without a border and a
@@ -1752,6 +1751,10 @@ textarea:focus-visible {
 
    It stays the same shape at every width. On a phone it simply gets
    narrower; it does not turn back into a sheet.
+
+   This replaced a Polaroid: a warm white gradient frame with a deeper
+   band along the foot, the title scrolling with the text, and the close
+   riding the top-right corner. If you need it, it is in the history.
 
    One deliberate improvement on the reference this was modelled on:
    that one sets aria-modal="true" but does not actually trap focus, so
@@ -1763,7 +1766,7 @@ textarea:focus-visible {
   position: fixed;
   inset: 0;
   z-index: 60;
-  /* One explicit cell, so the Polaroid's max-height: 100% has a
+  /* One explicit cell, so the card's max-height: 100% has a
      definite track to measure against rather than an auto one. The
      padding is the gutter the card is never allowed to touch. */
   display: grid;
@@ -1791,31 +1794,29 @@ textarea:focus-visible {
   opacity: 1;
 }
 
-/* ---------- The Polaroid ----------
-   --pol-edge is the white margin on three sides, --pol-foot the band
-   beneath the window. On a real Polaroid the foot is roughly four
-   times the edge. That is a great deal of empty white to ask for on a
-   card carrying this much reading, so it is held to about double:
-   enough to read as a Polaroid, not enough to waste a screen. */
+/* ---------- The card ----------
+   From Figma node 102:509. An even 24px frame on all four sides with a
+   24px gap, the title and the close in a header row above the reading
+   window, and two flat neutral papers rather than the warm gradient the
+   Polaroid used. --drawer-pad is that frame, and the ::after fade and
+   the phone overrides all read it, so the frame only has to change in
+   one place. */
 .drawer {
-  --pol-edge: clamp(11px, 1.5vw, 17px);
-  --pol-foot: clamp(24px, 2.8vw, 34px);
+  --drawer-pad: 24px;
+  --drawer-paper: #f4f2ee;
+  --drawer-window: #eae6df;
   /* relative, not absolute: it is the grid's only in-flow child, so the
      grid centres it, and it still paints above the absolute scrim. */
   position: relative;
   display: flex;
   flex-direction: column;
-  width: min(100%, 620px);
-  max-height: min(100%, 860px);
-  padding: var(--pol-edge) var(--pol-edge) var(--pol-foot);
+  gap: var(--drawer-pad);
+  width: min(100%, 1000px);
+  max-height: min(100%, 724px);
+  padding: var(--drawer-pad);
   border-radius: 4px;
-  /* Not flat white. Real instant film is warm at the top and cooler at
-     the foot, and the gradient is what stops a 620px slab of #fff
-     reading as a browser dialog. */
-  background: linear-gradient(#fffdf9, #f3ede1);
-  box-shadow:
-    0 32px 70px rgba(28, 8, 4, 0.45),
-    0 4px 14px rgba(28, 8, 4, 0.26);
+  background: var(--drawer-paper);
+  box-shadow: 2px 3px 5px rgba(0, 0, 0, 0.15);
   opacity: 0;
   transform: translateY(18px) scale(0.965);
   transition:
@@ -1833,37 +1834,62 @@ textarea:focus-visible {
   transform: translateY(0) scale(1);
 }
 
-/* The last line fading into the foot rather than being guillotined by
+/* The card takes focus when it opens, so that a screen reader announces
+   the dialog rather than the close button, and so no control is left
+   wearing a focus ring the moment the card appears. It is not a tab
+   stop, so suppressing the ring here costs a keyboard user nothing:
+   every control inside it still shows its own. */
+.drawer:focus {
+  outline: none;
+}
+
+/* The last line fading into the frame rather than being guillotined by
    it. It sits over the window's bottom padding, so at the end of the
    scroll there is nothing behind it to veil. */
 .drawer::after {
   content: "";
   position: absolute;
-  right: var(--pol-edge);
-  bottom: var(--pol-foot);
-  left: var(--pol-edge);
+  right: var(--drawer-pad);
+  bottom: var(--drawer-pad);
+  left: var(--drawer-pad);
   height: 34px;
-  border-radius: 0 0 2px 2px;
-  background: linear-gradient(rgba(253, 246, 234, 0), var(--cream));
+  background: linear-gradient(rgba(234, 230, 223, 0), var(--drawer-window));
   pointer-events: none;
 }
 
-/* The close button rides the top-right corner of the frame, half on
-   and half off. Anywhere inside the window and it would sit over the
-   text scrolling beneath it, which reads as a bug rather than a
-   button. Out here it never covers a word. */
+/* ---------- The header row ----------
+   The title used to scroll with the text. It now sits in the frame
+   above the window, opposite the close, exactly as the design has it. */
+.drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.drawer-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+/* Figma draws a bare 16px glyph. A 16px target is below the 24px
+   minimum, so the icon keeps its size and the button is padded out to
+   32px, then pulled back by half that in negative margin so the glyph
+   still lands 24px in from the card's edge. */
 .drawer-close {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  z-index: 2;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid var(--cream-edge);
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  margin: -8px -8px -8px 0;
+  border: 0;
   border-radius: 999px;
-  background: var(--cream-warm);
+  background: transparent;
   color: var(--ink-soft);
   cursor: pointer;
   transition:
@@ -1872,7 +1898,7 @@ textarea:focus-visible {
 }
 
 .drawer-close:hover {
-  background: #efe0c8;
+  background: rgba(51, 36, 26, 0.07);
   color: var(--ink);
 }
 
@@ -1885,9 +1911,9 @@ textarea:focus-visible {
   border-radius: 999px;
 }
 
-/* ---------- The photo window ----------
+/* ---------- The reading window ----------
    The only scrolling region. The frame itself must never scroll or the
-   white border would slide away with the text.
+   header would slide away with the text.
 
    min-height: 0 is not optional. A flex child defaults to
    min-height: auto, which means "never shrink below your content", so
@@ -1899,27 +1925,38 @@ textarea:focus-visible {
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding: clamp(26px, 3.4vw, 42px) clamp(20px, 3vw, 38px)
-    clamp(30px, 3.8vw, 48px);
-  border-radius: 2px;
-  background: var(--cream);
-  /* A hairline instead of a border, so the window's edge does not add
-     to its width and push the frame out of square. */
-  box-shadow: inset 0 0 0 1px rgba(51, 36, 26, 0.08);
+  padding: clamp(22px, 3vw, 34px) clamp(18px, 2.6vw, 32px);
+  background: var(--drawer-window);
+  /* An inset shadow rather than a border, so the window's edge does not
+     add to its width and push the frame out of square. */
+  box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.25);
   color: var(--ink-soft);
   font-size: 16.5px;
   line-height: 1.62;
-  /* The default grey bar reads as browser furniture sitting on top of
-     the photograph. Thinned and warmed so it belongs to the paper. */
+  /* Invisible until you scroll, then it disappears again once you stop.
+     Only the colours move, never the width, so where a browser does
+     reserve a gutter it stays reserved and no text reflows as the bar
+     comes and goes. main.js adds the class.
+
+     ⚠️ No transition on scrollbar-color. Chrome accepts one and then
+     does not reliably advance it, so the bar can sit stuck at its
+     starting transparency and never appear at all. Firefox does not
+     animate the property regardless. An instant swap is imperceptible
+     on something this small and it always works. */
   scrollbar-width: thin;
-  scrollbar-color: rgba(51, 36, 26, 0.26) transparent;
+  scrollbar-color: transparent transparent;
 }
 
-/* Safari, which does not read the two properties above. The transparent
-   border plus background-clip is the only way to inset a WebKit thumb
-   from its track. */
+.drawer-body.is-scrolling {
+  scrollbar-color: rgba(51, 36, 26, 0.3) transparent;
+}
+
+/* Safari and Chrome, which do not read the two properties above. The
+   transparent border plus background-clip is the only way to inset a
+   WebKit thumb, and it is what makes the bar read as a floating pill
+   rather than a bar filling a groove. The track is never painted. */
 .drawer-body::-webkit-scrollbar {
-  width: 11px;
+  width: 10px;
 }
 
 .drawer-body::-webkit-scrollbar-track {
@@ -1929,41 +1966,52 @@ textarea:focus-visible {
 .drawer-body::-webkit-scrollbar-thumb {
   border: 3px solid transparent;
   border-radius: 999px;
-  background: rgba(51, 36, 26, 0.26);
+  background-color: transparent;
   background-clip: content-box;
+  transition: background-color 300ms ease;
 }
 
+.drawer-body.is-scrolling::-webkit-scrollbar-thumb {
+  background-color: rgba(51, 36, 26, 0.3);
+}
+
+/* The reading measure. Wider than it was, because the card is now
+   landscape: at the old 62ch the prose sat as a narrow column stranded
+   in the middle of a 1000px window.
+
+   ⚠️ It is one px value shared by every child, not `ch`. A `ch` is the
+   width of a "0" in the element's OWN font, so a 20px semibold heading
+   and a 16.5px paragraph resolve the same `ch` count to different
+   widths, and auto margins then centre those different widths at
+   different places. The result is a heading that starts noticeably to
+   the left of the paragraph under it, which is invisible on a narrow
+   card and glaring on a wide one. */
 .drawer-body > * {
-  max-width: 62ch;
+  max-width: 640px;
   margin-left: auto;
   margin-right: auto;
 }
 
-/* The title scrolls with the text rather than sitting in a fixed
-   header. The card is small enough that a pinned header would eat a
-   third of the reading area. */
-.drawer-title {
-  margin: 0 auto var(--space-4);
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: clamp(25px, 3vw, 33px);
-  line-height: 1.15;
-  color: var(--ink);
-}
-
+/* Everything in the reading window is plain system UI. Recoleta stays
+   on the card's title in the header row, as the design has it, but
+   inside the window it was doing the lede and the subheadings too, and
+   a screenful of display serif is harder to read than it is handsome.
+   The subheadings carry their weight rather than their family now, so
+   they need 600 to still read as headings. */
 .drawer-lede {
   margin: 0 auto var(--space-6);
-  font-family: var(--font-display);
-  font-size: clamp(17px, 1.5vw, 20px);
-  line-height: 1.5;
+  font-family: var(--font-body);
+  font-size: clamp(17px, 1.5vw, 19px);
+  line-height: 1.55;
   color: var(--ink);
 }
 
 .drawer-body h3 {
   margin: var(--space-7) auto var(--space-3);
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: clamp(18px, 1.8vw, 23px);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: clamp(17px, 1.6vw, 20px);
+  letter-spacing: -0.005em;
   color: var(--ink);
 }
 
@@ -2008,20 +2056,26 @@ textarea:focus-visible {
 }
 
 /* Day trips: the drive time sits with the place name rather than in its
-   own column, so it stays attached when the row wraps on a phone. */
+   own column, so it stays attached when the row wraps on a phone.
+
+   ⚠️ `margin: 0` here, not the shorthand's full reset. This rule and
+   `.drawer-body > *` have equal specificity, so the shorthand would win
+   on source order and cancel the auto margins that centre every other
+   block, leaving this one list starting 124px to the left of the
+   paragraph above it. */
 .trip-list {
-  margin: 0;
+  margin-block: 0;
 }
 
 .trip-list > div {
   padding: var(--space-4) 0;
-  border-top: 1px solid var(--cream-edge);
+  border-top: 1px solid rgba(51, 36, 26, 0.12);
 }
 
 .trip-list dt {
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 18px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 17px;
   color: var(--ink);
 }
 
@@ -2040,26 +2094,17 @@ textarea:focus-visible {
 }
 
 /* On a phone the card keeps its shape and simply gets tighter: a
-   thinner white margin so the reading area is not squeezed, and a
-   smaller corner button so it does not crowd the screen edge. The
-   root's gutter grows rather than shrinks, so there is visible scrim
-   above and below and it still reads as a card resting on the page
-   rather than a sheet filling it. */
+   narrower frame so the reading area is not squeezed. The root's gutter
+   grows rather than shrinks, so there is visible scrim above and below
+   and it still reads as a card resting on the page rather than a sheet
+   filling it. */
 @media (max-width: 760px) {
   .drawer-root {
     padding: 46px 20px;
   }
 
   .drawer {
-    --pol-edge: 9px;
-    --pol-foot: 20px;
-  }
-
-  .drawer-close {
-    top: -8px;
-    right: -8px;
-    width: 40px;
-    height: 40px;
+    --drawer-pad: 16px;
   }
 }
 
