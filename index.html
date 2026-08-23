@@ -12,8 +12,14 @@
       name="description"
       content="Akriti and Srijan are getting married on 20 and 21 February 2027 at Tharavadu Mane, Bangalore."
     />
-    <title>Akriti &amp; Srijan &middot; 20 &amp; 21 February 2027</title>
-    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <title>Akriti &amp; Srijan&rsquo;s Wedding</title>
+    <!-- The marigold from the top right of the collage, on the same
+         terracotta tile the old "A" mark used. Two sizes only: 32 for the
+         browser tab, 180 for an iOS home screen. Both are palette PNGs,
+         which costs nothing on a flat tile and one flower but takes the
+         pair from 240KB down to 8KB. -->
+    <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="favicon-180.png" />
 
     <!-- The Polaroid is the first thing the eye lands on and the trigger
          for the whole intro, so fetch it before anything else asks. -->
@@ -277,7 +283,6 @@
       <section class="invite" id="event" aria-labelledby="invite-date">
         <p class="kicker">and we&rsquo;d love for you to be there on</p>
         <h2 class="display" id="invite-date">20 &amp; 21 February 2027</h2>
-        <p class="kicker kicker-at">at</p>
 
         <figure class="venue-shot">
           <img
@@ -295,6 +300,7 @@
           />
         </figure>
 
+        <p class="kicker kicker-at">in the courtyard of</p>
         <p class="venue-name">
           The Tharavadu Mane<br />
           <span>Bangalore, India</span>
@@ -303,7 +309,6 @@
         <p class="cta-wrap">
           <a class="btn-glass glass is-clear" href="rsvp/">RSVP here</a>
         </p>
-        <p class="micro">Please RSVP by 28 August 2026</p>
       </section>
 
       <hr class="rule" />
@@ -378,9 +383,10 @@
       </section>
 
       <p class="closing">
-        There will be more food than anyone can finish and more dancing than
-        anyone planned for. Mostly, though, we just want everyone we love in
-        one place.
+        We&rsquo;re excited about bringing together the different people,
+        places, and chapters that have shaped our lives. It feels special to
+        have all of those worlds meet in one place, and we can&rsquo;t wait to
+        share the weekend with you.
       </p>
 
       <hr class="rule" />
@@ -391,8 +397,6 @@
     <!-- ===== FOOTER ===== -->
     <footer class="site-footer">
       <b>Akriti &amp; Srijan</b>
-      <p>20 &amp; 21 February 2027 &middot; Tharavadu Mane, Bangalore</p>
-      <p><a href="mailto:hello@akriti-srijan.com">hello@akriti-srijan.com</a></p>
     </footer>
 
     <!-- ===== DETAIL MODALS =====
@@ -433,104 +437,85 @@
           </button>
         </div>
 
-        <div class="drawer-body">
+        <!-- ⚠️ tabindex="0" because this is the only part of the card
+             that scrolls. Without it a keyboard user cannot reach the
+             content below the fold at all: Tab skips a plain div, and
+             arrow keys only scroll whatever has focus. This card happens
+             to contain a link, which made it pass by luck; the other two
+             lost their links in a copy rewrite and started failing. All
+             three carry it so none of them depends on its own wording.
+             role + aria-labelledby stop the new stop being a silent one. -->
+        <div
+          class="drawer-body"
+          tabindex="0"
+          role="region"
+          aria-labelledby="drawer-travel-title"
+        >
           <p class="drawer-lede">
-            Guests are coming from across the United States and from all over
-            India. If something you need is missing here, please just ask us.
+            People are coming to Bangalore from all over India and from much
+            farther afield, so we know getting here is a bit of a journey.
+            We&rsquo;ve tried to make the rest as easy as possible.
           </p>
 
-          <h3>Flights</h3>
+          <h3>Getting to Bangalore</h3>
           <p>
-            Fly into <strong>Bengaluru (BLR)</strong>, Kempegowda
-            International. Air India runs a nonstop from San Francisco. From
-            everywhere else the usual one-stops are Emirates via Dubai, Qatar
-            via Doha, Etihad via Abu Dhabi, Lufthansa via Frankfurt, British
-            Airways via London, or Air India via Delhi.
+            Fly into <strong>Kempegowda International Airport (BLR)</strong>,
+            Bangalore&rsquo;s main airport.
           </p>
           <p>
-            Expect 20 to 26 hours door to door from the US East Coast and 18 to
-            24 from the West. India is 10.5 hours ahead of US Eastern and 13.5
-            ahead of Pacific, so give yourself a day to recover before things
-            start.
+            The wedding will be at The Tharavadu Mane in Yelahanka, in north
+            Bangalore. It&rsquo;s outside the main part of the city, so give
+            yourself some extra time when traveling to and from the venue:
+            Bangalore traffic has a way of making its own schedule.
           </p>
           <p>
-            From within India, BLR is served by IndiGo, Air India, SpiceJet and
-            Akasa from every major city.
-          </p>
-
-          <h3>Visas</h3>
-          <p>
-            Most visitors need an e-Tourist Visa. Apply at
-            <a
-              href="https://indianvisaonline.gov.in/evisa/"
-              target="_blank"
-              rel="noopener noreferrer"
-              >indianvisaonline.gov.in/evisa</a
-            >. That is the only official site, so type it in by hand: there are
-            convincing look-alikes that charge large fees for nothing. You can
-            apply from 120 days before you travel, and it is worth doing early.
-          </p>
-
-          <h3>Getting to the venue</h3>
-          <p>
-            Tharavadu Mane is in north Bangalore, near Nagawara Lake, roughly
-            30 to 35&nbsp;km from the airport and about an hour by car outside
-            peak traffic. Uber and Ola cover the area well. We will arrange
-            shuttles from the main guest hotels.
-          </p>
-          <p class="drawer-note">
-            Please do not book a hotel on distance alone yet. We are still
-            waiting on the exact street address from the venue and will put it
-            here the moment we have it.
+            Uber and Ola are widely used in Bangalore. For the wedding
+            celebrations, we&rsquo;ll arrange transportation between the main
+            guest hotels and the venue, so you won&rsquo;t need to figure that
+            part out yourself.
           </p>
 
           <h3>Where to stay</h3>
           <p>
-            We will confirm a room block and rates here once they are arranged.
-            In the meantime, north Bangalore keeps you close to the venue and
-            the city centre is better if you want to explore between events.
+            We&rsquo;re happy to take care of your accommodation for the nights
+            of February 19, 20, and 21.
           </p>
-          <ul>
-            <li>
-              <b>Near the venue:</b> The Leela Bhartiya City on Thanisandra
-              Main Road, Radisson Blu on the Outer Ring Road, Novotel Bengaluru
-              ORR, plus plenty of good budget options in Hebbal, Nagawara and
-              HBR Layout.
-            </li>
-            <li>
-              <b>City centre:</b> The Oberoi and The Ritz-Carlton near MG Road,
-              ITC Gardenia, Taj West End, JW Marriott on Vittal Mallya Road,
-              and Lemon Tree or Ibis for something more modest.
-            </li>
-          </ul>
           <p>
-            February is peak wedding season in India and hotels fill up, so
-            book early. Rates move a lot: compare Booking.com, MakeMyTrip and
-            the hotel's own site before committing.
+            If you&rsquo;d like us to arrange a room for you, just let us know
+            when you RSVP. We&rsquo;ll share more details about the hotels and
+            rooms as we get closer.
           </p>
 
-          <h3>Worth knowing</h3>
-          <ul>
-            <li>
-              <b>Weather.</b> February is Bangalore at its best: around 27&deg;C
-              (81&deg;F) by day and 14&deg;C (57&deg;F) at night. Pack light
-              clothes and something warm for the evenings.
-            </li>
-            <li>
-              <b>Money.</b> Cards are widely accepted, but carry some cash. UPI
-              runs the country and most foreign visitors cannot use it, so do
-              not rely on it.
-            </li>
-            <li>
-              <b>Water.</b> Drink bottled or filtered water. Street food is
-              part of the point of Bangalore, so eat it, just choose stalls
-              with a queue.
-            </li>
-            <li>
-              <b>Phones.</b> An Airtel or Jio tourist SIM at the airport is
-              cheap and makes cabs and maps far easier.
-            </li>
-          </ul>
+          <h3>Visas</h3>
+          <p>
+            If you&rsquo;re traveling to India on a foreign passport, you may
+            need an e-Tourist Visa. You can find more information and apply
+            through the
+            <a
+              href="https://indianvisaonline.gov.in/evisa/"
+              target="_blank"
+              rel="noopener noreferrer"
+              >official Indian e-Visa website</a
+            >.
+          </p>
+          <p>
+            Please apply well in advance. It generally takes roughly two weeks
+            from the time of application to receive your visa, though
+            processing times can vary.
+          </p>
+
+          <h3>A few practical things</h3>
+          <p>
+            February is one of the nicest times to be in Bangalore, with warm
+            days and cooler evenings. Cards are widely accepted, though
+            it&rsquo;s useful to carry some Indian rupees for smaller
+            purchases. Uber and Ola are the easiest ways to get around.
+          </p>
+          <p>
+            If you have any questions about travel, accommodation, or the
+            wedding, just reach out to Srijan or Akriti. We&rsquo;re happy to
+            help with more information.
+          </p>
         </div>
       </section>
 
@@ -554,82 +539,84 @@
           </button>
         </div>
 
-        <div class="drawer-body">
+        <div
+          class="drawer-body"
+          tabindex="0"
+          role="region"
+          aria-labelledby="drawer-events-title"
+        >
           <p class="drawer-lede">
-            Two days, and you are welcome at all of it. Timings are still being
-            settled and everyone who has replied will get an email once they
-            are.
+            We&rsquo;re celebrating over two days, and we&rsquo;d love for you
+            to join us for as much as you can. The final schedule is still
+            coming together, but here&rsquo;s the general idea.
           </p>
 
-          <h3>Saturday 20 February</h3>
-          <ul>
-            <li>
-              <b>Haldi.</b> Turmeric paste is smeared on both of us by everyone
-              who loves us. It stains, so wear something you do not mind
-              ruining, ideally yellow.
-            </li>
-            <li>
-              <b>Mehendi.</b> Henna drawn on hands and feet, with music and a
-              great deal of sitting around while it dries. Artists will be
-              there for guests too.
-            </li>
-            <li>
-              <b>Sangeet.</b> Music, dancing, and both families performing
-              routines they have rehearsed far too little. This is the loud
-              one.
-            </li>
-          </ul>
+          <h3>Saturday, 20 February</h3>
+          <dl class="trip-list">
+            <div>
+              <dt>Haldi</dt>
+              <dd>
+                We&rsquo;ll start by covering each other in turmeric, with help
+                from pretty much everyone we know. It&rsquo;s a traditional
+                ceremony where family and friends offer their blessings.
+                Yellow, orange, and other sunset colors are especially
+                encouraged.
+              </dd>
+            </div>
+            <div>
+              <dt>Mehendi</dt>
+              <dd>
+                Henna, music, snacks, and plenty of time for the designs to
+                dry. Artists will be there, so if you&rsquo;d like mehendi on
+                yourself, you&rsquo;re encouraged to join in.
+              </dd>
+            </div>
+            <div>
+              <dt>Sangeet</dt>
+              <dd>
+                An evening of music and dancing, featuring performances from
+                both families and varying amounts of rehearsal. Eventually, it
+                will become a dance party.
+              </dd>
+            </div>
+          </dl>
 
-          <h3>Sunday 21 February</h3>
-          <ul>
-            <li>
-              <b>The ceremony.</b> Around a sacred fire, with a priest guiding
-              us through the rituals. It runs long, and guests quite normally
-              talk, move about and eat during it. That is not rudeness, it is
-              how it works.
-            </li>
-            <li>
-              <b>The reception.</b> Dinner, speeches, and dancing until someone
-              turns the lights on.
-            </li>
-          </ul>
+          <h3>Sunday, 21 February</h3>
+          <dl class="trip-list">
+            <div>
+              <dt>Wedding ceremony</dt>
+              <dd>
+                We&rsquo;ll get married around a sacred fire, with a priest
+                guiding us through the traditional rituals. The ceremony takes
+                some time, with plenty happening around it, so don&rsquo;t
+                worry about sitting perfectly still throughout.
+              </dd>
+            </div>
+            <div>
+              <dt>Reception</dt>
+              <dd>Dinner, speeches, likely some more dancing.</dd>
+            </div>
+          </dl>
 
-          <h3>What to wear</h3>
+          <h3>What should I wear?</h3>
+          <p>Come dressed to celebrate.</p>
           <p>
-            Anything bright and festive. Indian clothes are very welcome but
-            never expected, and Western formal is perfectly appropriate at
-            every event. A few things that help:
+            Indian clothes are very welcome, but you do not need to buy or wear
+            traditional clothing. Western formalwear, including dresses, suits,
+            shirts, and trousers, is completely fine.
           </p>
-          <ul>
-            <li>Avoid pure white and all black for the ceremony.</li>
-            <li>Leave head-to-toe red to the bride.</li>
-            <li>
-              Wear shoes you can slip off easily. You will take them off more
-              than once.
-            </li>
-            <li>
-              For the haldi, wear something you are happy to lose to turmeric.
-            </li>
-          </ul>
 
           <h3>Do I need to come to both days?</h3>
           <p>
-            No. Come to whatever you can. If you can only make one, the
-            ceremony and reception on Sunday 21 February are the heart of it.
+            Yeah, why not? However, if you can only make one day, Sunday, 21
+            February is the main event, with the wedding ceremony and
+            reception.
           </p>
 
-          <h3>Can I bring my partner or my children?</h3>
+          <h3>What about gifts?</h3>
           <p>
-            Your invitation will say who it covers. Children are genuinely
-            welcome at Indian weddings and there will be plenty of them. If you
-            are unsure, just ask us on the form.
-          </p>
-
-          <h3>Gifts</h3>
-          <p>
-            Your being there, especially if you are flying a long way, is more
-            than enough. We will add details here nearer the time for anyone
-            who would like to.
+            Honestly, having you there, especially if you&rsquo;re traveling a
+            long way, is more than enough present for us :)
           </p>
         </div>
       </section>
@@ -654,126 +641,124 @@
           </button>
         </div>
 
-        <div class="drawer-body">
+        <div
+          class="drawer-body"
+          tabindex="0"
+          role="region"
+          aria-labelledby="drawer-bangalore-title"
+        >
           <p class="drawer-lede">
-            You have come a long way. It would be a shame to see only the
-            inside of a wedding venue. February is the best month of the year
-            to be in this part of India, so stay a few extra days if you can.
+            If you&rsquo;re coming all the way to Bangalore, we hope
+            you&rsquo;ll give yourself a little time to see the city.
           </p>
 
-          <h3>In the city</h3>
-          <ul>
-            <li>
-              <b>Lalbagh Botanical Garden</b>, laid out in 1760, with a glass
-              house modelled on London's Crystal Palace.
-            </li>
-            <li>
-              <b>Cubbon Park</b>, 300 acres of trees in the middle of the city.
-              Best early in the morning.
-            </li>
-            <li>
-              <b>Bangalore Palace</b>, a Tudor-style royal residence from the
-              1880s, and <b>Vidhana Soudha</b>, the granite state legislature,
-              particularly good lit up at night.
-            </li>
-            <li>
-              <b>Museum of Art and Photography (MAP)</b>, five floors and a
-              very good collection, and
-              <b>Karnataka Chitrakala Parishath</b> for Indian painting and
-              sculpture.
-            </li>
-          </ul>
+          <p>
+            We both really like Bangalore, now known as Bengaluru, with its
+            enormous trees and busy streets, century-old markets and excellent
+            coffee, temples and cocktail bars, dosa breakfasts and some of the
+            best restaurants in the country. It&rsquo;s also a city that
+            rewards wandering around without too much of a plan.
+          </p>
+          <p>Here are a few places we&rsquo;d recommend.</p>
 
-          <h3>Eat</h3>
-          <ul>
-            <li>
-              <b>Vidyarthi Bhavan</b> in Basavanagudi, making the same crisp
-              masala dosa since 1943.
-            </li>
-            <li>
-              <b>Mavalli Tiffin Room (MTR)</b>, a Bangalore institution since
-              1924.
-            </li>
-            <li>
-              <b>VV Puram Food Street</b>, an entire lane of South Indian
-              street food. Best after dark.
-            </li>
-            <li>
-              Bangalore is India's craft beer capital. <b>Toit</b> in
-              Indiranagar and <b>Byg Brewski</b> in Hennur are the ones people
-              talk about.
-            </li>
-          </ul>
-
-          <h3>Browse</h3>
-          <ul>
-            <li>
-              <b>Commercial Street</b> for clothes, fabric and jewellery, and
-              the best place to have an outfit made.
-            </li>
-            <li>
-              <b>Indiranagar</b> and <b>Koramangala</b> for the densest
-              concentration of restaurants and bars.
-            </li>
-          </ul>
-
-          <h3>Worth leaving the city for</h3>
+          <h3>For a slow morning</h3>
           <dl class="trip-list">
             <div>
-              <dt>Nandi Hills <span>1.5 hours</span></dt>
+              <dt>Lalbagh Botanical Garden</dt>
               <dd>
-                A hilltop fort north of the city, and the classic Bangalore
-                sunrise. Leave very early and you will be above the clouds.
+                One of Bangalore&rsquo;s best places for a morning walk.
+                It&rsquo;s huge, green, and a nice way to escape the traffic
+                for a couple of hours.
               </dd>
             </div>
             <div>
-              <dt>Mysore <span>3 hours</span></dt>
+              <dt>Cubbon Park</dt>
               <dd>
-                The city of palaces. Mysore Palace is illuminated on Sunday
-                evenings and is genuinely spectacular. Silk, sandalwood and
-                Chamundi Hills are all worth the trip. Easy as a long day or a
-                comfortable overnight.
-              </dd>
-            </div>
-            <div>
-              <dt>Coorg <span>5 hours</span></dt>
-              <dd>
-                Coffee and pepper plantations in the Western Ghats, misty and
-                cool. Best as a two or three night stay rather than a rush.
-              </dd>
-            </div>
-            <div>
-              <dt>Chikmagalur <span>5 hours</span></dt>
-              <dd>
-                India's coffee country, up at 1,100 metres, with good walking
-                in the Baba Budangiri range.
-              </dd>
-            </div>
-            <div>
-              <dt>Wayanad <span>5 hours</span></dt>
-              <dd>
-                Over the border into Kerala. Forested hills, tea and coffee
-                estates, elephants, and the prehistoric Edakkal Caves.
-              </dd>
-            </div>
-            <div>
-              <dt>Pondicherry <span>6 hours</span></dt>
-              <dd>
-                A former French colony on the east coast, with pastel streets,
-                the Sri Aurobindo Ashram and very good food. Worth a few
-                nights.
-              </dd>
-            </div>
-            <div>
-              <dt>Hampi <span>7 hours</span></dt>
-              <dd>
-                A UNESCO World Heritage site: the ruins of the Vijayanagara
-                empire scattered across a surreal landscape of giant boulders.
-                One of the most extraordinary places in India, and worth the
-                overnight journey.
+                Another great place to walk, especially if you&rsquo;re staying
+                in central Bangalore. It&rsquo;s right in the middle of the
+                city but feels remarkably removed from it.
               </dd>
             </div>
           </dl>
+
+          <h3>For food</h3>
+          <dl class="trip-list">
+            <div>
+              <dt>South Indian breakfast</dt>
+              <dd>
+                Please don&rsquo;t leave Bangalore without having a proper
+                dosa, idli, vada, and filter coffee. MTR is one of the
+                city&rsquo;s old institutions and is a good place to start.
+              </dd>
+            </div>
+            <div>
+              <dt>Local food</dt>
+              <dd>
+                Bangalore has an enormous food scene, from tiny neighborhood
+                spots to some genuinely excellent restaurants. Indiranagar, MG
+                Road, and Koramangala are good places to explore if
+                you&rsquo;re looking for variety.
+              </dd>
+            </div>
+          </dl>
+
+          <h3>For wandering around</h3>
+          <dl class="trip-list">
+            <div>
+              <dt>Malleswaram</dt>
+              <dd>
+                Old Bangalore, with temples, markets, neighborhood restaurants,
+                and plenty of good places to stop for a snack.
+              </dd>
+            </div>
+            <div>
+              <dt>Church Street &amp; MG Road</dt>
+              <dd>
+                More central, more modern, and good for an afternoon or evening
+                of walking around, shopping, coffee, and people-watching.
+              </dd>
+            </div>
+            <div>
+              <dt>Indiranagar</dt>
+              <dd>
+                One of the city&rsquo;s livelier neighborhoods, with
+                restaurants, bars, caf&eacute;s, and plenty happening after
+                dark.
+              </dd>
+            </div>
+          </dl>
+
+          <h3>If you have a little more time</h3>
+          <dl class="trip-list">
+            <div>
+              <dt>Nandi Hills</dt>
+              <dd>
+                A popular day trip north of Bangalore and an easy addition if
+                you have a spare morning.
+              </dd>
+            </div>
+            <div>
+              <dt>Mysore</dt>
+              <dd>
+                If you have an extra day, Mysore makes for a great trip from
+                Bangalore. The palace is spectacular, and the city has a very
+                different pace from Bangalore.
+              </dd>
+            </div>
+          </dl>
+
+          <h3>One last thing</h3>
+          <p>
+            Don&rsquo;t feel like you need to turn this trip into a checklist
+            of attractions. Bangalore is a good city to simply spend time in:
+            have breakfast somewhere, find a caf&eacute;, walk around, eat
+            something you&rsquo;ve never tried, and see where the day takes
+            you.
+          </p>
+          <p>
+            And if you&rsquo;re not sure where to go, ask us. We&rsquo;ll tell
+            you where we&rsquo;d actually go.
+          </p>
         </div>
       </section>
     </div>

@@ -18,13 +18,18 @@
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* ---------- Browser chrome inset ----------
-     On phones the toolbars overlay the page, so the layout viewport is
-     shorter than the physical screen and every CSS viewport unit
-     reports that short height. A full-bleed layer sized to 100vh
-     therefore stops at the toolbar's top edge instead of filling
-     behind it. Measuring the difference gives the CSS the missing
-     height. Only on touch devices: on a desktop screen.height is the
-     whole monitor, which would wildly oversize the background. */
+     A fallback only. Modern browsers get this right in CSS, using `lvh`
+     and `env(safe-area-inset-*)` on the fixed layers, and that is what
+     actually fixes it: measuring `screen.height - innerHeight` returned
+     0 on the iPhone where the wall was visibly stopping short, so this
+     never fired there.
+
+     Kept because it costs nothing and it is the only cover for a browser
+     old enough to lack `lvh`. On phones the toolbars overlay the page, so
+     the layout viewport is shorter than the physical screen and a layer
+     sized to 100vh stops at the toolbar's top edge. Only on touch
+     devices: on a desktop screen.height is the whole monitor, which would
+     wildly oversize the background. */
   function setChromeInset() {
     var coarse = window.matchMedia("(pointer: coarse)").matches;
     var gap = window.screen.height - window.innerHeight;

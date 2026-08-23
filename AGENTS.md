@@ -70,6 +70,39 @@ context at z-index 10, and a child can never paint above a sibling of its
 parent. So `.site-nav` is a direct child of `<body>`. Same for `.drawer-root`,
 which additionally has to cover the nav.
 
+**⚠️ `.background-layer` and `.light-layer` must cover the whole physical
+screen, not the viewport, and they are sized together for that reason.** The
+flat `--wall` colour is painted on `<html>`, and a root background always fills
+the screen whatever the viewport reports. So if these two come up short, the
+shortfall shows as a band of flat, untextured, *unshadowed* terracotta.
+
+That is exactly what happened on an iPhone at 390x844: measured from a
+screenshot, the wall covered only 740pt, leaving 46pt bare at the top and 58pt
+at the bottom, and the bottom band grew to 98pt once the toolbar expanded. Both
+bands read *brighter* than the wall, which is the giveaway, because the light
+layer was stopping short too and nothing was shading them.
+
+`100vh` from `top: 0` is wrong three ways: on iOS `vh` is the viewport, which
+can be inset by the safe areas so the box starts below the status bar; `vh`
+shrinks as the toolbar appears, so the bottom rides up; and adding one inset's
+worth of height is not enough because the box has to grow at *both* ends. The
+layers are therefore centred, sized from `100lvh` (the large viewport, the
+tallest the page ever gets), and given **two** insets of extra height so the
+slack is symmetrical. A further fixed 120px is added behind `pointer: coarse`,
+because the two plausible models of iOS's layout both come out covered but one
+only just, and a phone cannot be checked from this machine. `env()` is zero on
+desktop and `lvh` equals `vh` there, so a computer keeps precisely the geometry
+the light was tuned against.
+
+Over-provisioning is safe by design: the wall is `object-fit: cover`, so extra
+height only crops a little more texture, invisible on plaster. **Coming up
+short is the bug.** Verified covered against five different models of the iOS
+viewport with 32 to 141pt of slack, and byte-identical on desktop.
+
+`--chrome-inset`, measured in `main.js`, is now only the fallback for a browser
+without `lvh`. It did not fire on the iPhone that showed the problem:
+`screen.height - innerHeight` came back as 0 there.
+
 Brand colour is `#a94332`.
 
 ## Contrast under the light
@@ -434,6 +467,24 @@ trap documented for `.p-dosa` in the collage. There must only ever be one
 `min-height: auto`, meaning "never shrink below your content". Without it the
 window grows to fit every word, the card outgrows the screen, and nothing
 scrolls at all.
+
+**⚠️ `.drawer-body` also needs `tabindex="0"`, plus `role="region"` and an
+`aria-labelledby` pointing at that card's title.** It is the only part of the
+card that scrolls, and a keyboard user cannot reach content below the fold
+without it: Tab skips a plain `div`, and arrow keys only scroll whatever holds
+focus. axe calls this `scrollable-region-focusable`, impact serious.
+
+This is easy to reintroduce, because **a card can pass by accident**. Any
+focusable element inside the region satisfies the rule, so the Travel card
+passed for months purely because its visa paragraph contained a link. When a
+copy rewrite removed the links from the Events and Bangalore cards, those two
+started failing while Travel carried on passing, which makes it look like a
+content problem rather than a structural one. All three carry the attributes now
+so that none of them depends on its own wording.
+
+The focus trap in `main.js` already matches `[tabindex]:not([tabindex="-1"])`,
+so the new focus stop is inside the trap rather than a way out of it. Verified:
+40 tabs each way on each card, zero escapes.
 
 **The reading measure is one shared `640px`, not a `ch` count.** A `ch` is the
 width of a "0" in the element's *own* font, so a 20px semibold heading and a
@@ -952,11 +1003,7 @@ so it is the test worth repeating if the script is ever changed again.
 - **The date.** The Figma says "February 21, 2027"; the site says
   "20 & 21 February 2027". One of them is wrong.
 - **The venue spelling.** Figma "Tharvadu Mane", site "Tharavadu Mane".
-- **"Please RSVP by 28 August 2026"** was lifted from the Figma and never
-  confirmed.
 - **The venue street address in the Travel modal is still a placeholder.**
-- **The closing paragraph** ("Come for the food, stay for the dancing...") was
-  written by an assistant, not by the couple.
 - **All three detail modals** were condensed from an earlier version of the site
   and have never been fact-checked. Treat every logistic in them as a draft.
 

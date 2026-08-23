@@ -67,7 +67,7 @@ var COLUMNS = [
   ["email", "Email"],
   ["attending", "Attending"],
   ["guests", "Party size"],
-  ["dietary", "Dietary needs"],
+  ["room", "Book a room"],
   ["note", "Note"]
 ];
 
@@ -154,19 +154,38 @@ function getSheet_() {
     sheet = book.insertSheet(SHEET_NAME);
   }
 
-  /* nextRow_, not getLastRow, for the same reason as above: a tab whose
-     cells have been touched but left empty still reports a last row. */
-  if (nextRow_(sheet) === 1) {
-    var headers = COLUMNS.map(function (column) {
-      return column[1];
-    });
+  /* The heading row, kept in step with COLUMNS on every run rather than
+     only when the tab is empty.
+
+     ⚠️ It has to be every run. A "first run only" check never fires on a
+     tab whose headings were typed by hand at setup, which is how this
+     one was made, so renaming a field would leave the old heading
+     sitting above the new data. That is not hypothetical: when the
+     dietary question became the room question, column F would have
+     filled up with "Yes" and "No" under a heading that still read
+     "Dietary needs", with nothing anywhere to say so.
+
+     Only written when it actually differs, so a sheet that is already
+     correct is not rewritten on every single reply. setValues does not
+     clear formatting, so the bold set below survives a correction. */
+  var headers = COLUMNS.map(function (column) {
+    return column[1];
+  });
+
+  var current = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
+  var stale = false;
+  for (var h = 0; h < headers.length; h++) {
+    if (String(current[h]).trim() !== headers[h]) {
+      stale = true;
+      break;
+    }
+  }
+
+  if (stale) {
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   }
 
-  /* Kept separate from the block above, and safe to run every time.
-     The heading row was added by hand when the tab was set up, so a
-     "first run only" check would never have fired and the heading
-     would scroll away once the list got long. */
+  /* Also safe to run every time, and separate for the same reason. */
   if (sheet.getFrozenRows() < 1) {
     sheet.getRange(1, 1, 1, COLUMNS.length).setFontWeight("bold");
     sheet.setFrozenRows(1);

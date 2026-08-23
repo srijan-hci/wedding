@@ -12,7 +12,8 @@
       content="Let Akriti and Srijan know whether you can be there on 20 and 21 February 2027."
     />
     <title>RSVP &middot; Akriti &amp; Srijan</title>
-    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="../favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="../favicon-180.png" />
     <link rel="stylesheet" href="../styles.css" />
     <script>
       document.documentElement.classList.add("js");
@@ -58,12 +59,25 @@
       />
     </picture>
 
-    <!-- The secondary modifier keeps the same glass pill but at a lower
-         weight, so it never competes with Continue or Send it. -->
-    <nav class="site-nav site-nav--secondary" aria-label="Main">
-      <ul class="glass">
-        <li><a href="../">Back to the invitation</a></li>
-      </ul>
+    <!-- A way out, not the thing to do. It keeps the same glass as the
+         invitation's nav and shrinks to a single round button, sitting on
+         the same left edge as every question below it.
+
+         The arrow carries no text, so the anchor needs an aria-label:
+         without one a screen reader announces it as just "link". -->
+    <nav class="site-nav site-nav--back" aria-label="Main">
+      <a class="glass" href="../" aria-label="Back to the invitation">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path
+            d="M15 5 8 12l7 7"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.9"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </a>
     </nav>
 
     <main class="content-layer rsvp-page">
@@ -98,9 +112,6 @@
             autocomplete="email"
             required
           />
-          <p class="rsvp-help">
-            So we can send you timings and any changes. Nothing else, ever.
-          </p>
         </fieldset>
 
         <fieldset class="rsvp-step" data-step>
@@ -137,27 +148,20 @@
               value="1"
               inputmode="numeric"
             />
-            <p class="rsvp-help">
-              Your invitation says who it covers. If you are not sure, put what
-              you hope for and we will follow up.
-            </p>
           </fieldset>
 
           <fieldset class="rsvp-step" data-step>
-            <legend class="rsvp-q">Anything we should know about food?</legend>
-            <label class="rsvp-label" for="rsvp-dietary">
-              Allergies, or what you do and don&rsquo;t eat
-            </label>
-            <textarea
-              class="rsvp-input"
-              id="rsvp-dietary"
-              name="dietary"
-              rows="3"
-            ></textarea>
-            <p class="rsvp-help">
-              Most of the food will be vegetarian regardless. Leave this blank
-              if nothing applies.
-            </p>
+            <legend class="rsvp-q">Do you need a room?</legend>
+            <div class="rsvp-choices">
+              <label class="rsvp-choice">
+                <input type="radio" name="room" value="Yes" required />
+                <span>Yes, please book one</span>
+              </label>
+              <label class="rsvp-choice">
+                <input type="radio" name="room" value="No" />
+                <span>No, I&rsquo;ve got it covered</span>
+              </label>
+            </div>
           </fieldset>
         </div>
 

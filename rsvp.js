@@ -49,10 +49,12 @@ var RSVP_FALLBACK_EMAIL = "hello@akriti-srijan.com";
     status.className = "form-status" + (kind ? " is-" + kind : "");
   }
 
-  /* ---------- Hide the "who and what" questions for a no ----------
-     Someone who cannot come should not be asked about dietary
-     requirements. Disabling the inputs as well as hiding them keeps
-     them out of the submitted data and out of the tab order. */
+  /* ---------- Hide the "who and where" questions for a no ----------
+     Someone who cannot come should not be asked how many are coming or
+     whether they want a room. Disabling the inputs as well as hiding
+     them keeps them out of the submitted data and out of the tab order,
+     and it is also what stops the required room choice from blocking a
+     "no" at submit: constraint validation skips disabled fields. */
   function syncDetails() {
     var choice = form.querySelector("input[name='attending']:checked");
     var coming = !choice || choice.value === "Yes";

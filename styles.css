@@ -80,6 +80,62 @@
   --space-8: 64px;
   --space-9: 96px;
 
+  /* ---------- Vertical rhythm ----------
+     Every gap between blocks down the page is one of these five steps,
+     so the page reads as a rhythm rather than a pile of one-off numbers.
+     One fluid base, multiplied. Change --v-unit to loosen or tighten the
+     whole page at once.
+
+       --v-pair     0.4x    a label and the line it introduces
+       --v-tight    1x      a button and its fine print
+       --v-item     2x      one element to the next inside a group
+       --v-group    3x      one group of lines to the next
+       --v-section  4.5x    one section of the page to the next
+
+     ⚠️ Do not add a sixth value to solve a single awkward gap. The point
+     is that there are only five. If a gap needs something in between,
+     the layout around it is usually the real problem. */
+  --v-unit: clamp(11px, 1.75vw, 26px);
+  --v-pair: calc(var(--v-unit) * 0.4);
+  --v-tight: var(--v-unit);
+  --v-item: calc(var(--v-unit) * 2);
+  --v-group: calc(var(--v-unit) * 3);
+  --v-section: calc(var(--v-unit) * 4.5);
+
+  /* ---------- Type scale ----------
+     One ratio, 1.333 (a perfect fourth), seven steps. Every size in the
+     page's editorial voice is a step on it, so the sizes relate to each
+     other instead of being eleven unrelated numbers.
+
+       --t-fine     (spare, one step below the body)     15 / 13
+       --t-body     RSVP button                          20 / 15
+       --t-label    the two kickers                      27 / 17
+       --t-title    details heading, closing, footer     36 / 20
+       --t-lede     (spare, one step above the title)    47 / 24
+       --t-feature  the date and the venue name          63 / 30
+       --t-display  "See you there!"                     84 / 34
+
+     First number is a 1512px screen, second a 360px phone. Each step is
+     a straight line between the two, so type grows smoothly with the
+     window rather than jumping at a breakpoint.
+
+     ⚠️ --t-feature's 30px floor is measured, not chosen: at 32px the line
+     "20 & 21 February 2027" is 317px wide and overflows the 312px of
+     content a 360px phone has, so it wraps. Do not raise that minimum.
+
+     TWO THINGS DELIBERATELY OFF THIS SCALE, both for good reasons: the
+     hero headline is sized in cqw against the collage stage and was
+     solved by measuring its rendered ink to fit the artwork, and the nav
+     pill is fixed-pixel chrome whose height the hero's --stage-top has to
+     clear. Neither belongs to the page's reading rhythm. */
+  --t-fine: clamp(13px, 12.38px + 0.174vw, 15px);
+  --t-body: clamp(15px, 13.44px + 0.434vw, 20px);
+  --t-label: clamp(17px, 13.88px + 0.868vw, 27px);
+  --t-title: clamp(20px, 15px + 1.389vw, 36px);
+  --t-lede: clamp(24px, 16.81px + 1.997vw, 47px);
+  --t-feature: clamp(30px, 19.69px + 2.865vw, 63px);
+  --t-display: clamp(34px, 18.38px + 4.34vw, 84px);
+
   --radius: 6px;
   --radius-lg: 14px;
 
@@ -124,20 +180,78 @@ body {
 }
 
 /* ---------- The fixed layers ----------
-   Sized to the viewport plus --chrome-inset, which main.js measures. On
-   phones the browser toolbars overlay the page, so every viewport unit
-   reports a height shorter than the physical screen and a 100vh layer
-   stops short of the bottom. Extending past it is the only way to
-   paint the wall behind the toolbar. Zero on desktop. */
+   These have to cover the entire physical screen, including behind the
+   status bar, the home indicator and the browser's own toolbars. Nothing
+   else on the page has to: the flat --wall colour is painted on <html>,
+   and a root background always fills the screen no matter what the
+   viewport reports. So any shortfall here shows as a band of flat,
+   untextured, unshadowed terracotta at the top and bottom.
+
+   Measured from a screenshot on an iPhone at 390x844: the wall covered
+   only 740pt, leaving 46pt bare at the top and 58pt at the bottom, and
+   the bottom band grew to 98pt once the toolbar expanded. Both bands
+   read brighter than the wall, which is the giveaway: the light layer
+   stops short as well, so nothing is shading them.
+
+   Three things are wrong with sizing a layer as `100vh` from `top: 0`:
+
+     1. `vh` is not the screen. On iOS it is the viewport, which can be
+        inset by the safe areas, so the box starts BELOW the status bar.
+     2. `vh` shrinks as the toolbar appears, so the bottom rides up.
+     3. Even correcting for both, a single inset's worth of extra height
+        is not enough, because the box has to grow at both ends.
+
+   So: centre it and give it a whole inset of slack at each end. Centring
+   is what makes the slack symmetrical, which is why the insets are
+   doubled rather than added once. `lvh` is the LARGE viewport, the
+   tallest the page ever gets, which removes the toolbar problem.
+
+   `env()` is 0 on desktop and `lvh` equals `vh` there, so this is exactly
+   the old behaviour on a computer and nothing about the light changes.
+
+   Over-provisioning is safe by design: the image is `object-fit: cover`,
+   so extra height only crops a little more texture, invisible on a
+   plaster wall. Coming up SHORT is the bug. The first width/height pair
+   is the old rule, kept as a fallback for anything without `lvh`. */
 .background-layer,
 .light-layer {
   position: fixed;
-  top: 0;
-  left: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   display: block;
   width: 100vw;
   height: calc(100vh + var(--chrome-inset, 0px));
+  width: calc(
+    100vw + 2 * env(safe-area-inset-left, 0px) + 2 *
+      env(safe-area-inset-right, 0px)
+  );
+  height: calc(
+    100lvh + 2 * env(safe-area-inset-top, 0px) + 2 *
+      env(safe-area-inset-bottom, 0px)
+  );
   pointer-events: none;
+}
+
+/* One more safety margin, on touch devices only. The two plausible models
+   of how iOS lays this out both come out covered on the maths above, but
+   one of them only just, and a phone is the one place this cannot be
+   checked from here. 120px of extra height, 60px at each end once
+   centred, keeps it covered even if the assumption about `lvh` is wrong.
+
+   Deliberately behind `pointer: coarse` so a desktop, where none of this
+   was ever broken, keeps exactly the geometry the light was tuned
+   against. On a phone it makes the light about 14% taller, which on
+   something this soft and this slow is not visible. */
+@media (pointer: coarse) {
+  .background-layer,
+  .light-layer {
+    height: calc(100vh + var(--chrome-inset, 0px) + 120px);
+    height: calc(
+      100lvh + 2 * env(safe-area-inset-top, 0px) + 2 *
+        env(safe-area-inset-bottom, 0px) + 120px
+    );
+  }
 }
 
 .background-layer {
@@ -330,7 +444,7 @@ body {
   padding: clamp(12px, 1.2vw, 18px) clamp(24px, 2.4vw, 36px);
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: clamp(15px, 1.32vw, 20px);
+  font-size: var(--t-body);
   letter-spacing: 0.01em;
   color: #fff4e6;
   text-decoration: none;
@@ -410,46 +524,70 @@ body {
   background: #fdf6ea;
 }
 
-/* ---------- Secondary nav ----------
+/* ---------- Back to the invitation ----------
    The RSVP page has one real next action at a time: Continue, then Send
-   it. "Back to the invitation" is a way out, not the thing to do, so it
-   keeps the same glass pill and drops its weight: less tint, a fainter
-   lip, a softer shadow, and smaller type. Scoped to the modifier class,
-   so the nav on the invitation itself is untouched. */
-.site-nav--secondary ul.glass {
-  padding: 4px;
-  background: rgba(52, 18, 11, 0.24);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 240, 224, 0.2),
-    inset 0 -1px 0 rgba(255, 224, 200, 0.06),
-    0 3px 12px rgba(46, 14, 7, 0.14);
+   it. Getting back to the invitation is a way out, not the thing to do,
+   so it drops from a labelled pill to a single round button and moves
+   off the centre line.
+
+   It lines up with the left edge of the questions below it. The nav is
+   fixed and .rsvp-page is not, so the two cannot inherit that edge from
+   a shared parent: the column width and its gutter are tokens instead,
+   and both elements are built from the same two numbers. Change one and
+   they move together.
+
+   ⚠️ These have to live on :root, not on .rsvp-page. Custom properties
+   inherit downward only, and the nav is the page's sibling, not its
+   child. */
+:root {
+  --rsvp-col: 700px;
+  --rsvp-gutter: clamp(24px, 6vw, 44px);
 }
 
-/* The dispersion fringe is the loudest part of the glass. Dimmed rather
-   than removed, so the pill still reads as the same material. */
-.site-nav--secondary ul.glass::after {
-  opacity: 0.2;
+/* The same centred column as the page, so the button can sit on its
+   left edge. .site-nav's own translateX(-50%) still does the centring;
+   only the width of the box being centred has changed. */
+.site-nav--back {
+  display: flex;
+  justify-content: flex-start;
+  width: min(100%, var(--rsvp-col));
+  padding-inline: var(--rsvp-gutter);
 }
 
-.site-nav--secondary a {
-  padding: 7px var(--space-4);
-  font-size: 15px;
-  color: rgba(253, 241, 226, 0.84);
+/* .site-nav a is a wide pill built around a word. This has no word in
+   it, so it is squared off and sized as a target: 42px clears WCAG
+   2.2's 24px minimum comfortably, which matters more here than usual
+   because the arrow itself is only 18px of ink. */
+.site-nav--back a {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  color: rgba(253, 241, 226, 0.92);
 }
 
-.site-nav--secondary a:hover,
-.site-nav--secondary a:focus-visible {
-  background: rgba(30, 8, 4, 0.3);
+.site-nav--back svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* The glass and the hover state are the same element here, where on the
+   invitation's nav they are the pill and the link inside it. So hover
+   replaces the tint rather than layering over it, and the replacement
+   has to be darker than the tint it removes or the button appears to
+   lighten as you approach it. */
+.site-nav--back a:hover,
+.site-nav--back a:focus-visible {
+  background: rgba(30, 8, 4, 0.68);
   color: #fff6ea;
 }
 
-/* Without backdrop-filter the base pill falls back to near-solid. Left
-   at that, the secondary version would come out heavier than the
-   primary one it is meant to sit behind. */
-@supports not (backdrop-filter: blur(1px)) {
-  .site-nav--secondary ul.glass {
-    background: rgba(52, 18, 11, 0.72);
-  }
+/* The global a:focus-visible sets border-radius: 2px so the ring hugs a
+   rectangular link. Around a circle that reads as a box, so the radius
+   has to be restated. */
+.site-nav--back a:focus-visible {
+  border-radius: 999px;
 }
 
 /* ============================================================
@@ -1454,44 +1592,61 @@ body {
 }
 
 .invite {
-  padding-top: clamp(56px, 8.3vw, 126px);
+  padding-top: var(--v-group);
 }
 
-/* The two small lines that frame the date: "and we'd love for you to be
-   there on" and "at". Figma has them at 29px on a 1512 frame. */
+/* The two small lines that frame the date and the venue: "and we'd love
+   for you to be there on" and "in the courtyard of". */
 .kicker {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(17px, 1.92vw, 29px);
+  font-size: var(--t-label);
   line-height: 1.4;
   color: #fdf6ed;
   text-shadow: 0 2px 18px rgba(60, 16, 8, 0.45);
 }
 
+/* "in the courtyard of" sits below the photograph, directly above the
+   venue name it introduces, so it takes the gap that separates the pair
+   from the picture. */
 .kicker-at {
-  margin-top: clamp(40px, 6.4vw, 97px);
+  margin-top: var(--v-item);
 }
 
-/* The date, and "See you there!", are the two largest things on the
-   page. Figma puts both at 100px. */
+/* The date and "See you there!" share everything except their size. They
+   used to share that too, both at the Figma's 100px. The date now matches
+   the venue name so the two read as one pair with the photograph between
+   them, and the sign-off is the loudest thing left on the page. Only the
+   size differs; keep the rest in the shared block. */
 .display,
 .signoff {
-  margin: clamp(14px, 2.8vw, 42px) 0 0;
+  margin: var(--v-pair) 0 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(40px, 6.6vw, 100px);
   line-height: 1.02;
   letter-spacing: -0.012em;
   color: #fffaf2;
   text-shadow: 0 3px 30px rgba(60, 16, 8, 0.42);
 }
 
+/* Size, leading and tracking all copied from .venue-name, not just the
+   size, or the two lines would not read as the same piece of type. */
+.display {
+  font-size: var(--t-feature);
+  line-height: 1.24;
+  letter-spacing: normal;
+}
+
+.signoff {
+  font-size: var(--t-display);
+}
+
 /* ---------- The venue photograph ----------
    Already a Polaroid: the frame is baked into the image, so there is no
    border here to go out of step with it. */
 .venue-shot {
-  margin: clamp(30px, 5.1vw, 77px) auto 0;
+  margin: var(--v-item) auto 0;
   width: min(72vw, 1100px);
 }
 
@@ -1503,10 +1658,10 @@ body {
 }
 
 .venue-name {
-  margin: clamp(28px, 5.1vw, 77px) 0 0;
+  margin: var(--v-pair) 0 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(26px, 3.5vw, 53px);
+  font-size: var(--t-feature);
   line-height: 1.24;
   color: #f6efe6;
   text-shadow: 0 2px 22px rgba(60, 16, 8, 0.45);
@@ -1519,12 +1674,12 @@ body {
 }
 
 .cta-wrap {
-  margin: clamp(34px, 6.9vw, 105px) 0 0;
+  margin: var(--v-group) 0 0;
 }
 
 .micro {
-  margin: clamp(12px, 1.6vw, 24px) 0 0;
-  font-size: clamp(13px, 1vw, 15px);
+  margin: var(--v-tight) 0 0;
+  font-size: var(--t-fine);
   letter-spacing: 0.02em;
   color: #faf0e5;
   text-shadow: 0 2px 14px rgba(60, 16, 8, 0.5);
@@ -1537,7 +1692,7 @@ body {
   position: relative;
   z-index: 4;
   width: min(260px, 40vw);
-  margin: clamp(48px, 7.3vw, 110px) auto;
+  margin: var(--v-section) auto;
   border: 0;
   border-top: 1px solid rgba(255, 244, 232, 0.4);
 }
@@ -1547,7 +1702,7 @@ body {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(20px, 2.25vw, 34px);
+  font-size: var(--t-title);
   line-height: 1.35;
   color: #fdf7ef;
   text-shadow: 0 2px 20px rgba(60, 16, 8, 0.45);
@@ -1557,7 +1712,7 @@ body {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: clamp(20px, 8.4vw, 127px);
-  margin: clamp(40px, 6.7vw, 101px) 0 0;
+  margin: var(--v-group) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -1617,11 +1772,14 @@ body {
   z-index: 4;
   /* The Figma sets this paragraph 1086px wide on a 1512 frame. */
   max-width: min(74vw, 1090px);
-  margin: clamp(44px, 7.2vw, 109px) auto 0;
+  margin: var(--v-section) auto 0;
   padding: 0 var(--space-5);
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(22px, 3.3vw, 50px);
+  /* A step quieter than it was. At 50px this read as a paragraph
+     competing with the sign-off; on the scale it sits at --t-title, so it
+     hands over to "See you there!" instead of arguing with it. */
+  font-size: var(--t-title);
   line-height: 1.34;
   text-align: center;
   color: #f6efe6;
@@ -1631,7 +1789,7 @@ body {
 .signoff {
   position: relative;
   z-index: 4;
-  margin-top: clamp(60px, 12vw, 180px);
+  margin-top: var(--v-section);
   text-align: center;
 }
 /* ---------- Footer ----------
@@ -1648,7 +1806,7 @@ body {
   display: block;
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: clamp(24px, 3vw, 34px);
+  font-size: var(--t-title);
   color: #fff6ea;
   text-shadow: 0 2px 22px rgba(60, 16, 8, 0.5);
 }
@@ -1867,12 +2025,16 @@ textarea:focus-visible {
   gap: var(--space-4);
 }
 
+/* The top of the card's hierarchy, so it has to outrank the section
+   headings inside the window. It used to be Regular at 20px against
+   subheadings at SemiBold 21px, which put it visibly BELOW the things
+   it introduces. It is now the same weight and a clear step larger. */
 .drawer-title {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 400;
-  font-size: 20px;
-  line-height: 1.35;
+  font-weight: 600;
+  font-size: clamp(21px, 2vw, 25px);
+  line-height: 1.3;
   color: var(--ink);
 }
 
@@ -1975,42 +2137,49 @@ textarea:focus-visible {
   background-color: rgba(51, 36, 26, 0.3);
 }
 
-/* The reading measure. Wider than it was, because the card is now
-   landscape: at the old 62ch the prose sat as a narrow column stranded
-   in the middle of a 1000px window.
+/* The reading measure, or rather the lack of one: every block fills the
+   window. There used to be a 640px cap with auto margins, which centred
+   a narrow column inside a 1000px card and left a wide empty gutter
+   down each side. The owner did not want that gutter, so the text now
+   runs the full width of the window and the window's own padding is the
+   only inset.
 
-   ⚠️ It is one px value shared by every child, not `ch`. A `ch` is the
-   width of a "0" in the element's OWN font, so a 20px semibold heading
-   and a 16.5px paragraph resolve the same `ch` count to different
-   widths, and auto margins then centre those different widths at
-   different places. The result is a heading that starts noticeably to
-   the left of the paragraph under it, which is invisible on a narrow
-   card and glaring on a wide one. */
+   ⚠️ The tradeoff is line length. At the card's widest this gives about
+   105 characters a line, well past the 45 to 75 that is comfortable for
+   long-form reading. It is a deliberate choice for a card people skim
+   for logistics rather than read end to end. If it is ever put back,
+   note the old trap: the cap must be one px value shared by every
+   child, never `ch`. A `ch` is the width of a "0" in the element's OWN
+   font, so a 21px Recoleta heading and a 16.5px sans paragraph resolve
+   the same `ch` count to different widths, and auto margins then centre
+   those different widths at different places. The result was a heading
+   starting noticeably to the left of the paragraph under it. */
 .drawer-body > * {
-  max-width: 640px;
-  margin-left: auto;
-  margin-right: auto;
+  margin-left: 0;
+  margin-right: 0;
 }
 
-/* Everything in the reading window is plain system UI. Recoleta stays
-   on the card's title in the header row, as the design has it, but
-   inside the window it was doing the lede and the subheadings too, and
-   a screenful of display serif is harder to read than it is handsome.
-   The subheadings carry their weight rather than their family now, so
-   they need 600 to still read as headings. */
+/* Recoleta does the titles, the system sans does the reading. Setting a
+   whole screenful of display serif in Light was tried and it was harder
+   to read than it was handsome, which is the same conclusion an earlier
+   version of this card reached. The face earns its keep on the
+   subheadings, where it is a line at a time.
+
+   ⚠️ Everything that is NOT a title is one size and one colour. The
+   lede used to be larger and darker than the paragraphs under it, which
+   made the first paragraph of each card look like a different kind of
+   text from the rest. It now differs only in the space beneath it, so
+   it reads as a lead-in rather than a pull quote. Do not give it back
+   its own font-size or colour. */
 .drawer-lede {
-  margin: 0 auto var(--space-6);
-  font-family: var(--font-body);
-  font-size: clamp(17px, 1.5vw, 19px);
-  line-height: 1.55;
-  color: var(--ink);
+  margin: 0 0 var(--space-6);
 }
 
 .drawer-body h3 {
-  margin: var(--space-7) auto var(--space-3);
-  font-family: var(--font-body);
+  margin: var(--space-7) 0 var(--space-3);
+  font-family: var(--font-display);
   font-weight: 600;
-  font-size: clamp(17px, 1.6vw, 20px);
+  font-size: clamp(18px, 1.7vw, 21px);
   letter-spacing: -0.005em;
   color: var(--ink);
 }
@@ -2020,11 +2189,11 @@ textarea:focus-visible {
 }
 
 .drawer-body p {
-  margin: 0 auto var(--space-4);
+  margin: 0 0 var(--space-4);
 }
 
 .drawer-body ul {
-  margin: 0 auto var(--space-4);
+  margin: 0 0 var(--space-4);
   padding-left: 1.15em;
 }
 
@@ -2055,14 +2224,13 @@ textarea:focus-visible {
   font-size: 15px;
 }
 
-/* Day trips: the drive time sits with the place name rather than in its
-   own column, so it stays attached when the row wraps on a phone.
+/* A list of named things, each with a description under it. `margin: 0`
+   is the browser default for a dl's block margins, cleared so the list
+   sits tight under its heading.
 
-   ⚠️ `margin: 0` here, not the shorthand's full reset. This rule and
-   `.drawer-body > *` have equal specificity, so the shorthand would win
-   on source order and cancel the auto margins that centre every other
-   block, leaving this one list starting 124px to the left of the
-   paragraph above it. */
+   (This carried a warning about auto margins and a 124px offset. That
+   applied when .drawer-body > * centred a 640px column; the blocks now
+   fill the window, so there is nothing left to knock out of line.) */
 .trip-list {
   margin-block: 0;
 }
@@ -2072,10 +2240,14 @@ textarea:focus-visible {
   border-top: 1px solid rgba(51, 36, 26, 0.12);
 }
 
+/* A title, so Recoleta, same as the h3 above it, and the same weight.
+   It is one step smaller and it has a rule above it, which is enough to
+   place it under the section heading rather than beside it. The
+   description below is plain body text like everything else. */
 .trip-list dt {
-  font-family: var(--font-body);
+  font-family: var(--font-display);
   font-weight: 600;
-  font-size: 17px;
+  font-size: 18px;
   color: var(--ink);
 }
 
@@ -2133,16 +2305,27 @@ textarea:focus-visible {
 .rsvp-page {
   position: relative;
   z-index: 4;
-  max-width: 700px;
+  max-width: var(--rsvp-col);
   margin: 0 auto;
-  padding: clamp(96px, 14vh, 180px) var(--space-5) clamp(80px, 12vh, 140px);
+  /* The horizontal padding is the whole left and right margin on a
+     phone, where the 700px cap never bites. Left-aligned text hugging a
+     24px gutter reads cramped, so it opens up with the viewport and
+     stops at 44px, which is where the column reaches its cap anyway.
+
+     Shared with the back button above, which has to sit on this exact
+     left edge. See --rsvp-gutter. */
+  padding: clamp(96px, 14vh, 180px) var(--rsvp-gutter)
+    clamp(80px, 12vh, 140px);
   min-height: 100svh;
-  /* One question at a time reads better centred: there is nothing else
-     on the page to align to, so a left edge just floats. This is the
-     only place alignment is set. Everything below either inherits it or
-     is a flex row, and flex rows ignore text-align, which is why the
-     three of them centre themselves explicitly. */
-  text-align: center;
+  /* Left-aligned, inside a 700px column that stays centred in the
+     window. So every line shares one left edge, but that edge is never
+     near the side of the screen: about 400px in on a laptop, and a
+     comfortable gutter on a phone.
+
+     This is the only place alignment is set. Everything below either
+     inherits it or is a flex row, and flex rows ignore text-align,
+     which is why the three of them set their own justification. */
+  text-align: left;
 }
 
 .rsvp-title {
@@ -2261,21 +2444,41 @@ textarea:focus-visible {
 .rsvp-input {
   display: block;
   width: 100%;
-  padding: 2px 4px 10px;
+  /* No horizontal padding. The field used to be centred, where a few px
+     of inset made no difference. Left-aligned, it pushes the typed text
+     off the column's left edge and out of line with its own label. */
+  padding: 2px 0 12px;
   border: 0;
   border-bottom: 1px solid rgba(255, 240, 224, 0.45);
   border-radius: 0;
   background: transparent;
   color: #fffaf2;
   caret-color: #ffe9c9;
-  font-family: var(--font-body);
-  font-size: 17px;
-  line-height: 1.5;
-  text-shadow: 0 2px 14px rgba(60, 16, 8, 0.55);
-  /* Inherited alignment does not cross into a form control, so the
-     typed text has to be centred by hand or it sits left in an
-     otherwise centred page. */
-  text-align: center;
+  font-family: var(--font-display);
+  /* Medium, not regular. Recoleta's regular is a noticeably finer stroke
+     than the system sans it replaced, and cream-on-terracotta under a
+     multiply blend has very little contrast to spare: measured, the
+     typed name came out at 4.53:1 against a 4.5 threshold. Medium is
+     already loaded for the buttons, so this costs nothing to download
+     and buys real headroom. It also reads as an answer rather than more
+     body copy. */
+  font-weight: 500;
+  /* Scales with the window like the question does, so the ladder holds
+     at every width: question, then answer, then the small label between
+     them. At 19px the answer sat only 4px above its own label, which is
+     not enough of a step to read as a different kind of thing. */
+  font-size: clamp(21px, 2.1vw, 26px);
+  line-height: 1.45;
+  /* Two shadows, not one. The wide soft one is the page's house style;
+     the tight one darkens the wall immediately around each glyph, which
+     is the only background that actually affects legibility. Measured:
+     the typed email sat at 4.44:1 at 1512 with the wide shadow alone,
+     just under the 4.5 threshold, because the light pools brighter
+     there than it does behind the name field above it. */
+  text-shadow:
+    0 2px 14px rgba(60, 16, 8, 0.55),
+    0 0 6px rgba(60, 16, 8, 0.5);
+  text-align: left;
   transition: border-color 200ms ease;
 }
 
@@ -2320,11 +2523,20 @@ textarea.rsvp-input {
   min-height: 2.4em;
 }
 
-/* Narrower than its column, so it needs the auto margins to sit in the
-   middle. A block element with a max-width hugs the left otherwise. */
+/* Narrower than its column. A block element with a max-width hugs the
+   left on its own, which is now what we want, so there are no auto
+   margins here.
+
+   The type is much larger than the other fields because the answer is
+   a single character. At body size one digit sitting on a long rule
+   read as an empty field rather than a filled one: there was not
+   enough ink to see. The box narrows to match, so the digit still
+   fills a sensible share of its own underline. */
 .rsvp-input--short {
-  max-width: 140px;
-  margin-inline: auto;
+  max-width: 116px;
+  padding-bottom: 16px;
+  font-size: clamp(28px, 2.6vw, 34px);
+  line-height: 1.2;
 }
 
 .rsvp-input:hover {
@@ -2380,9 +2592,9 @@ textarea.rsvp-input {
   display: flex;
   align-items: center;
   /* A flex row does not inherit text-align. With the dot taken out of
-     flow the label is the only child left, so this centres it exactly,
-     and the two options line up with each other. */
-  justify-content: center;
+     flow the label is the only child left, so this puts it against the
+     pill's left padding, in line with the labels above. */
+  justify-content: flex-start;
   position: relative;
   padding: 20px;
   border: 1px solid rgba(255, 240, 224, 0.3);
@@ -2480,13 +2692,13 @@ textarea.rsvp-input {
 }
 
 /* ---------- Actions ----------
-   Back keeps order: -1 so it stays to the left of Continue, and the
-   pair is centred together. Centring the buttons individually would
-   stack them; this keeps them on one line under the question. */
+   Back keeps order: -1 so it stays to the left of Continue, which on a
+   left-aligned page also puts it on the column's left edge, in line
+   with the question above it. */
 .rsvp-actions {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: var(--space-4);
   margin-top: clamp(36px, 6vh, 56px);
 }
