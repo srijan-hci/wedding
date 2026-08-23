@@ -671,15 +671,24 @@ would send it twice.
 `RSVP_ENDPOINT` in `rsvp.js` holds the live `/exec` URL and is committed. It is
 not a secret: anyone can read it in the page source, and the script only ever
 appends a row. If it is ever emptied the form does not fail silently, it tells
-people to email instead.
+people to get in touch instead.
 
 **⚠️ `mode: "no-cors"` means a success here is "delivered", not "confirmed".**
 The browser refuses to let us read the reply, so we cannot tell a written row
-from a script that threw. That is why the thank-you screen also gives an email
-address. It is also why **the sheet is the only ground truth when testing.**
-`curl` reports 405 on that endpoint even when the post works, because the real
-response is a 302 to `script.googleusercontent.com` and curl mishandles the
-redirect. Do not chase that 405.
+from a script that threw. That is why all four messages in `rsvp.js` (both
+thank-yous and both failures) offer a way to reach a human. It is also why
+**the sheet is the only ground truth when testing.** `curl` reports 405 on that
+endpoint even when the post works, because the real response is a 302 to
+`script.googleusercontent.com` and curl mishandles the redirect. Do not chase
+that 405.
+
+**`RSVP_FALLBACK_EMAIL` is currently empty, and that is deliberate.** It held
+`hello@akriti-srijan.com`, which was never a real mailbox: a guest whose reply
+failed was being told to write to an address that would bounce, which is worse
+than saying nothing. Empty, `contactUs()` returns "reach out to us" and all four
+sentences still read correctly. Put a real address in and every one of them
+starts naming it, with no other edit. Worth doing: **there is currently no
+concrete route at all for a guest whose submission fails.**
 
 **If you change the Apps Script you must redeploy it**, via Deploy > Manage
 deployments > pencil > New version. A brand new deployment would hand you a

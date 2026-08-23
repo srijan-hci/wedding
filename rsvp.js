@@ -32,8 +32,23 @@
 var RSVP_ENDPOINT =
   "https://script.google.com/macros/s/AKfycbyWqY8AlldZPx5sPeKqTJSxCBBQp4Z9-QqEuGalQh5a90mQveM26D89OS-EyXGd6iVHpg/exec";
 
-/* Shown whenever the form cannot be sent, so a reply is never lost. */
-var RSVP_FALLBACK_EMAIL = "hello@akriti-srijan.com";
+/* Optional. The RSVP posts with mode: "no-cors", so a "sent" here means
+   delivered, not confirmed: the browser will not let us read the reply,
+   so we cannot tell a written row from a script that threw. Every
+   message below therefore offers a way to reach a human.
+
+   Left empty, those messages say "reach out to us" rather than naming an
+   address that does not exist, which is worse than vague. Put a real
+   address in and all four start naming it again, with no other edit. */
+var RSVP_FALLBACK_EMAIL = "";
+
+/* The one phrase every message shares, so the address only has to be
+   worded in a single place. */
+function contactUs() {
+  return RSVP_FALLBACK_EMAIL
+    ? "email us at " + RSVP_FALLBACK_EMAIL
+    : "reach out to us";
+}
 
 (function () {
   var form = document.getElementById("rsvp-form");
@@ -87,8 +102,8 @@ var RSVP_FALLBACK_EMAIL = "hello@akriti-srijan.com";
 
     if (!RSVP_ENDPOINT) {
       setStatus(
-        "This form is not connected yet. Please email us at " +
-          RSVP_FALLBACK_EMAIL +
+        "This form is not connected yet. Please " +
+          contactUs() +
           " and we will add you by hand.",
         "error"
       );
@@ -96,7 +111,7 @@ var RSVP_FALLBACK_EMAIL = "hello@akriti-srijan.com";
     }
 
     submit.disabled = true;
-    setStatus("Sending...");
+    setStatus("Sending, please wait...");
 
     /* The round trip to Apps Script takes about five seconds on a good
        connection, and considerably longer on a slow one. Deliberately no
@@ -140,8 +155,8 @@ var RSVP_FALLBACK_EMAIL = "hello@akriti-srijan.com";
         clearTimeout(stillGoing);
         submit.disabled = false;
         setStatus(
-          "Something went wrong sending that. Please try again, or email us at " +
-            RSVP_FALLBACK_EMAIL +
+          "Something went wrong sending that. Please try again, or " +
+            contactUs() +
             ".",
           "error"
         );
@@ -163,11 +178,11 @@ var RSVP_FALLBACK_EMAIL = "hello@akriti-srijan.com";
 
     var message = document.createElement("p");
     message.textContent = coming
-      ? "We have got your reply and we cannot wait to see you in February. If anything changes, or you did not mean to send that, email us at " +
-        RSVP_FALLBACK_EMAIL +
+      ? "We have got your reply and we cannot wait to see you in February. If anything changes, please " +
+        contactUs() +
         "."
-      : "We have got your reply. We will miss you, but thank you for letting us know. If your plans change, email us at " +
-        RSVP_FALLBACK_EMAIL +
+      : "We have got your reply. We will miss you, but thank you for letting us know. If your plans change, please " +
+        contactUs() +
         ".";
 
     done.appendChild(title);
