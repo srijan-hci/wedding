@@ -1805,7 +1805,10 @@ body {
 .site-footer b {
   display: block;
   font-family: var(--font-display);
-  font-weight: 500;
+  /* 400, not 500, to match .details-title. They sit at the same size on
+     the same wall, so a heavier weight here read as a second style
+     rather than the same voice closing the page. */
+  font-weight: 400;
   font-size: var(--t-title);
   color: #fff6ea;
   text-shadow: 0 2px 22px rgba(60, 16, 8, 0.5);
