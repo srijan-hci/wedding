@@ -13,12 +13,16 @@
       content="Akriti and Srijan are getting married on 20 and 21 February 2027 at Tharavadu Mane, Bangalore."
     />
     <title>Akriti &amp; Srijan&rsquo;s Wedding</title>
-    <!-- The marigold from the top right of the collage, on the same
-         terracotta tile the old "A" mark used. Two sizes only: 32 for the
-         browser tab, 180 for an iOS home screen. Both are palette PNGs,
-         which costs nothing on a flat tile and one flower but takes the
-         pair from 240KB down to 8KB. -->
-    <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png" />
+    <!-- The marigold from the top right of the collage. Two sizes only: 32
+         for the browser tab, 180 for an iOS home screen.
+         The 32 is a transparent RGBA PNG, so it reads on the tab strip in
+         either a light or a dark browser theme. The 180 deliberately keeps
+         its terracotta tile: iOS ignores transparency on a home screen icon
+         and composites it against solid black. It stays a palette PNG,
+         which costs nothing on a flat tile and one flower and holds it to
+         7KB. ?v=2 busts the favicon cache, which browsers hold on to hard
+         enough that a changed icon otherwise looks like it did nothing. -->
+    <link rel="icon" href="favicon-32.png?v=2" sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href="favicon-180.png" />
 
     <!-- The Polaroid is the first thing the eye lands on and the trigger
