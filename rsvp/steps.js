@@ -58,6 +58,14 @@
   }
 
   function labelFor(field) {
+    /* A group sitting inside a step that already has a legend can say
+       what the review should call it. Without this the legend above
+       names it, which is right for the step and wrong for a follow-up
+       underneath: every night would be listed as "Do you need
+       accommodation?". */
+    var override = field.closest("[data-review-label]");
+    if (override) return override.getAttribute("data-review-label");
+
     var id = field.id;
     var label = id && form.querySelector("label[for='" + id + "']");
     if (label) return label.textContent.trim();
@@ -68,6 +76,13 @@
     var kicker = clone.querySelector(".rsvp-kicker");
     if (kicker) kicker.remove();
     return clone.textContent.trim();
+  }
+
+  /* The words actually on the pill, not its value: the two can drift, and
+     the review should show what the person read. Whitespace is normalised
+     because the markup wraps onto several lines. */
+  function optionText(field) {
+    return field.parentElement.textContent.replace(/\s+/g, " ").trim();
   }
 
   /* The review step is built from the form itself rather than from a
@@ -84,13 +99,33 @@
         step.querySelectorAll("input, select, textarea")
       );
 
+      /* One row per checkbox group, not per box. */
+      var counted = {};
+
       fields.forEach(function (field) {
         if (field.disabled || field.type === "hidden") return;
 
         var value;
         if (field.type === "radio") {
           if (!field.checked) return;
-          value = field.parentElement.textContent.trim();
+          value = optionText(field);
+        } else if (field.type === "checkbox") {
+          /* The first live box in a group collects every ticked label in
+             it and the rest are skipped, or three ticked nights would
+             print the same question three times over. */
+          if (counted[field.name]) return;
+          counted[field.name] = true;
+          value = fields
+            .filter(function (f) {
+              return (
+                f.type === "checkbox" &&
+                f.name === field.name &&
+                f.checked &&
+                !f.disabled
+              );
+            })
+            .map(optionText)
+            .join(", ");
         } else {
           value = (field.value || "").trim();
         }

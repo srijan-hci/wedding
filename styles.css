@@ -2353,13 +2353,9 @@ textarea:focus-visible {
   margin-top: clamp(40px, 7vh, 72px);
 }
 
+/* Spacing only. Everything else comes from the shared marker rule. */
 .rsvp-progress {
   margin: 0 0 var(--space-6);
-  font-size: 13px;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: #fae8d9;
-  text-shadow: 0 2px 14px rgba(60, 16, 8, 0.55);
 }
 
 /* A fieldset, because these really are groups of related controls, but
@@ -2425,15 +2421,92 @@ textarea:focus-visible {
   border-radius: 4px;
 }
 
+/* ---------- The small marker ----------
+   ONE treatment for every small structural label on this page: the step
+   counter, the field labels, the review keys, the day above each night.
+   They used to be five separate rules in five sizes with five different
+   tracking values, all in the system sans, which read as UI chrome
+   bolted onto an invitation rather than part of it.
+
+   Set in the same Recoleta as everything else, so the page speaks in one
+   voice with two registers instead of two unrelated families. Anything
+   the page SAYS or you ANSWER is sentence case at reading size; anything
+   that merely MARKS a thing is these caps.
+
+   ⚠️ Uppercase and tracked deliberately, not as decoration. Recoleta's
+   lowercase at 13px is far too fine to hold cream on terracotta under a
+   multiply blend. Caps have no descenders, one uniform height and, once
+   the letter-spacing opens them up, enough ink to survive it.
+
+   Medium rather than SemiBold, which is what this started as. SemiBold
+   read heavy against the regular weight of the questions above it, and
+   Medium is already loaded for the buttons so it costs nothing to
+   download. ⚠️ Dropping a weight takes ink away, which costs contrast,
+   so it was re-measured rather than assumed. See the colour note below.
+
+   ⚠️ This rule must stay BELOW .rsvp-progress and ABOVE nothing that
+   redeclares the same properties. .rsvp-review dt and
+   .rsvp-choice--night b both sit further down the file at equal
+   specificity, so they would win on source order: neither may set
+   font-family, size, weight, tracking or case of its own. */
+.rsvp-progress,
+.rsvp-label,
+.rsvp-review dt,
+.rsvp-choice--night b {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.3;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  /* Measured, not chosen, and measured twice. A warm dim #f6dcc5 was the
+     obvious colour for something meant to recede and put all seven
+     markers between 4.20 and 4.48 against the 4.5 threshold; #fdeede
+     still left five short at 4.24 to 4.43. This is the same cream the
+     question above it uses, which clears the threshold everywhere with
+     real headroom.
+
+     Losing the colour difference costs nothing here: at 13px tracked
+     caps against a 40px sentence, the size and the case already do all
+     the separating, and the marker still reads as the quieter thing.
+
+     Two shadows for the same reason .rsvp-input has two. The wide one is
+     the page's house style; the tight one darkens the wall in the few
+     pixels immediately around each glyph, which is the only background
+     that actually affects legibility. The audit reads its background
+     from a shadow-off frame, so this buys nothing on paper and a real
+     amount on screen. */
+  color: #fffaf2;
+  text-shadow:
+    0 2px 14px rgba(60, 16, 8, 0.55),
+    0 0 6px rgba(60, 16, 8, 0.5);
+}
+
 /* Underline fields group by proximity, not by a box, so the gap above a
    label has to beat the gap below it. Otherwise the label reads as
-   belonging to the line above it rather than to its own. */
+   belonging to the line above it rather than to its own.
+
+   The bottom gap is 6px rather than 4px now the label is tracked caps:
+   caps sit on the baseline with nothing below them, so the same measured
+   gap looks tighter than it did with a descending lowercase "y". */
 .rsvp-label {
   display: block;
-  margin: var(--space-7) 0 4px;
-  font-size: 15px;
-  color: #fcf3ea;
-  text-shadow: 0 2px 14px rgba(60, 16, 8, 0.5);
+  margin: var(--space-7) 0 6px;
+}
+
+/* A question, not a field label, so it belongs to the speaking voice: a
+   smaller sibling of .rsvp-q rather than a marker. It used to carry
+   .rsvp-label, which made "Which nights will you be staying with us?"
+   look like the caption on a text field instead of something being
+   asked. */
+.rsvp-subq {
+  margin: var(--space-7) 0 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(19px, 1.8vw, 23px);
+  line-height: 1.3;
+  color: #fffaf2;
+  text-shadow: 0 3px 22px rgba(60, 16, 8, 0.45);
 }
 
 /* A single rule to write on rather than a boxed field. A cream box is
@@ -2578,7 +2651,8 @@ textarea.rsvp-input {
 
 .rsvp-help {
   margin: var(--space-3) 0 0;
-  font-size: 14.5px;
+  font-family: var(--font-display);
+  font-size: clamp(15px, 1.5vw, 18px);
   line-height: 1.5;
   color: #faf0e5;
   text-shadow: 0 2px 14px rgba(60, 16, 8, 0.5);
@@ -2667,6 +2741,65 @@ textarea.rsvp-input {
   }
 }
 
+/* ---------- Which nights ----------
+   A follow-up inside the accommodation step, not a step of its own. It is
+   shown only for a yes, so it needs to arrive rather than appear: the
+   animation runs on its own because [hidden] is display:none, and lifting
+   that restarts it with no JavaScript involved. */
+.rsvp-nights {
+  animation: nights-in 320ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@keyframes nights-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rsvp-nights {
+    animation: none;
+  }
+}
+
+/* Three short answers read better side by side than as a third column of
+   full-width pills under two that already are. minmax(0, 1fr) rather than
+   1fr so a long label shrinks the pill instead of overflowing the row. */
+.rsvp-choices--nights {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  /* Wider than the 12px it started at. These pills answer the question
+     directly above them, so the gap has to read as "belonging to" rather
+     than "crammed under", while still being far tighter than the 48px
+     separating that question from the yes and no above it. */
+  margin-top: var(--space-4);
+}
+
+.rsvp-choice--night {
+  /* These say what they are on two lines and have no neighbours to line
+     up with, so they centre rather than sit against a left padding. */
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 14px 8px;
+  font-size: clamp(15px, 1.3vw, 17px);
+  text-align: center;
+}
+
+.rsvp-choice--night span {
+  display: block;
+}
+
+/* Block only: the shared marker rule sets the type. */
+.rsvp-choice--night b {
+  display: block;
+}
+
 /* ---------- Review ---------- */
 .rsvp-review {
   margin: var(--space-6) 0 0;
@@ -2677,12 +2810,16 @@ textarea.rsvp-input {
   border-top: 1px solid rgba(255, 240, 224, 0.25);
 }
 
+/* A rule above every row leaves the list stopping mid-air rather than
+   closing. One at the foot finishes it, and matches the underline every
+   field on the way here was typed onto. */
+.rsvp-review > div:last-child {
+  border-bottom: 1px solid rgba(255, 240, 224, 0.25);
+}
+
+/* Nothing typographic here: see the shared marker rule. */
 .rsvp-review dt {
-  font-size: 13px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #eec9a8;
-  text-shadow: 0 2px 14px rgba(60, 16, 8, 0.5);
+  margin: 0;
 }
 
 .rsvp-review dd {
@@ -2690,7 +2827,12 @@ textarea.rsvp-input {
   font-family: var(--font-display);
   font-size: clamp(17px, 1.7vw, 21px);
   color: #fff6ea;
-  text-shadow: 0 2px 18px rgba(60, 16, 8, 0.45);
+  /* The tight second shadow again: at 390 this measured 4.55 against a
+     4.5 threshold, which is one percent of headroom on a page where the
+     light pools differently at every scroll position. */
+  text-shadow:
+    0 2px 18px rgba(60, 16, 8, 0.45),
+    0 0 6px rgba(60, 16, 8, 0.5);
   overflow-wrap: anywhere;
 }
 
@@ -2723,16 +2865,26 @@ textarea.rsvp-input {
   display: none;
 }
 
+/* The quiet half of the pair. Same Recoleta as the button beside it, so
+   the two read as one set of controls rather than a serif button next to
+   a sans link; the underline and the dimmer cream carry the hierarchy
+   instead of a change of family. */
 .rsvp-back {
   order: -1;
   padding: 15px 6px;
   border: 0;
   background: none;
-  color: #f0ddcd;
-  font-family: var(--font-body);
-  font-size: 15px;
+  /* Had no text shadow at all, which is why it measured 4.35 against a
+     4.5 threshold while everything around it passed. Brighter cream and
+     the same shadow pair as the markers. */
+  color: #fff6ea;
+  text-shadow:
+    0 2px 14px rgba(60, 16, 8, 0.55),
+    0 0 6px rgba(60, 16, 8, 0.5);
+  font-family: var(--font-display);
+  font-size: 17px;
   text-decoration: underline;
-  text-underline-offset: 4px;
+  text-underline-offset: 5px;
   cursor: pointer;
 }
 
@@ -2747,10 +2899,13 @@ textarea.rsvp-input {
   outline-offset: 4px;
 }
 
+/* Same Recoleta as the date and venue line under the title, so every
+   sentence the page says back to you is set in one voice. */
 .form-status {
   margin: var(--space-5) 0 0;
   min-height: 1.4em;
-  font-size: 15.5px;
+  font-family: var(--font-display);
+  font-size: clamp(15px, 1.5vw, 19px);
   color: #f6e6d6;
   text-shadow: 0 2px 14px rgba(60, 16, 8, 0.55);
 }
@@ -2795,7 +2950,8 @@ textarea.rsvp-input {
 
 .rsvp-done p {
   margin: 0;
-  font-size: 17px;
+  font-family: var(--font-display);
+  font-size: clamp(15px, 1.5vw, 19px);
   line-height: 1.6;
   color: #f4e7da;
   text-shadow: 0 2px 16px rgba(60, 16, 8, 0.5);

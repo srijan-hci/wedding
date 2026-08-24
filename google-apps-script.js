@@ -67,8 +67,15 @@ var COLUMNS = [
   ["email", "Email"],
   ["attending", "Attending"],
   ["guests", "Party size"],
-  ["room", "Book a room"],
-  ["note", "Note"]
+  ["room", "Accommodation"],
+  ["note", "Note"],
+  /* ⚠️ Deliberately last, not next to "Accommodation" where it belongs
+     by meaning. Rows are written by POSITION, so slotting a new column
+     into the middle would leave every reply already in the sheet with
+     its note sitting under a heading that now says "Nights". Adding at
+     the end cannot disturb anything already there. Move it by hand in
+     the sheet later if the order matters, and move it here to match. */
+  ["nights", "Nights"]
 ];
 
 /* The tab to write into. The emoji is part of the name. */

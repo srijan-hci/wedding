@@ -151,16 +151,50 @@
           </fieldset>
 
           <fieldset class="rsvp-step" data-step>
-            <legend class="rsvp-q">Do you need a room?</legend>
+            <legend class="rsvp-q">Do you need accommodation?</legend>
             <div class="rsvp-choices">
               <label class="rsvp-choice">
                 <input type="radio" name="room" value="Yes" required />
-                <span>Yes, please book one</span>
+                <span>Yes, please book it for me</span>
               </label>
               <label class="rsvp-choice">
                 <input type="radio" name="room" value="No" />
                 <span>No, I&rsquo;ve got it covered</span>
               </label>
+            </div>
+
+            <!-- A follow-up, not a seventh question. It sits inside the
+                 same fieldset, so it belongs to the step above it and the
+                 stepper never sees it. rsvp.js hides and disables it for
+                 anything but a yes, which keeps it out of the tab order,
+                 out of the review and out of the submitted data.
+
+                 A checkbox group has no legend of its own inside an
+                 existing fieldset, so role="group" plus aria-labelledby
+                 is what names it. -->
+            <div class="rsvp-nights" id="rsvp-nights" hidden>
+              <p class="rsvp-subq" id="rsvp-nights-label">
+                Which nights will you be staying with us?
+              </p>
+              <div
+                class="rsvp-choices rsvp-choices--nights"
+                role="group"
+                aria-labelledby="rsvp-nights-label"
+                data-review-label="Nights"
+              >
+                <label class="rsvp-choice rsvp-choice--night">
+                  <input type="checkbox" name="nights" value="Fri 19 Feb" />
+                  <span><b>Fri</b> 19 Feb</span>
+                </label>
+                <label class="rsvp-choice rsvp-choice--night">
+                  <input type="checkbox" name="nights" value="Sat 20 Feb" />
+                  <span><b>Sat</b> 20 Feb</span>
+                </label>
+                <label class="rsvp-choice rsvp-choice--night">
+                  <input type="checkbox" name="nights" value="Sun 21 Feb" />
+                  <span><b>Sun</b> 21 Feb</span>
+                </label>
+              </div>
             </div>
           </fieldset>
         </div>

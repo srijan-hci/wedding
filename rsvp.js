@@ -58,6 +58,13 @@ function contactUs() {
   var submit = document.getElementById("rsvp-submit");
   var details = document.getElementById("rsvp-attending-details");
   var attendingInputs = form.querySelectorAll("input[name='attending']");
+  var roomInputs = form.querySelectorAll("input[name='room']");
+  var nights = document.getElementById("rsvp-nights");
+  var nightInputs = nights
+    ? Array.prototype.slice.call(
+        nights.querySelectorAll("input[type='checkbox']")
+      )
+    : [];
 
   function setStatus(message, kind) {
     status.textContent = message;
@@ -66,10 +73,11 @@ function contactUs() {
 
   /* ---------- Hide the "who and where" questions for a no ----------
      Someone who cannot come should not be asked how many are coming or
-     whether they want a room. Disabling the inputs as well as hiding
-     them keeps them out of the submitted data and out of the tab order,
-     and it is also what stops the required room choice from blocking a
-     "no" at submit: constraint validation skips disabled fields. */
+     whether they want somewhere to stay. Disabling the inputs as well as
+     hiding them keeps them out of the submitted data and out of the tab
+     order, and it is also what stops the required accommodation choice
+     from blocking a "no" at submit: constraint validation skips disabled
+     fields. */
   function syncDetails() {
     var choice = form.querySelector("input[name='attending']:checked");
     var coming = !choice || choice.value === "Yes";
@@ -80,10 +88,54 @@ function contactUs() {
     });
   }
 
+  /* ---------- Which nights ----------
+     Only asked of someone who wants a bed booked, and only ever as a
+     follow-up inside the accommodation step: this reveals a block, never
+     a seventh question. Hidden and disabled together, for the same
+     reasons as above.
+
+     ⚠️ Must run AFTER syncDetails(), which enables every control inside
+     the details block including these. Run the other way round and
+     saying "yes, I'm coming" would switch the nights back on regardless
+     of the accommodation answer.
+
+     A checkbox group has no group-level `required` in HTML: `required`
+     on a checkbox means that one box must be ticked. So it goes on every
+     box while none is ticked and comes off all of them the moment one
+     is, which is what makes "at least one" work with checkValidity(). */
+  function syncNights() {
+    if (!nights) return;
+
+    var choice = form.querySelector("input[name='room']:checked");
+    var wanted = !details.hidden && !!choice && choice.value === "Yes";
+
+    nights.hidden = !wanted;
+
+    var picked = nightInputs.some(function (el) {
+      return el.checked;
+    });
+
+    nightInputs.forEach(function (el) {
+      el.disabled = !wanted;
+      el.required = wanted && !picked;
+    });
+  }
+
+  function sync() {
+    syncDetails();
+    syncNights();
+  }
+
   attendingInputs.forEach(function (input) {
-    input.addEventListener("change", syncDetails);
+    input.addEventListener("change", sync);
   });
-  syncDetails();
+  roomInputs.forEach(function (input) {
+    input.addEventListener("change", syncNights);
+  });
+  nightInputs.forEach(function (input) {
+    input.addEventListener("change", syncNights);
+  });
+  sync();
 
   /* ---------- Submitting ---------- */
   form.addEventListener("submit", function (event) {
@@ -125,9 +177,21 @@ function contactUs() {
     var data = new FormData(form);
     var body = new URLSearchParams();
 
+    /* ⚠️ A checkbox group sends one entry per ticked box, so "nights"
+       arrives three times over. Apps Script's e.parameter only ever hands
+       back the FIRST value for a repeated key, so posting them as-is
+       would silently record one night and drop the rest. Joining them
+       here means the sheet gets one readable cell and the script stays a
+       plain key-to-column map. */
+    var multi = {};
+
     data.forEach(function (value, key) {
       if (key === "website") return;
-      body.append(key, value);
+      multi[key] = multi[key] ? multi[key] + ", " + value : value;
+    });
+
+    Object.keys(multi).forEach(function (key) {
+      body.append(key, multi[key]);
     });
 
     body.append("submittedAt", new Date().toISOString());
