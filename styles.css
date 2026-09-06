@@ -2272,6 +2272,19 @@ textarea:focus-visible {
   margin: 0 0 var(--space-4);
 }
 
+/* The closing paragraph on the Bangalore card is a section in its own
+   right, but it has no heading to carry the gap that every other section
+   gets. This gives it the same --space-7 above that an h3 gets, so it
+   reads as a new thought rather than a continuation of the list above.
+
+   ⚠️ It has to be qualified by .drawer-body. `.drawer-body p` is (0,1,1)
+   and its `margin` SHORTHAND sets margin-top back to 0, so a bare
+   `.drawer-outro` at (0,1,0) would lose and this would silently do
+   nothing. Same shorthand trap that bit .trip-list further down. */
+.drawer-body .drawer-outro {
+  margin-top: var(--space-7);
+}
+
 .drawer-body ul {
   margin: 0 0 var(--space-4);
   padding-left: 1.15em;
