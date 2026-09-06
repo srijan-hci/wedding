@@ -488,9 +488,12 @@ body {
 .site-nav ul {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  /* No gap. The two in-page links are meant to sit flush against each
+     other so they read as one group, and the only air in the row is
+     the space either side of the divider. */
+  gap: 0;
   margin: 0;
-  padding: 6px;
+  padding: 6px var(--space-2);
   list-style: none;
 }
 
@@ -522,6 +525,56 @@ body {
 .site-nav a.is-active:hover,
 .site-nav a.is-active:focus-visible {
   background: #fdf6ea;
+}
+
+/* ---------- The divider ----------
+   Event and Details move you around this page. RSVP leaves it. All
+   three look the same, deliberately, so a hairline is what says the
+   third one is a different kind of thing.
+
+   Straight from the design, and the two halves of it work together:
+   the links carry 24px of padding and the row has no gap, so Event and
+   Details sit 48px apart word to word and read as one group, while the
+   rule gets 6px of clear air on each side and pushes RSVP out to 61px.
+   That 1:1.27 is what makes the pair look like a pair.
+
+   ⚠️ --rule-air is the clear space on ONE side. The item's margin has
+   to be twice that plus the rule's own width, and the rule's offset
+   has to be one air plus that width, or it sits off centre. Both are
+   derived below rather than written out, so changing the air moves
+   everything correctly.
+
+   The rule is a short hairline, centred: 20px against a link that is
+   nearly twice that. A full-height rule was tried and read as a hard
+   division of the pill into two compartments, which is heavier than
+   this needs to be. It fades out at both ends so it reads as light
+   catching an edge rather than a drawn border.
+
+   ⚠️ It hangs in the gap, outside its own item's box, so it needs
+   pointer-events: none. Without that it would sit in front of the
+   pill either side of it and swallow clicks aimed at nothing. */
+.site-nav .nav-divide {
+  --rule-air: 6px;
+  --rule-w: 1px;
+  position: relative;
+  margin-left: calc(var(--rule-air) * 2 + var(--rule-w));
+}
+
+.site-nav .nav-divide::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: calc((var(--rule-air) + var(--rule-w)) * -1);
+  width: var(--rule-w);
+  height: 20px;
+  transform: translateY(-50%);
+  background: linear-gradient(
+    to bottom,
+    rgba(253, 241, 226, 0.04),
+    rgba(253, 241, 226, 0.36) 50%,
+    rgba(253, 241, 226, 0.04)
+  );
+  pointer-events: none;
 }
 
 /* ---------- Back to the invitation ----------
@@ -1891,6 +1944,30 @@ textarea:focus-visible {
   .site-nav a {
     padding: 8px var(--space-4);
     font-size: 15px;
+  }
+
+  /* The pill is shorter here, so the rule comes down with it. */
+  .site-nav .nav-divide::before {
+    height: 17px;
+  }
+
+  /* ⚠️ A deeper tint than the wide layout, and it is not decoration.
+     The nav is fixed, so it crosses whatever is under it, and on a
+     phone the detail cards fill the whole width: the pill spends part
+     of the page sitting squarely on cream card stock rather than on
+     the wall. The standard 0.52 tint is not enough of a base there.
+
+     Measured, worst of six light phases with every link plain, the
+     right-hand end of the pill over a card: 4.64:1 before the labels
+     were reordered and 3.60:1 after, against a 4.5 threshold. It was
+     already marginal and the reorder tipped it over. At 0.66 the same
+     worst case is comfortably clear again.
+
+     Scoped to .site-nav rather than .glass so the invitation's own
+     RSVP button, which sits on the wall and was never at risk, keeps
+     the lighter glass it was designed with. */
+  .site-nav .glass {
+    background: rgba(52, 18, 11, 0.66);
   }
 
   .section {

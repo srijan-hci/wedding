@@ -146,6 +146,28 @@ page, the RSVP page and an open detail modal. The colours are already near the
 top of their range, so if you add small text on the wall, measure it. Do not
 eyeball it.
 
+⚠️ **A third trap, and it only shows on a phone: the nav pill's own tint is
+load-bearing, and how much it needs depends on the width.** The nav is fixed,
+so it crosses whatever is beneath it. On a wide window it passes over the wall
+and the gap between the detail cards. On a 390px phone the cards fill the
+width, so the pill spends part of the page sitting squarely on cream card
+stock, and the standard `rgba(52, 18, 11, 0.52)` is not a dark enough base
+there.
+
+This was already marginal before anyone noticed: measured as the worst of six
+light phases, with every link forced plain so no active chip masked a slot,
+the right-hand end of the pill over a card was **4.64:1** against a 4.5
+threshold. Reordering the labels moved a different word into that slot and it
+became **3.60:1**. `.site-nav .glass` therefore takes `0.66` below 760px,
+which puts the same worst case at **6.88:1**.
+
+Two things to copy if you measure this again. Force every link plain first:
+at some scroll positions the rightmost slot happens to hold the active cream
+chip, which reads 8:1 and hides the plain-link failure sitting underneath it.
+And sample several light phases rather than one, because the light multiplies
+over the **text** as well as the backdrop: the same slot read 9.36, 5.01 and
+2.85 on three single-shot runs, which is noise, not a result.
+
 ## The collage and the intro
 
 The design came from Figma. The original wide arrangement was solved against
@@ -401,12 +423,55 @@ knowing before editing it:
    320x568 up to 1920x1080, and the stage reaches its full 1600px cap at
    1080-tall.
 
+### The nav
+
+Three items in one glass pill: `Event`, `Details`, then `RSVP`, with a
+hairline before RSVP. All three are styled identically on purpose. The first
+two move you around this page and the third leaves it, and the rule is what
+says so.
+
+The horizontal rhythm came from the designer as an explicit spec, and every
+part of it is doing something:
+
+| | |
+|---|---|
+| 24px padding either side of each label | the chip the active state paints |
+| **no** flex gap | Event and Details sit flush, so they read as one group |
+| 6px of air either side of the rule | 48px between the pair, 61px across the rule |
+| 8px inside the pill's ends | the pill's own inset |
+
+That 1:1.27 between the two gaps is the whole point. An earlier attempt kept
+24px padding *and* an 8px gap, which put the pair 56px apart against 64px
+across the divider: at 1:1.14 the grouping does not register, and the space
+between Event and Details just reads as a void.
+
+⚠️ **`--rule-air` is the clear space on ONE side of the rule.** The item's
+margin has to be twice that plus the rule's own width, and the rule's offset
+one air plus that width, or it sits off centre. Both are derived in `calc()`
+rather than written out. Do not replace them with the numbers.
+
+⚠️ **The rule hangs in the gap, outside its own item's box, so it needs
+`pointer-events: none`.** Without it, it sits in front of the pill either side
+of it and swallows clicks aimed at nothing.
+
+A full-height rule matching the design capture was tried and rejected by the
+owner as too heavy: it divides the pill into two compartments. It is a short
+20px hairline, centred, fading out at both ends.
+
+**RSVP was a solid cream chip, and then lit glass, before it went back to a
+plain link.** Both are in the history and both measured safe. If it ever needs
+to stand out again, the lit-glass one is the version to return to: same
+material as the pill, with a brighter lip, a harder backdrop blur and a warm
+glow, over a dark base that stops it blowing out on a light backdrop. The
+cream chip is the weaker idea, because it is the only thing on the nav that is
+not glass. **The brand colour cannot do this job at all: `#a94332` is
+`--wall`, so a terracotta chip reads as a hole punched in the pill.**
+
 ### The liquid glass
 
 Used by the nav pill and the RSVP button. Frost, refraction, dispersion and
 rim, as four layers, because an element with its own `filter` becomes a
 backdrop root and would block its own `backdrop-filter`.
-
 **⚠️ Two approaches were built and rejected. Do not retry them without reading
 this.**
 
