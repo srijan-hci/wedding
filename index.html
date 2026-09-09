@@ -455,6 +455,36 @@
           role="region"
           aria-labelledby="drawer-travel-title"
         >
+          <!-- Mood photography, not information.
+
+               Every one carries alt="" on purpose. The copy below says
+               everything these say, and five announcements of "photo of
+               a yellow street sign" ahead of the lede is noise a screen
+               reader user has to sit through before reaching the point.
+
+               ⚠️ Do NOT copy the alt pattern from the three .card-shot
+               images in the details section. Those sit inside <button>s
+               and their alt IS the button's accessible name, so blanking
+               those makes the button announce as nothing at all. These
+               are inert, so the opposite rule applies.
+
+               loading="lazy" is what keeps these free. The whole modal
+               is hidden at page load, so a lazy image inside it is never
+               near the viewport and never fetched: the home page costs
+               exactly zero bytes for all fifteen of these, and only the
+               card you actually open pays. width/height are the real
+               file dimensions so the row reserves its height and nothing
+               shifts as they arrive.
+
+               The last two are dropped below 760px. See .drawer-strip. -->
+          <div class="drawer-strip">
+            <img src="Assets/modal/travel-venue.webp"        alt="" width="254" height="336" loading="lazy" decoding="async">
+            <img src="Assets/modal/travel-palace.webp"       alt="" width="254" height="336" loading="lazy" decoding="async">
+            <img src="Assets/modal/travel-stay-corner.webp"  alt="" width="254" height="336" loading="lazy" decoding="async">
+            <img src="Assets/modal/travel-station-sign.webp" alt="" width="254" height="336" loading="lazy" decoding="async">
+            <img src="Assets/modal/travel-street-sign.webp"  alt="" width="254" height="336" loading="lazy" decoding="async">
+          </div>
+
           <p class="drawer-lede">
             People are traveling to Bangalore from all over India and from much
             farther away. We appreciate you making the journey to get here, and
@@ -549,6 +579,15 @@
           role="region"
           aria-labelledby="drawer-events-title"
         >
+          <!-- See the Travel card's strip for why alt="" and lazy. -->
+          <div class="drawer-strip">
+            <img src="Assets/modal/events-musicians.webp"     alt="" width="254" height="336" loading="lazy" decoding="async">
+            <img src="Assets/modal/events-sacred-fire.webp"   alt="" width="254" height="336" loading="lazy" decoding="async">
+            <img src="Assets/modal/events-flower-market.webp" alt="" width="254" height="336" loading="lazy" decoding="async">
+            <img src="Assets/modal/events-mehendi.webp"       alt="" width="254" height="336" loading="lazy" decoding="async">
+            <img src="Assets/modal/events-haldi.webp"         alt="" width="254" height="336" loading="lazy" decoding="async">
+          </div>
+
           <p class="drawer-lede">
             We&rsquo;re celebrating over two days, and we&rsquo;d love for you
             to join us for as much as you can. The final schedule is still
@@ -658,6 +697,15 @@
           role="region"
           aria-labelledby="drawer-bangalore-title"
         >
+          <!-- See the Travel card's strip for why alt="" and lazy. -->
+          <div class="drawer-strip">
+            <img src="Assets/modal/bangalore-street-cafe.webp"   alt="" width="254" height="336" loading="lazy" decoding="async">
+            <img src="Assets/modal/bangalore-temple.webp"        alt="" width="254" height="336" loading="lazy" decoding="async">
+            <img src="Assets/modal/bangalore-filter-coffee.webp" alt="" width="254" height="336" loading="lazy" decoding="async">
+            <img src="Assets/modal/bangalore-cafe-interior.webp" alt="" width="254" height="336" loading="lazy" decoding="async">
+            <img src="Assets/modal/bangalore-flower-auto.webp"   alt="" width="254" height="336" loading="lazy" decoding="async">
+          </div>
+
           <p class="drawer-lede">
             If you&rsquo;re coming all the way to Bangalore, we hope
             you&rsquo;ll give yourself a little extra time to explore the city!

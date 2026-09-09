@@ -50,6 +50,7 @@ authoritative while still making the feature easy to back out.
 | `google-apps-script.js` | Not used by the page. The script to paste into Google Apps Script so RSVPs land in a Google Sheet, with setup instructions. |
 | `Assets/` | The wall photograph, avif/jpg at 1200/1600/3200. |
 | `Assets/collage/` | The collage cut-outs, WebP with PNG fallback except the three cards which are WebP only, plus `prepare.py` which made them. Originals in `Assets/collage/_source/`, gitignored. |
+| `Assets/modal/` | The five photographs across the top of each detail modal, WebP only. Made by the same `prepare.py`. Sources are `Assets/{travel,events,bangalore}-*.png`, gitignored. |
 | `Font/` | Recoleta. Only the three weights actually loaded are tracked. |
 | `tools/` | Measurement scripts. Nothing here ships. See `tools/README.md`. Includes `springs.py`, which generates the curves in `motion.css`. |
 
@@ -651,6 +652,55 @@ alt instead. **Do not set `alt=""` on these three.** They look decorative, and
 the reflex is to blank them, but doing so makes a screen reader announce three
 consecutive buttons as nothing but "button".
 
+**Each card opens with a strip of five photographs**, `.drawer-strip`, the
+first thing inside the scrolling window and above the lede. They are mood
+images, not information, so unlike the three card Polaroids above they all
+carry `alt=""`. The copy underneath says everything they say, and five
+announcements of "photo of a yellow street sign" ahead of the lede is noise
+a screen reader user has to sit through to reach the point. **The two rules
+are opposite and both are deliberate: blank alt here, real alt on the
+`.card-shot` images.**
+
+Sources are `Assets/{travel,events,bangalore}-*.png`, gitignored like every
+other raw export, and `prepare.py` writes them to `Assets/modal/` as WebP.
+They need none of the collage machinery: they are flat rectangular
+photographs, so there is no alpha to trim, and like the cards they ship
+WebP-only because nothing uses `<picture>` for them.
+
+**They cost the home page nothing.** Every one is `loading="lazy"`, and the
+whole modal is `hidden` at load, so a lazy image inside it is never near the
+viewport and is never fetched. Measured: **0** requests on a full page load
+plus a scroll to the bottom. Opening one card costs 126 to 143 KB on a
+desktop and 74 to 81 KB on a phone. `width` and `height` are the real file
+dimensions so the row reserves its height and the lede does not jump as they
+arrive.
+
+⚠️ **The strip drops to three frames at 560px, NOT at the 760px the rest of
+the card uses.** The two have genuinely different constraints: the card's
+breakpoint is about how much frame it needs, the strip's is about how small
+a photograph can get before it stops being one. Measured floor for that is
+about 85px, which is what a 390px phone already shows.
+
+Putting it at 760px looked right and was wrong. Five frames are 116px each
+at 761px, but three frames at 760px are **211px**, so the row nearly doubles
+in height across one pixel and lands *bigger* than the 171px it is on a
+1512px desktop, which inverts the whole idea of a strip. It is softer too:
+Figma exported these at 254px, so 211px is only 1.2x. At 560px the numbers
+behave, and the widest any frame gets anywhere is 171px.
+
+The last two are dropped with `display: none` rather than a grid trick, so
+they are never fetched either. Verified: a phone pulls three files per card,
+a desktop five.
+
+⚠️ **`prepare.py` never upscales, so `MODAL_LONGEST` of 336 is a no-op
+against the current exports.** They are 254x336, which is about 1.5x the
+widest display size rather than a full 2x. Sharp enough, but if these are
+ever re-exported from Figma, ask for 2x and the number can rise to 672.
+
+Verified after adding them: zero axe violations at 390, 820 and 1440 on all
+three cards, zero console errors, and the focus trap still holds at 0
+escapes over 40 tabs each way on each card.
+
 ### The RSVP page
 
 `rsvp/` ships **one ordinary form** with every question visible and a
@@ -904,8 +954,8 @@ excluded.
 
 ## Regenerating the collage assets
 
-`prepare.py` is the only thing that should ever write to `Assets/collage/`.
-Never hand-edit an exported file.
+`prepare.py` is the only thing that should ever write to `Assets/collage/`
+or `Assets/modal/`. Never hand-edit an exported file.
 
 **It must be run from the repo root, not from its own folder.** Its source
 paths are relative (`Assets/...`), so running it in place fails on the first
@@ -922,6 +972,14 @@ OneDrive note below):
 ```
 cp /tmp/collage-out/card-travel.webp Assets/collage/card-travel.webp
 chmod 644 Assets/collage/card-travel.webp
+```
+
+The modal strip photographs land in a subfolder of the same output, and go
+to a different destination:
+
+```
+cp /tmp/collage-out/modal/*.webp Assets/modal/
+chmod 644 Assets/modal/*.webp
 ```
 
 The designer re-saves artwork **over the same filenames** (`Assets/Frame 6.png`
@@ -951,16 +1009,28 @@ renders nothing without SwiftShader:
 ```python
 p.chromium.launch(headless=True,
     executable_path="/Users/srjhanwa/Library/Caches/ms-playwright/"
-        "chromium_headless_shell-1208/chrome-headless-shell-mac-arm64/"
+        "chromium_headless_shell-1223/chrome-headless-shell-mac-arm64/"
         "chrome-headless-shell",
     args=["--use-gl=angle", "--use-angle=swiftshader",
           "--enable-unsafe-swiftshader"])
 ```
 
+⚠️ **That build number goes stale.** It was `1208`, and a Playwright update
+moved it to `1223`, at which point every script here died with "executable
+doesn't exist". Do not trust the number above; check what is actually on disk
+first with `ls -d ~/Library/Caches/ms-playwright/*/`.
+
 Route `**/*.{js,css,webp}` with `Cache-Control: no-cache` or Playwright will
 happily screenshot the previous version of a file you just changed. Also note
 `page.accessibility` does not exist in this build: inject axe and `evaluate`
 instead.
+
+⚠️ **Do not test the focus trap by forcing a modal open from the DOM.** The
+trap is armed inside `open()` in `main.js`, which is what attaches the
+`keydown` listener and sets `openDrawer`. Setting `hidden = false` and adding
+`.is-open` by hand skips all of that, so the trap is simply not running and
+the test reports a confident 28 escapes out of 40 tabs on a modal that is
+completely fine. Click `[data-drawer="drawer-travel"]` like a person would.
 
 **`pkill` and `killall` are refused; `kill` needs a numeric PID.** Finding the
 PID and killing it have to be two separate calls, because each shell command

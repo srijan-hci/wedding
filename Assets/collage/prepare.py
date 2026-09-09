@@ -1,7 +1,7 @@
 """
-Prepare raw collage artwork for the web.
+Prepare raw collage artwork, and the detail-modal photo strips, for the web.
 
-Every piece gets the same treatment the original twelve had:
+Every collage piece gets the same treatment the original twelve had:
   1. trim to the artwork's real edges, so the image box equals the artwork
      and CSS sizing is predictable
   2. resize so the longest edge hits a sensible retina size
@@ -12,6 +12,10 @@ Two pieces are special:
     alpha channel. Lossy alpha halves the file with no visible cost.
   - the venue photograph is displayed large, so it ships at two widths and
     the browser picks one.
+
+The modal strips are different from all of the above and are handled
+separately at the bottom of this file: they are rectangular photographs
+with no alpha, so they are neither trimmed nor given a PNG fallback.
 
 Writes to /tmp first. The repo lives under OneDrive, which throws
 TimeoutError when you write many files in a tight loop.
@@ -64,6 +68,36 @@ CARDS = [
     ("Frame 7.png", "card-events",    920, 82, 90),
     ("Frame 8.png", "card-bangalore", 920, 82, 90),
 ]
+
+# The photo strip across the top of each detail modal. Five per card, in
+# the order they appear left to right, which is also the order the CSS
+# hides them in: a phone shows the first three and drops the last two.
+#
+# ⚠️ These are NOT collage stickers, and none of the machinery above
+# applies to them. They are flat rectangular photographs, so there is no
+# alpha to trim and trim() would be a no-op at best. They go to
+# Assets/modal/, never Assets/collage/.
+#
+# WebP only, like CARDS. Nothing uses <picture> for these, so a PNG
+# fallback would be a megabyte nothing ever requests.
+#
+# Figma exported them at 254x336, so LONGEST is 336 and fit() is a
+# no-op: it never upscales, and there is nothing to scale down to. That
+# is about 1.5x the widest display size (roughly 171px in a 1000px card)
+# rather than a full 2x. It is sharp enough, but if these are ever
+# re-exported from Figma, ask for 2x and this number can rise to 672.
+MODAL = [
+    "travel-venue", "travel-palace", "travel-stay-corner",
+    "travel-station-sign", "travel-street-sign",
+
+    "events-musicians", "events-sacred-fire", "events-flower-market",
+    "events-mehendi", "events-haldi",
+
+    "bangalore-street-cafe", "bangalore-temple", "bangalore-filter-coffee",
+    "bangalore-cafe-interior", "bangalore-flower-auto",
+]
+MODAL_LONGEST = 336
+MODAL_QUALITY = 80
 
 
 def trim_solid(im, threshold=250, coverage=0.5):
@@ -118,6 +152,7 @@ def export(im, slug, quality, alpha_quality):
 
 os.makedirs(OUT, exist_ok=True)
 os.makedirs(f"{OUT}/_source", exist_ok=True)
+os.makedirs(f"{OUT}/modal", exist_ok=True)
 
 print(f"{'piece':20} {'trimmed':13} {'final':13} {'webp':>7}")
 print("-" * 58)
@@ -175,3 +210,31 @@ for filename, slug, longest, quality, alpha_quality in CARDS:
 
 print("-" * 58)
 print(f"{'total webp':20} {'':13} {'':13} {total:6.0f}K")
+
+# ---------- the modal photo strips ----------
+#
+# Straight to RGB and straight out. convert("RGB") matters: a Figma PNG
+# arrives with an alpha channel whether or not anything is transparent,
+# and carrying a pointless fully-opaque channel through to WebP costs
+# bytes for nothing.
+print()
+print(f"{'strip photo':26} {'source':13} {'final':13} {'webp':>7}")
+print("-" * 64)
+
+strip_total = 0
+for slug in MODAL:
+    path = os.path.join(SRC, f"{slug}.png")
+    if not os.path.exists(path):
+        print(f"{slug:26} MISSING: {path}")
+        continue
+
+    im = Image.open(path)
+    final = fit(im, MODAL_LONGEST).convert("RGB")
+    final.save(f"{OUT}/modal/{slug}.webp", "WEBP",
+               quality=MODAL_QUALITY, method=6)
+    kb = os.path.getsize(f"{OUT}/modal/{slug}.webp") / 1024
+    strip_total += kb
+    print(f"{slug:26} {str(im.size):13} {str(final.size):13} {kb:6.0f}K")
+
+print("-" * 64)
+print(f"{'total strip webp':26} {'':13} {'':13} {strip_total:6.0f}K")

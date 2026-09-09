@@ -2255,6 +2255,42 @@ textarea:focus-visible {
   margin: 0 0 var(--space-6);
 }
 
+/* ---------- The photo strip ----------
+   A row of mood photography across the top of each card, above the
+   lede. Five frames on a desktop, three on a phone.
+
+   A grid of equal fractions rather than flex, so every frame is exactly
+   the same width whatever the card is doing: the images all share one
+   254x336 export, so equal columns means one unbroken row with no ragged
+   right edge. The images fill their column and the aspect-ratio holds
+   the row's height, which is what stops the lede jumping down the page
+   as the pictures arrive.
+
+   object-fit: cover is belt and braces. Every current file is 254x336
+   so nothing is actually being cropped, but if one is ever re-exported
+   at a different shape it will fill its frame instead of distorting.
+
+   The background is the window paper one shade down, so a frame that
+   has not loaded yet reads as a deliberate empty tile rather than a
+   hole. They are lazy-loaded, so on a slow connection there is a moment
+   where that matters. */
+.drawer-strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-2);
+  margin: 0 0 var(--space-6);
+}
+
+.drawer-strip img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 254 / 336;
+  object-fit: cover;
+  border-radius: 2px;
+  background: rgba(51, 36, 26, 0.06);
+}
+
 .drawer-body h3 {
   margin: var(--space-7) 0 var(--space-3);
   font-family: var(--font-display);
@@ -2370,6 +2406,40 @@ textarea:focus-visible {
 
   .drawer {
     --drawer-pad: 16px;
+  }
+}
+
+/* The strip switches from five frames to three, and it does so at 560px
+   rather than at the 760px the rest of the card uses. The two have
+   different constraints and they genuinely disagree.
+
+   The card's breakpoint is about how much frame it needs. The strip's is
+   about how small a photograph can get before it stops being one, and
+   the measured floor for that is about 85px: it is what a 390px phone
+   already shows and it reads fine.
+
+   ⚠️ Switching at 760px looked correct and was not. Five frames are
+   116px each at 761px, but three frames at 760px are 211px, so the row
+   nearly doubles in height across a single pixel and lands BIGGER than
+   the 171px it is on a 1512px desktop, which inverts the whole idea of
+   a strip. It is also softer: the exports are 254px wide, so 211px is
+   only 1.2x and visibly soft on a retina tablet.
+
+   At 560px the numbers behave. Five frames are 85px just above it,
+   three are 145px just below, and 145px is the largest the three-frame
+   row can ever be, which is a comfortable 1.75x of the export. */
+@media (max-width: 560px) {
+  /* Three, not a wrapped 3 + 2 second row, which reads as a mistake.
+
+     display: none rather than a grid trick, so the hidden two are never
+     fetched either: a lazy image that is not rendered is never near the
+     viewport. A phone downloads three photographs per card, not five. */
+  .drawer-strip {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .drawer-strip img:nth-child(n + 4) {
+    display: none;
   }
 }
 
